@@ -33,7 +33,7 @@ Built as a **Level 1 (White Belt)** project for the Stellar dApp development cou
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/stellar-pay.git
+git clone https://github.com/go99further/stellar-pay.git
 cd stellar-pay
 ```
 
