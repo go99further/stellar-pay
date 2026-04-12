@@ -66,11 +66,14 @@ After connecting your wallet, if your balance is 0, click the **"Fund with Frien
 ### Wallet Connected State
 ![Wallet Connected](./screenshots/wallet-connected.png)
 
-### Send XLM Payment
-![Send Payment](./screenshots/send-payment.png)
+### Balance Displayed
+![Balance Displayed](./screenshots/balance-displayed.png)
 
 ### Successful Testnet Transaction
-![Transaction Success](./screenshots/transaction-success.png)
+![Testnet Transaction](./screenshots/testnet-transaction.png)
+
+### Transaction Result Shown to User
+![Transaction Result](./screenshots/transaction-result.png)
 
 ## Project Structure
 
