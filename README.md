@@ -50,10 +50,11 @@ Built as a **Level 2 (Yellow Belt)** project for the Stellar dApp development co
 
 | Item | Value |
 |------|-------|
-| Contract ID | `PLACEHOLDER_CONTRACT_ID` |
+| Contract ID | `CBW7N5YI34QFHTHRGK5ICBHGWA672ABPEFONMQEE2JZTQUGAJMUDJ5PT` |
 | Network | Stellar Testnet |
 | RPC URL | `https://soroban-testnet.stellar.org` |
-| Transaction Hash | `PLACEHOLDER_TX_HASH` |
+| Deploy TX Hash | `ecb22d2521f1868064f05ee8ea2dd0a6fb0dccbef0526c63957be2ce40510041` |
+| Poll Creation TX | `4743513a6ef6bd18a60d7cf1fb0ca563a7299302f6d016631fbbadaa08f4e2fa` |
 
 ## Prerequisites
 
