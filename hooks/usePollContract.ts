@@ -13,6 +13,7 @@ import {
 } from "@/lib/poll-contract";
 import { useWallet } from "@/context/WalletContext";
 import { classifyError } from "@/lib/errors";
+import { cache, CACHE_KEYS, CACHE_TTL } from "@/lib/cache";
 
 export interface PollData {
   question: string;
@@ -47,14 +48,24 @@ export function usePollContract() {
       return;
     }
 
+    // Check cache first for static data
+    const cachedQ = cache.get<string>(CACHE_KEYS.POLL_QUESTION);
+    const cachedOpts = cache.get<string[]>(CACHE_KEYS.POLL_OPTIONS);
+
     try {
       const [question, options, votes, totalVotes, hasVoted] = await Promise.all([
-        readPollQuestion(address),
-        readPollOptions(address),
+        cachedQ ?? readPollQuestion(address),
+        cachedOpts ?? readPollOptions(address),
         readPollVotes(address),
         readTotalVotes(address),
         checkHasVoted(address, address),
       ]);
+
+      // Cache static data (question/options rarely change)
+      if (!cachedQ) cache.set(CACHE_KEYS.POLL_QUESTION, question, CACHE_TTL.POLL_STATIC);
+      if (!cachedOpts) cache.set(CACHE_KEYS.POLL_OPTIONS, options, CACHE_TTL.POLL_STATIC);
+      cache.set(CACHE_KEYS.POLL_VOTES, votes, CACHE_TTL.POLL_VOTES);
+      cache.set(CACHE_KEYS.POLL_TOTAL, totalVotes, CACHE_TTL.POLL_VOTES);
 
       setPollData({
         question,
@@ -98,6 +109,11 @@ export function usePollContract() {
 
         setTxHash(result.hash);
         setTxStatus("success");
+
+        // Invalidate vote-related cache
+        cache.invalidate(CACHE_KEYS.POLL_VOTES);
+        cache.invalidate(CACHE_KEYS.POLL_TOTAL);
+        if (address) cache.invalidate(CACHE_KEYS.HAS_VOTED(address));
 
         // Reload poll data
         await loadPollData();
