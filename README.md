@@ -106,13 +106,13 @@ stellar contract deploy \
 ## Screenshots
 
 ### Wallet Options Available
-![Wallet Options](./screenshots/wallet-connected.png)
+![Wallet Options](./screenshots/wallet-options.png)
 
-### Balance Displayed
-![Balance Displayed](./screenshots/balance-displayed.png)
+### Wallet Connected with Balance
+![Wallet Connected](./screenshots/wallet-connected.png)
 
-### Send XLM Transaction
-![Testnet Transaction](./screenshots/testnet-transaction.png)
+### On-Chain Poll with Live Results
+![On-Chain Vote](./screenshots/onchain-vote.png)
 
 ### Transaction Result
 ![Transaction Result](./screenshots/transaction-result.png)
