@@ -2,7 +2,11 @@
 
 A multi-wallet dApp built on the **Stellar Testnet** with XLM payments and on-chain voting via a Soroban smart contract.
 
-Built as a **Level 2 (Yellow Belt)** project for the Stellar dApp development course.
+Built as a **Level 3 (Orange Belt)** project for the Stellar dApp development course.
+
+## Demo Video
+
+[Watch the 1-minute demo](YOUR_VIDEO_LINK_HERE)
 
 ## Features
 
@@ -27,11 +31,17 @@ Built as a **Level 2 (Yellow Belt)** project for the Stellar dApp development co
 - Real-time status: Building → Signing → Submitting → Success/Fail
 - Transaction hash with Stellar Expert link
 
+### Caching Layer
+- In-memory cache with TTL for poll data and balances
+- Static data (question, options) cached for 2 minutes
+- Vote counts cached for 10 seconds
+- Automatic cache invalidation after voting
+
 ### Real-Time Event Feed
 - Polls Soroban RPC every 5 seconds for contract events
 - Live event feed showing vote activity
 
-### XLM Payments (White Belt)
+### XLM Payments
 - Send XLM to any Stellar address
 - Balance display with refresh
 - Friendbot integration for testnet funding
@@ -45,6 +55,7 @@ Built as a **Level 2 (Yellow Belt)** project for the Stellar dApp development co
 | Multi-Wallet | @creit.tech/stellar-wallets-kit v2.1.0 |
 | Blockchain | @stellar/stellar-sdk v15 (Horizon + Soroban RPC) |
 | Smart Contract | Soroban (Rust) |
+| Testing | Vitest + Testing Library |
 
 ## Contract Info
 
@@ -92,7 +103,13 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
-### 5. Deploy the Smart Contract (optional)
+### 5. Run tests
+
+```bash
+npm test
+```
+
+### 6. Deploy the Smart Contract (optional)
 
 ```bash
 cd contracts/poll
@@ -101,6 +118,27 @@ stellar contract deploy \
   --wasm target/wasm32v1-none/release/poll_contract.wasm \
   --network testnet \
   --source <YOUR_SECRET_KEY>
+```
+
+## Testing
+
+19 tests across 3 test suites, all passing:
+
+### Test Output
+![Test Output](./screenshots/test-output.png)
+
+### Test Suites
+
+| Suite | Tests | Description |
+|-------|-------|-------------|
+| `cache.test.ts` | 9 | Cache set/get, TTL expiry, invalidation, complex objects |
+| `errors.test.ts` | 6 | Error classification for 3 error types + display helpers |
+| `validation.test.ts` | 4 | Stellar address validation, amount validation, MAX calculation |
+
+Run tests:
+```bash
+npm test          # single run
+npm run test:watch  # watch mode
 ```
 
 ## Screenshots
@@ -125,6 +163,10 @@ stellar-pay/
 │   ├── layout.tsx              # Root layout
 │   ├── page.tsx                # Main page (Tab: Pay / Vote)
 │   └── globals.css             # Global styles + animations
+├── __tests__/
+│   ├── cache.test.ts           # Cache layer tests (9 tests)
+│   ├── errors.test.ts          # Error classification tests (6 tests)
+│   └── validation.test.ts      # Input validation tests (4 tests)
 ├── components/
 │   ├── WalletConnect.tsx       # Multi-wallet connect (StellarWalletsKit)
 │   ├── BalanceDisplay.tsx      # XLM balance display
@@ -137,16 +179,18 @@ stellar-pay/
 ├── context/
 │   └── WalletContext.tsx       # Wallet state management
 ├── hooks/
-│   ├── usePollContract.ts      # Contract read/write hook
+│   ├── usePollContract.ts      # Contract read/write hook (with cache)
 │   └── useContractEvents.ts    # Event polling hook
 ├── lib/
 │   ├── stellar.ts              # Horizon SDK (balance, payments)
 │   ├── wallet-kit.ts           # StellarWalletsKit initialization
 │   ├── poll-contract.ts        # Soroban RPC contract calls
+│   ├── cache.ts                # In-memory cache with TTL
 │   └── errors.ts               # 3 typed error classes
 ├── contracts/poll/
 │   ├── Cargo.toml              # Rust project config
 │   └── src/lib.rs              # Soroban poll contract
+├── vitest.config.ts            # Test configuration
 └── .env.example                # Environment template
 ```
 
