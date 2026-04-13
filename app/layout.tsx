@@ -13,9 +13,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Stellar Pay - Send XLM on Testnet",
+  title: "Stellar Pay + Vote - dApp on Testnet",
   description:
-    "A simple payment dApp built on Stellar Testnet. Connect your Freighter wallet, check balances, and send XLM transactions.",
+    "Multi-wallet dApp on Stellar Testnet with XLM payments and on-chain voting via Soroban smart contract.",
 };
 
 export default function RootLayout({
