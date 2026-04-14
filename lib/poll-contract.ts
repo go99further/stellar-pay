@@ -29,7 +29,7 @@ export async function readPollQuestion(sourcePublicKey: string): Promise<string>
   const contract = new StellarSdk.Contract(CONTRACT_ID);
 
   const tx = new StellarSdk.TransactionBuilder(account, {
-    fee: "100",
+    fee: "1000000",
     networkPassphrase: NETWORK_PASSPHRASE,
   })
     .addOperation(contract.call("get_question"))
@@ -54,7 +54,7 @@ export async function readPollOptions(sourcePublicKey: string): Promise<string[]
   const contract = new StellarSdk.Contract(CONTRACT_ID);
 
   const tx = new StellarSdk.TransactionBuilder(account, {
-    fee: "100",
+    fee: "1000000",
     networkPassphrase: NETWORK_PASSPHRASE,
   })
     .addOperation(contract.call("get_options"))
@@ -79,7 +79,7 @@ export async function readPollVotes(sourcePublicKey: string): Promise<Map<number
   const contract = new StellarSdk.Contract(CONTRACT_ID);
 
   const tx = new StellarSdk.TransactionBuilder(account, {
-    fee: "100",
+    fee: "1000000",
     networkPassphrase: NETWORK_PASSPHRASE,
   })
     .addOperation(contract.call("get_votes"))
@@ -105,7 +105,7 @@ export async function readTotalVotes(sourcePublicKey: string): Promise<number> {
   const contract = new StellarSdk.Contract(CONTRACT_ID);
 
   const tx = new StellarSdk.TransactionBuilder(account, {
-    fee: "100",
+    fee: "1000000",
     networkPassphrase: NETWORK_PASSPHRASE,
   })
     .addOperation(contract.call("get_total_votes"))
@@ -130,7 +130,7 @@ export async function checkHasVoted(sourcePublicKey: string, voterAddress: strin
   const contract = new StellarSdk.Contract(CONTRACT_ID);
 
   const tx = new StellarSdk.TransactionBuilder(account, {
-    fee: "100",
+    fee: "1000000",
     networkPassphrase: NETWORK_PASSPHRASE,
   })
     .addOperation(
@@ -160,7 +160,7 @@ export async function buildVoteTransaction(
   const contract = new StellarSdk.Contract(CONTRACT_ID);
 
   const tx = new StellarSdk.TransactionBuilder(account, {
-    fee: "100",
+    fee: "10000000",
     networkPassphrase: NETWORK_PASSPHRASE,
   })
     .addOperation(
@@ -194,7 +194,10 @@ export async function submitTransaction(signedXdr: string): Promise<{
   const sendResult = await rpcServer.sendTransaction(tx);
 
   if (sendResult.status === "ERROR") {
-    throw new Error("Transaction submission failed");
+    const detail = sendResult.errorResult
+      ? JSON.stringify(sendResult.errorResult)
+      : "unknown error";
+    throw new Error(`Transaction submission failed: ${detail}`);
   }
 
   // Poll for result
