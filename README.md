@@ -6,7 +6,7 @@ Built as a **Level 3 (Orange Belt)** project for the Stellar dApp development co
 
 ## Demo Video
 
-[Watch the 1-minute demo](YOUR_VIDEO_LINK_HERE)
+https://github.com/go99further/stellar-pay/raw/main/screenshots/demo.mp4
 
 ## Features
 
