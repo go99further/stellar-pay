@@ -4,6 +4,12 @@ use soroban_sdk::{
     Address, Env, Map, String, Vec,
 };
 
+mod reward_token {
+    soroban_sdk::contractimport!(
+        file = "../reward-token/target/wasm32-unknown-unknown/release/reward_token.wasm"
+    );
+}
+
 /// Storage keys for the poll contract
 #[contracttype]
 pub enum DataKey {
@@ -14,6 +20,7 @@ pub enum DataKey {
     Voters,
     TotalVotes,
     PollActive,
+    RewardToken,
 }
 
 #[contract]
@@ -21,13 +28,14 @@ pub struct PollContract;
 
 #[contractimpl]
 impl PollContract {
-    /// Initialize the contract — sets the caller as admin.
-    pub fn initialize(env: Env, admin: Address) {
+    /// Initialize the contract — sets the caller as admin and the reward token address.
+    pub fn initialize(env: Env, admin: Address, reward_token: Address) {
         if env.storage().instance().has(&DataKey::Admin) {
             panic!("already initialized");
         }
         admin.require_auth();
         env.storage().instance().set(&DataKey::Admin, &admin);
+        env.storage().instance().set(&DataKey::RewardToken, &reward_token);
         env.storage().instance().set(&DataKey::PollActive, &false);
     }
 
@@ -60,6 +68,7 @@ impl PollContract {
     }
 
     /// Cast a vote. Each address can vote exactly once.
+    /// Cross-contract call: mints 1 VOTE token to the voter via RewardToken contract.
     pub fn vote(env: Env, voter: Address, option_index: u32) {
         voter.require_auth();
 
@@ -96,8 +105,14 @@ impl PollContract {
 
         env.events().publish(
             (symbol_short!("poll"), symbol_short!("vote")),
-            (voter, option_index, total + 1),
+            (voter.clone(), option_index, total + 1),
         );
+
+        // Cross-contract call: mint 1 VOTE token (1_0000000 = 1.0 with 7 decimals) to the voter
+        let reward_token: Address = env.storage().instance()
+            .get(&DataKey::RewardToken).unwrap();
+        let reward_client = reward_token::Client::new(&env, &reward_token);
+        reward_client.mint(&voter, &1_0000000i128);
     }
 
     // ── Read-only functions ──

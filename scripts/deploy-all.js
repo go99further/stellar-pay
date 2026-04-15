@@ -329,16 +329,23 @@ async function main() {
   // ── Step 5: Create Poll contract ──
   const poll = await createContract(deployer, pollHashBytes, "Poll");
 
-  // ── Step 6: Initialize Poll ──
+  // ── Step 6: Initialize Poll (with RewardToken address for cross-contract call) ──
   console.log("\nInitializing Poll...");
   await invokeContract(deployer, poll.contractId, "initialize", [
     StellarSdk.nativeToScVal(deployer.publicKey(), { type: "address" }),
+    StellarSdk.nativeToScVal(reward.contractId, { type: "address" }),
   ]);
 
-  // ── Step 7: Extend Poll TTL ──
+  // ── Step 7: Authorize Poll contract as minter on RewardToken (cross-contract call setup) ──
+  console.log("\nAuthorizing Poll contract as RewardToken minter...");
+  await invokeContract(deployer, reward.contractId, "set_minter", [
+    StellarSdk.nativeToScVal(poll.contractId, { type: "address" }),
+  ]);
+
+  // ── Step 8: Extend Poll TTL ──
   await extendTtl(deployer, poll.contractId, pollHashBytes, "Poll");
 
-  // ── Step 8: Create a poll ──
+  // ── Step 9: Create a poll ──
   console.log("Creating poll...");
   const pollTxHash = await invokeContract(deployer, poll.contractId, "create_poll", [
     StellarSdk.nativeToScVal("What is the best Stellar wallet?", { type: "string" }),

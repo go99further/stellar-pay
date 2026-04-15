@@ -67,12 +67,12 @@ Built as a **Level 4 (Green Belt)** project for the Stellar dApp development cou
 
 | Item | Value |
 |------|-------|
-| Poll Contract ID | `CC5SFU56BFW6XLJCV6TWMH2A24SZWVWIYZJBXTBTJCP3TREZYGZUGCPW` |
-| RewardToken Contract ID | `CCU2IKALLSXH5IFFFOVZNDHNY2B6LIEIGBBLOJABPCLEKCEWICE347UP` |
+| Poll Contract ID | `CDIMCIKFTDYRMZNKG7XWJFYKN65JY43JYEUT4DLN3RHNGNQXRG52CV5L` |
+| RewardToken Contract ID | `CADMBCY6I6EK27FNYJMLKGDA6VUTTZJIB44NEJBLVPEXU3BGRBLGD4GO` |
 | Network | Stellar Testnet |
 | RPC URL | `https://soroban-testnet.stellar.org` |
-| Poll Deploy TX | `faca2f62bf765e9a95bde6e97f3760ece206b03df2ababd14feebb1c568da89a` |
-| RewardToken Deploy TX | `440d7727a4e2ca2462bb943545f21b05a40def7911ddb9975c7284be2ba0df53` |
+| Poll Deploy TX | `388932b18baf2a3d4f983c989f20ff1f8bc2abc0d7780b0495fc5466a2e9d682` |
+| RewardToken Deploy TX | `c85ce87f33c0ffa39aba0a864cd77b84e5911afa291bc871599dc09fab8efab8` |
 
 ## Prerequisites
 

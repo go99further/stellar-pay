@@ -7,6 +7,7 @@ use soroban_sdk::{
 #[contracttype]
 pub enum DataKey {
     Admin,
+    Minter,
     Name,
     Symbol,
     Balance(Address),
@@ -30,13 +31,32 @@ impl RewardToken {
         env.storage().instance().set(&DataKey::TotalSupply, &0i128);
     }
 
-    /// Mint tokens to an address. Only admin can mint.
-    pub fn mint(env: Env, to: Address, amount: i128) {
+    /// Set the minter address (admin only). Used to authorize the Poll contract for cross-contract mint.
+    pub fn set_minter(env: Env, minter: Address) {
         let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
         admin.require_auth();
+        env.storage().instance().set(&DataKey::Minter, &minter);
+    }
 
+    /// Mint tokens to an address.
+    /// Accepts authorization from either the admin or the designated minter (Poll contract).
+    pub fn mint(env: Env, to: Address, amount: i128) {
         if amount <= 0 {
             panic!("amount must be positive");
+        }
+
+        let admin: Address = env.storage().instance().get(&DataKey::Admin).unwrap();
+        let minter_opt: Option<Address> = env.storage().instance().get(&DataKey::Minter);
+
+        // Accept auth from admin or designated minter
+        match minter_opt {
+            Some(minter) => {
+                // Require auth from minter (Poll contract invoking this)
+                minter.require_auth();
+            }
+            None => {
+                admin.require_auth();
+            }
         }
 
         let balance: i128 = env.storage().persistent()
