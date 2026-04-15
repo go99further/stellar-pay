@@ -9,6 +9,7 @@ import TransactionResult, {
   TransactionResultData,
 } from "@/components/TransactionResult";
 import PollCard from "@/components/poll/PollCard";
+import RewardBadge from "@/components/RewardBadge";
 import { sendPayment, fundWithFriendbot } from "@/lib/stellar";
 import { classifyError } from "@/lib/errors";
 
@@ -89,6 +90,8 @@ function AppContent() {
                 onRefresh={() => refreshBalance()}
               />
             )}
+
+            {address && <RewardBadge />}
 
             {/* Friendbot fund button */}
             {address && balance === "0" && (
