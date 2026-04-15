@@ -40,8 +40,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-# scripts (dev-only)
-/scripts/
-
 # rust build artifacts
 **/target/
