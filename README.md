@@ -143,13 +143,14 @@ See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ## Testing
 
-19 tests across 3 test suites, all passing:
+27 tests across 4 test suites, all passing:
 
 | Suite | Tests | Description |
 |-------|-------|-------------|
 | `cache.test.ts` | 9 | Cache set/get, TTL expiry, invalidation, complex objects |
 | `errors.test.ts` | 6 | Error classification for 3 error types + display helpers |
 | `validation.test.ts` | 4 | Stellar address validation, amount validation, MAX calculation |
+| `reward-token.test.ts` | 8 | Token amount formatting, vote reward math, cross-contract supply |
 
 Run tests:
 ```bash
@@ -179,7 +180,8 @@ stellar-pay/
 ├── __tests__/
 │   ├── cache.test.ts           # Cache layer tests (9 tests)
 │   ├── errors.test.ts          # Error classification tests (6 tests)
-│   └── validation.test.ts      # Input validation tests (4 tests)
+│   ├── validation.test.ts      # Input validation tests (4 tests)
+│   └── reward-token.test.ts    # RewardToken math + cross-contract tests (8 tests)
 ├── components/
 │   ├── WalletConnect.tsx       # Multi-wallet connect (StellarWalletsKit)
 │   ├── BalanceDisplay.tsx      # XLM balance display
