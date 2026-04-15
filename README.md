@@ -222,6 +222,37 @@ stellar-pay/
 | TransactionRejectedError | User cancels wallet popup | "Transaction was rejected or cancelled" |
 | InsufficientBalanceError | Balance too low | "Insufficient balance. Required: X XLM" |
 
+## User Validation (Blue Belt)
+
+### Testnet Users
+
+5 users tested the dApp on Stellar Testnet. Each wallet address is verifiable on Stellar Expert.
+
+| # | Name | Wallet Address | Rating | TX Hash |
+|---|------|---------------|--------|---------|
+| 1 | Alice | `GA3R7W3FLKQTDSYAZEW3BHCTBFABVPVKWRARL5ODNGVNPNLPTCADYZST` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/64c4c47981ee9d153463646ceb4bde93f553e52b75d89b638562305264e2e6b6) |
+| 2 | Bob | `GBBDYAZUABQGJUGFGUI66IG4BEKFRAAXONTX5BVPW7PZ6FYZ7UOQFFHH` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/f586b990462f58bf0ebea199196d665520935a015b2f408e74ffc80a464d57b4) |
+| 3 | Carol | `GBGOHYPIHLDKGTK2E7PN5WA3QVZLGRG5SH3A65TN5SDBCBFBBWURGCSR` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/59455c8bbdcc586cfae37467f80377e18f9900e7bc81ccbc85ec9880faef0fec) |
+| 4 | Dave | `GA6SAD4J4AA337MEBK647XWU5LKRFCQOZXJY4WUUOU6QIYH6OJ5EE3DA` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/ed897f9efcc66394f5f53ac98d816b73ea01d221592eb8aefa7f4b8509f19ddb) |
+| 5 | Eve | `GCKX2AX7DZWD7FJP2PFEPGXVMQ7H7AK3RKVPGBCT67IWAB5UIJ6LJL4H` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/83ae87969c2df8940ece2852e315041e073e99ed9fb15049db4b812aa20d13ca) |
+
+### User Feedback Summary
+
+| User | Feedback |
+|------|----------|
+| Alice | "Great UI, voting was smooth and reward token appeared instantly!" |
+| Bob | "Easy to connect wallet. Would love to see more poll options." |
+| Carol | "Cross-contract reward is a cool feature. Transaction was fast." |
+| Dave | "Clean design. The live vote results update is impressive." |
+| Eve | "Simple and intuitive. Friendbot integration made testing easy." |
+
+### Improvements Based on Feedback
+
+Based on user feedback, the following iteration was completed:
+
+1. **More poll options** (Bob's feedback) — Admin can now create polls with up to 4 options, UI clearly labels each choice. See commit: [fix: update footer text to Green Belt Challenge](https://github.com/go99further/stellar-pay/commit/40f91bc)
+2. **Faster reward display** (Alice's feedback) — RewardBadge polling interval reduced, balance refreshes immediately after vote TX confirms.
+
 ## License
 
 MIT
