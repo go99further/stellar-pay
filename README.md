@@ -8,7 +8,7 @@ Built as a **Level 4 (Green Belt)** project for the Stellar dApp development cou
 
 ## Live Demo
 
-> Deployed on Vercel: [stellar-pay.vercel.app](https://stellar-pay.vercel.app) *(connect a Stellar wallet to use)*
+> Deployed on Vercel: [stellar-pay-dapp.vercel.app](https://stellar-pay-dapp-ap1pmx6ke-go99furthers-projects.vercel.app) *(connect a Stellar wallet to use)*
 
 ## Features
 
