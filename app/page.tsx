@@ -187,7 +187,7 @@ function AppContent() {
         {/* Footer */}
         <footer className="mt-16 text-center">
           <p className="text-xs text-slate-500">
-            Built for Stellar Yellow Belt Challenge &middot; Powered by{" "}
+            Built for Stellar Green Belt Challenge &middot; Powered by{" "}
             <a
               href="https://stellar.org"
               target="_blank"
