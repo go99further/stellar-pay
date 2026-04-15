@@ -1,12 +1,14 @@
 # Stellar Pay + Vote
 
-A multi-wallet dApp built on the **Stellar Testnet** with XLM payments and on-chain voting via a Soroban smart contract.
+[![CI](https://github.com/go99further/stellar-pay/actions/workflows/ci.yml/badge.svg)](https://github.com/go99further/stellar-pay/actions/workflows/ci.yml)
 
-Built as a **Level 3 (Orange Belt)** project for the Stellar dApp development course.
+A multi-wallet dApp built on the **Stellar Testnet** with XLM payments, on-chain voting, and a custom **RewardToken** — two Soroban smart contracts with cross-contract calls.
 
-## Demo Video
+Built as a **Level 4 (Green Belt)** project for the Stellar dApp development course.
 
-https://github.com/go99further/stellar-pay/raw/main/screenshots/demo.mp4
+## Live Demo
+
+> Deployed on Vercel: [stellar-pay.vercel.app](https://stellar-pay.vercel.app) *(connect a Stellar wallet to use)*
 
 ## Features
 
@@ -15,12 +17,15 @@ https://github.com/go99further/stellar-pay/raw/main/screenshots/demo.mp4
 - Unified auth modal for wallet selection
 - Connect/disconnect with any supported wallet
 
-### Smart Contract (Soroban)
-- **Poll contract** deployed on Stellar Testnet
-- Create polls with 2-4 options
-- Cast votes (one vote per address, enforced on-chain)
-- Read poll data (question, options, vote counts)
-- Events emitted on every vote
+### Two Soroban Smart Contracts (Cross-Contract Calls)
+- **Poll contract** — create polls, cast votes (one per address, on-chain enforced), live results
+- **RewardToken contract** — custom `VOTE` token minted as reward for voting
+- **Cross-contract call**: `Poll.vote()` calls `RewardToken.mint()` to reward the voter automatically
+
+### Reward Token (VOTE)
+- Custom SPL-style token implemented in Soroban (Rust)
+- `initialize`, `mint`, `transfer`, `balance`, `name`, `symbol`, `total_supply`
+- Token balance displayed live in the wallet card
 
 ### Error Handling (3 types)
 1. **WalletNotFoundError** — wallet extension not installed
@@ -33,8 +38,7 @@ https://github.com/go99further/stellar-pay/raw/main/screenshots/demo.mp4
 
 ### Caching Layer
 - In-memory cache with TTL for poll data and balances
-- Static data (question, options) cached for 2 minutes
-- Vote counts cached for 10 seconds
+- Static data cached for 2 minutes; vote counts for 10 seconds
 - Automatic cache invalidation after voting
 
 ### Real-Time Event Feed
@@ -54,24 +58,27 @@ https://github.com/go99further/stellar-pay/raw/main/screenshots/demo.mp4
 | Styling | Tailwind CSS 4 |
 | Multi-Wallet | @creit.tech/stellar-wallets-kit v2.1.0 |
 | Blockchain | @stellar/stellar-sdk v15 (Horizon + Soroban RPC) |
-| Smart Contract | Soroban (Rust) |
+| Smart Contracts | Soroban (Rust) — Poll + RewardToken |
+| CI/CD | GitHub Actions |
+| Deploy | Vercel |
 | Testing | Vitest + Testing Library |
 
 ## Contract Info
 
 | Item | Value |
 |------|-------|
-| Contract ID | `CBW7N5YI34QFHTHRGK5ICBHGWA672ABPEFONMQEE2JZTQUGAJMUDJ5PT` |
+| Poll Contract ID | `CC5SFU56BFW6XLJCV6TWMH2A24SZWVWIYZJBXTBTJCP3TREZYGZUGCPW` |
+| RewardToken Contract ID | `CCU2IKALLSXH5IFFFOVZNDHNY2B6LIEIGBBLOJABPCLEKCEWICE347UP` |
 | Network | Stellar Testnet |
 | RPC URL | `https://soroban-testnet.stellar.org` |
-| Deploy TX Hash | `ecb22d2521f1868064f05ee8ea2dd0a6fb0dccbef0526c63957be2ce40510041` |
-| Poll Creation TX | `4743513a6ef6bd18a60d7cf1fb0ca563a7299302f6d016631fbbadaa08f4e2fa` |
+| Poll Deploy TX | `faca2f62bf765e9a95bde6e97f3760ece206b03df2ababd14feebb1c568da89a` |
+| RewardToken Deploy TX | `440d7727a4e2ca2462bb943545f21b05a40def7911ddb9975c7284be2ba0df53` |
 
 ## Prerequisites
 
 - [Node.js](https://nodejs.org/) v18+
 - A Stellar wallet browser extension (Freighter, xBull, Albedo, or LOBSTR)
-- For contract deployment: [Rust](https://rustup.rs/) + [Stellar CLI](https://github.com/stellar/stellar-cli)
+- For contract deployment: [Rust](https://rustup.rs/) + wasm32-unknown-unknown target
 
 ## Setup Instructions
 
@@ -92,7 +99,14 @@ npm install
 
 ```bash
 cp .env.example .env.local
-# Edit .env.local with your deployed contract ID
+# Edit .env.local with the deployed contract IDs
+```
+
+`.env.local`:
+```
+NEXT_PUBLIC_CONTRACT_ID=CC5SFU56BFW6XLJCV6TWMH2A24SZWVWIYZJBXTBTJCP3TREZYGZUGCPW
+NEXT_PUBLIC_REWARD_TOKEN_ID=CCU2IKALLSXH5IFFFOVZNDHNY2B6LIEIGBBLOJABPCLEKCEWICE347UP
+NEXT_PUBLIC_SOROBAN_RPC_URL=https://soroban-testnet.stellar.org
 ```
 
 ### 4. Run the development server
@@ -109,25 +123,27 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 npm test
 ```
 
-### 6. Deploy the Smart Contract (optional)
+### 6. Deploy both contracts (optional)
 
 ```bash
-cd contracts/poll
-stellar contract build
-stellar contract deploy \
-  --wasm target/wasm32v1-none/release/poll_contract.wasm \
-  --network testnet \
-  --source <YOUR_SECRET_KEY>
+node scripts/deploy-all.js
 ```
+
+This script uploads both WASM files, creates both contracts with unique salts, initializes them, extends their TTL, and creates the first poll. It prints the contract IDs and `.env.local` values at the end.
+
+## CI/CD Pipeline
+
+GitHub Actions runs on every push to `main`:
+1. Install Node.js dependencies
+2. Run tests (`npm test`)
+3. Build the Next.js app (`npm run build`)
+4. Lint (`npm run lint`)
+
+See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ## Testing
 
 19 tests across 3 test suites, all passing:
-
-### Test Output
-![Test Output](./screenshots/test-output.png)
-
-### Test Suites
 
 | Suite | Tests | Description |
 |-------|-------|-------------|
@@ -143,10 +159,7 @@ npm run test:watch  # watch mode
 
 ## Screenshots
 
-### Wallet Options Available
-![Wallet Options](./screenshots/wallet-options.png)
-
-### Wallet Connected with Balance
+### Wallet Connected with Reward Token Balance
 ![Wallet Connected](./screenshots/wallet-connected.png)
 
 ### On-Chain Poll with Live Results
@@ -172,6 +185,7 @@ stellar-pay/
 │   ├── BalanceDisplay.tsx      # XLM balance display
 │   ├── SendPayment.tsx         # Payment form
 │   ├── TransactionResult.tsx   # Transaction result display
+│   ├── RewardBadge.tsx         # VOTE token balance display
 │   └── poll/
 │       ├── PollCard.tsx        # Voting UI + transaction status
 │       ├── PollResults.tsx     # Live results bar chart
@@ -185,11 +199,15 @@ stellar-pay/
 │   ├── stellar.ts              # Horizon SDK (balance, payments)
 │   ├── wallet-kit.ts           # StellarWalletsKit initialization
 │   ├── poll-contract.ts        # Soroban RPC contract calls
+│   ├── reward-token.ts         # RewardToken contract calls
 │   ├── cache.ts                # In-memory cache with TTL
 │   └── errors.ts               # 3 typed error classes
-├── contracts/poll/
-│   ├── Cargo.toml              # Rust project config
-│   └── src/lib.rs              # Soroban poll contract
+├── contracts/
+│   ├── poll/                   # Poll Soroban contract (Rust)
+│   └── reward-token/           # RewardToken Soroban contract (Rust)
+├── scripts/
+│   └── deploy-all.js           # Deploy both contracts to testnet
+├── .github/workflows/ci.yml    # GitHub Actions CI pipeline
 ├── vitest.config.ts            # Test configuration
 └── .env.example                # Environment template
 ```
