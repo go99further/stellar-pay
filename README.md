@@ -228,6 +228,8 @@ stellar-pay/
 
 5 users tested the dApp on Stellar Testnet. Each wallet address is verifiable on Stellar Expert.
 
+**Survey responses (Google Sheets):** [View feedback data](https://docs.google.com/spreadsheets/d/1P1qPPlimM1_GI87STya4mVfMYYpkdcXtrwN7-GAhAQ8/edit?usp=sharing)
+
 | # | Name | Wallet Address | Rating | TX Hash |
 |---|------|---------------|--------|---------|
 | 1 | Alice | `GA3R7W3FLKQTDSYAZEW3BHCTBFABVPVKWRARL5ODNGVNPNLPTCADYZST` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/64c4c47981ee9d153463646ceb4bde93f553e52b75d89b638562305264e2e6b6) |
