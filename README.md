@@ -4,7 +4,7 @@
 
 A multi-wallet dApp built on the **Stellar Testnet** with XLM payments, on-chain voting, and a custom **RewardToken** — two Soroban smart contracts with cross-contract calls.
 
-Built as a **Level 4 (Green Belt)** project for the Stellar dApp development course.
+Built as a **Level 6 (Black Belt)** project for the Stellar dApp development course.
 
 ## Live Demo
 
@@ -41,6 +41,13 @@ Built as a **Level 4 (Green Belt)** project for the Stellar dApp development cou
 - Static data cached for 2 minutes; vote counts for 10 seconds
 - Automatic cache invalidation after voting
 
+### AI Vote Insight (Powered by Qwen)
+- After each confirmed on-chain vote, an AI panel appears below the results chart
+- Calls Alibaba DashScope (Qwen Turbo) to generate a 2-3 sentence neutral analysis of the vote distribution
+- Debounced fetch (300ms) — only re-fetches when `totalVotes` actually increments
+- Silent failure: if the AI API is unavailable, the panel hides gracefully; voting UI is never affected
+- "Powered by Qwen" badge with a manual refresh button
+
 ### Real-Time Event Feed
 - Polls Soroban RPC every 5 seconds for contract events
 - Live event feed showing vote activity
@@ -54,6 +61,7 @@ Built as a **Level 4 (Green Belt)** project for the Stellar dApp development cou
 
 | Layer | Technology |
 |-------|-----------|
+| AI | Alibaba DashScope (Qwen Turbo) |
 | Framework | Next.js 16 (App Router) + TypeScript |
 | Styling | Tailwind CSS 4 |
 | Multi-Wallet | @creit.tech/stellar-wallets-kit v2.1.0 |
@@ -143,7 +151,7 @@ See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 
 ## Testing
 
-27 tests across 4 test suites, all passing:
+35 tests across 5 test suites, all passing:
 
 | Suite | Tests | Description |
 |-------|-------|-------------|
@@ -151,6 +159,7 @@ See [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 | `errors.test.ts` | 6 | Error classification for 3 error types + display helpers |
 | `validation.test.ts` | 4 | Stellar address validation, amount validation, MAX calculation |
 | `reward-token.test.ts` | 8 | Token amount formatting, vote reward math, cross-contract supply |
+| `ai-insight.test.ts` | 8 | Map→Record conversion, percentage calc, zero-division guard, fetch guard logic |
 
 Run tests:
 ```bash
@@ -176,12 +185,17 @@ stellar-pay/
 ├── app/
 │   ├── layout.tsx              # Root layout
 │   ├── page.tsx                # Main page (Tab: Pay / Vote)
-│   └── globals.css             # Global styles + animations
+│   ├── globals.css             # Global styles + animations
+│   └── api/
+│       └── ai/
+│           └── poll-insight/
+│               └── route.ts   # AI insight API (DashScope/Qwen)
 ├── __tests__/
 │   ├── cache.test.ts           # Cache layer tests (9 tests)
 │   ├── errors.test.ts          # Error classification tests (6 tests)
 │   ├── validation.test.ts      # Input validation tests (4 tests)
-│   └── reward-token.test.ts    # RewardToken math + cross-contract tests (8 tests)
+│   ├── reward-token.test.ts    # RewardToken math + cross-contract tests (8 tests)
+│   └── ai-insight.test.ts      # AI insight logic tests (8 tests)
 ├── components/
 │   ├── WalletConnect.tsx       # Multi-wallet connect (StellarWalletsKit)
 │   ├── BalanceDisplay.tsx      # XLM balance display
@@ -191,6 +205,7 @@ stellar-pay/
 │   └── poll/
 │       ├── PollCard.tsx        # Voting UI + transaction status
 │       ├── PollResults.tsx     # Live results bar chart
+│       ├── AIInsight.tsx       # AI vote analysis panel (Qwen)
 │       └── EventFeed.tsx       # Real-time event stream
 ├── context/
 │   └── WalletContext.tsx       # Wallet state management
