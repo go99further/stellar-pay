@@ -3,6 +3,7 @@
 import { usePollContract, TxStatus } from "@/hooks/usePollContract";
 import PollResults from "./PollResults";
 import EventFeed from "./EventFeed";
+import AIInsight from "./AIInsight";
 
 export default function PollCard() {
   const { pollData, txStatus, txHash, txError, vote, resetTx } = usePollContract();
@@ -96,6 +97,14 @@ export default function PollCard() {
 
       {/* Results Chart */}
       <PollResults
+        options={pollData.options}
+        votes={pollData.votes}
+        totalVotes={pollData.totalVotes}
+      />
+
+      {/* AI Insight */}
+      <AIInsight
+        question={pollData.question}
         options={pollData.options}
         votes={pollData.votes}
         totalVotes={pollData.totalVotes}
