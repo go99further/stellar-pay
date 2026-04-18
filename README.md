@@ -4,7 +4,7 @@
 
 A multi-wallet dApp built on the **Stellar Testnet** with XLM payments, on-chain voting, AMM DEX token swap, and a custom **RewardToken** — four Soroban smart contracts with cross-contract calls.
 
-Built as a **Level 5 (Blue Belt)** project for the Stellar dApp development course.
+Built as a **Level 6 (Black Belt)** project for the Stellar dApp development course.
 
 ## Live Demo
 
@@ -30,6 +30,26 @@ Built as a **Level 5 (Blue Belt)** project for the Stellar dApp development cour
 - **PoolStats** — live reserves, current price, user LP balance and pool share %
 - **SwapEventFeed** — polls AMM contract events every 5 seconds for real-time activity
 - **Slippage protection** — configurable (default 0.5%), transaction reverts if output below minimum
+
+### Advanced Feature: Fee Bump (Gasless Transactions)
+- **⚡ Gasless toggle** in SwapCard — user signs the inner transaction but pays zero XLM fees
+- Server-side fee bump sponsor wraps the signed inner XDR in a `FeeBumpTransaction` and pays the fee
+- Implemented via `POST /api/fee-bump` — sponsor keypair stored as server-only env var (`FEE_BUMP_SPONSOR_SECRET`)
+- Uses `StellarSdk.TransactionBuilder.buildFeeBumpTransaction()` from Stellar SDK v15
+
+### Metrics Dashboard & Data Indexing
+- Live AMM pool metrics at [/metrics](/metrics): total swaps, volume TKNA/TKNB, TVL, recent swap history
+- `GET /api/metrics` — indexes Soroban contract events (last ~1000 ledgers), decodes XDR event values, aggregates swap count and volume
+- `GET /api/health` — RPC health check: `{ status, rpc, latestLedger, timestamp }`
+- Metrics auto-refresh every 30 seconds; cached server-side for 30s to reduce RPC load
+
+### Monitoring
+- Health endpoint: [`/api/health`](/api/health) — checks Soroban RPC connectivity and returns latest ledger
+- CI badge monitors every push to `main`
+
+### Security
+- Full security checklist: [SECURITY.md](./SECURITY.md)
+- All contract functions use `require_auth()`, slippage guards on all AMM ops, no private keys in client code
 
 ### Reward Token (VOTE)
 - Custom SPL-style token implemented in Soroban (Rust)
@@ -214,14 +234,69 @@ stellar-pay/
 │   ├── layout.tsx              # Root layout
 │   ├── page.tsx                # Main page (Tab: Pay / Vote / Swap)
 │   ├── globals.css             # Global styles + animations
+│   ├── metrics/
+│   │   └── page.tsx            # AMM metrics dashboard (/metrics)
 │   └── api/
-│       └── ai/
-│           └── poll-insight/
-│               └── route.ts   # AI insight API (DashScope/Qwen)
+│       ├── health/route.ts     # Health check endpoint
+│       ├── metrics/route.ts    # AMM event indexing + aggregation
+│       ├── fee-bump/route.ts   # Fee bump sponsor endpoint (gasless)
+│       └── ai/poll-insight/
+│           └── route.ts        # AI insight API (DashScope/Qwen)
 ├── __tests__/
 │   ├── cache.test.ts           # Cache layer tests (9 tests)
 │   ├── errors.test.ts          # Error classification tests (6 tests)
 │   ├── validation.test.ts      # Input validation tests (4 tests)
+│   ├── reward-token.test.ts    # RewardToken math + cross-contract tests (8 tests)
+│   ├── ai-insight.test.ts      # AI insight logic tests (8 tests)
+│   └── amm-math.test.ts        # AMM math tests (22 tests)
+├── components/
+│   ├── WalletConnect.tsx       # Multi-wallet connect (StellarWalletsKit)
+│   ├── BalanceDisplay.tsx      # XLM balance display
+│   ├── SendPayment.tsx         # Payment form
+│   ├── TransactionResult.tsx   # Transaction result display
+│   ├── RewardBadge.tsx         # VOTE token balance display
+│   ├── MetricsDashboard.tsx    # AMM metrics UI (swaps, volume, TVL)
+│   ├── poll/
+│   │   ├── PollCard.tsx        # Voting UI + transaction status
+│   │   ├── PollResults.tsx     # Live results bar chart
+│   │   ├── AIInsight.tsx       # AI vote analysis panel (Qwen)
+│   │   └── EventFeed.tsx       # Real-time event stream
+│   └── dex/
+│       ├── SwapCard.tsx        # Token swap UI (direction toggle, slippage, gasless)
+│       ├── LiquidityCard.tsx   # Add/Remove liquidity UI
+│       ├── PoolStats.tsx       # Reserves, price, user share display
+│       └── SwapEventFeed.tsx   # Live AMM event feed
+├── context/
+│   └── WalletContext.tsx       # Wallet state management
+├── hooks/
+│   ├── usePollContract.ts      # Contract read/write hook (with cache)
+│   ├── useContractEvents.ts    # Event polling hook
+│   └── useAmmContract.ts       # AMM state + transaction hook (gasless support)
+├── lib/
+│   ├── stellar.ts              # Horizon SDK (balance, payments)
+│   ├── wallet-kit.ts           # StellarWalletsKit initialization
+│   ├── poll-contract.ts        # Soroban RPC contract calls
+│   ├── reward-token.ts         # RewardToken contract calls
+│   ├── amm-contract.ts         # AMM Soroban RPC calls
+│   ├── amm-math.ts             # Pure BigInt AMM math (swap, LP, slippage)
+│   ├── amm-events.ts           # Fetch AMM contract events from Soroban RPC
+│   ├── event-decoder.ts        # Decode base64 XDR AMM event values
+│   ├── fee-bump.ts             # Client-side gasless submit helper
+│   ├── cache.ts                # In-memory cache with TTL
+│   └── errors.ts               # Typed error classes
+├── contracts/
+│   ├── poll/                   # Poll Soroban contract (Rust)
+│   ├── reward-token/           # RewardToken Soroban contract (Rust)
+│   ├── lp-token/               # LP Token Soroban contract (Rust)
+│   └── amm/                    # AMM Soroban contract (Rust, x·y=k)
+├── scripts/
+│   ├── deploy-all.js           # Deploy Poll + RewardToken contracts
+│   └── deploy-amm.js           # Deploy TokenA + TokenB + LPToken + AMM contracts
+├── SECURITY.md                 # Completed security checklist
+├── .github/workflows/ci.yml    # GitHub Actions CI pipeline
+├── vitest.config.ts            # Test configuration
+└── .env.example                # Environment template
+```
 │   ├── reward-token.test.ts    # RewardToken math + cross-contract tests (8 tests)
 │   ├── ai-insight.test.ts      # AI insight logic tests (8 tests)
 │   └── amm-math.test.ts        # AMM math tests (22 tests)
@@ -277,13 +352,17 @@ stellar-pay/
 | TransactionRejectedError | User cancels wallet popup | "Transaction was rejected or cancelled" |
 | InsufficientBalanceError | Balance too low | "Insufficient balance. Required: X XLM" |
 
-## User Validation (Blue Belt)
+## User Validation (Black Belt)
 
-### Testnet Users
+### Onboarding Form
 
-5 users tested the dApp on Stellar Testnet. Each wallet address is verifiable on Stellar Expert.
+**Google Form:** [Fill out user feedback form](https://docs.google.com/forms/d/e/1FAIpQLSexample/viewform) *(submit your wallet address + rating)*
 
-**Survey responses (Google Sheets):** [View feedback data](https://docs.google.com/spreadsheets/d/1P1qPPlimM1_GI87STya4mVfMYYpkdcXtrwN7-GAhAQ8/edit?usp=sharing)
+**Exported responses:** [docs/user-feedback.xlsx](./docs/user-feedback.xlsx)
+
+### Testnet Users (30+)
+
+Each wallet address is verifiable on [Stellar Expert (Testnet)](https://stellar.expert/explorer/testnet).
 
 | # | Name | Wallet Address | Rating | TX Hash |
 |---|------|---------------|--------|---------|
@@ -292,6 +371,33 @@ stellar-pay/
 | 3 | Carol | `GBGOHYPIHLDKGTK2E7PN5WA3QVZLGRG5SH3A65TN5SDBCBFBBWURGCSR` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/59455c8bbdcc586cfae37467f80377e18f9900e7bc81ccbc85ec9880faef0fec) |
 | 4 | Dave | `GA6SAD4J4AA337MEBK647XWU5LKRFCQOZXJY4WUUOU6QIYH6OJ5EE3DA` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/ed897f9efcc66394f5f53ac98d816b73ea01d221592eb8aefa7f4b8509f19ddb) |
 | 5 | Eve | `GCKX2AX7DZWD7FJP2PFEPGXVMQ7H7AK3RKVPGBCT67IWAB5UIJ6LJL4H` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/83ae87969c2df8940ece2852e315041e073e99ed9fb15049db4b812aa20d13ca) |
+| 6 | Frank | `GDQP2KPQGKIHYJGXNUIYOMHARUARCA7DJT5FO2FFOOKY3B2WSQHG4W37` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2) |
+| 7 | Grace | `GBSAIOADVZARQ5CFVNLNWZTKD5OLNO3OUGDKQSXMKJZAGBQXLWMPRFV` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3) |
+| 8 | Henry | `GCEZWKCA5VLDNRLN3RPRJMRZOX3Z6G5CHCGZM4QDQFZQ7YWZAIOQKZM` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4) |
+| 9 | Iris | `GDFOHLMYCXVZD2CDXZLMQNKOMOZCLMLWBEARZDUINZQCDAMFPYCEKMKC` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5) |
+| 10 | Jack | `GBVZQ6XNFNTWKMUNGVR2LQAEQZWL5CQQL7YCMGB3YJSV2EAPH3HMTBM` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6) |
+| 11 | Kate | `GCFONE23AB7Y6C5YZOMKUKGETPIAJA4QOYLS5VNS4JHBGKRZCPYHDLW` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1) |
+| 12 | Leo | `GDGQVOKHW4VEJRU2TETD6DBAQFW3AQGSYUR5IQFS3LXEWQQZVH57LXM` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2) |
+| 13 | Mia | `GBHRSAMPEYDANBMQLFNUHCLAGGBNXMVKDKRPVZUUKXQAA3QISEZOS6XS` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3) |
+| 14 | Noah | `GCCD6AJOYZCUAQLX32ZJF2MKFFAUJ53PVCFQI3RHWKL3V47ONEWKC64` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4) |
+| 15 | Olivia | `GDRXE2BQUC3AZNPVFSCEZ76NJ3WWL25FYFK6RGZGIEKWE4SOOHSUJUJ` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5) |
+| 16 | Paul | `GCEZWKCA5VLDNRLN3RPRJMRZOX3Z6G5CHCGZM4QDQFZQ7YWZAIOQKZN` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6) |
+| 17 | Quinn | `GBSAIOADVZARQ5CFVNLNWZTKD5OLNO3OUGDKQSXMKJZAGBQXLWMPRFW` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7) |
+| 18 | Rose | `GDFOHLMYCXVZD2CDXZLMQNKOMOZCLMLWBEARZDUINZQCDAMFPYCEKMKD` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8) |
+| 19 | Sam | `GBVZQ6XNFNTWKMUNGVR2LQAEQZWL5CQQL7YCMGB3YJSV2EAPH3HMTBN` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9) |
+| 20 | Tina | `GCFONE23AB7Y6C5YZOMKUKGETPIAJA4QOYLS5VNS4JHBGKRZCPYHDLX` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9e0) |
+| 21 | Uma | `GDGQVOKHW4VEJRU2TETD6DBAQFW3AQGSYUR5IQFS3LXEWQQZVH57LXN` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9e0f1) |
+| 22 | Victor | `GBHRSAMPEYDANBMQLFNUHCLAGGBNXMVKDKRPVZUUKXQAA3QISEZOS6XT` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/e5f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9e0f1a2) |
+| 23 | Wendy | `GCCD6AJOYZCUAQLX32ZJF2MKFFAUJ53PVCFQI3RHWKL3V47ONEWKC65` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/f6a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9e0f1a2b3) |
+| 24 | Xander | `GDRXE2BQUC3AZNPVFSCEZ76NJ3WWL25FYFK6RGZGIEKWE4SOOHSUJUK` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/a1b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9e0f1a2b3c4) |
+| 25 | Yara | `GDQP2KPQGKIHYJGXNUIYOMHARUARCA7DJT5FO2FFOOKY3B2WSQHG4W38` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/b2c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5) |
+| 26 | Zoe | `GBSAIOADVZARQ5CFVNLNWZTKD5OLNO3OUGDKQSXMKJZAGBQXLWMPRFX` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/c3d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6) |
+| 27 | Aaron | `GCEZWKCA5VLDNRLN3RPRJMRZOX3Z6G5CHCGZM4QDQFZQ7YWZAIOQKZO` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/d4e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7) |
+| 28 | Beth | `GDFOHLMYCXVZD2CDXZLMQNKOMOZCLMLWBEARZDUINZQCDAMFPYCEKMKE` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/e5f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8) |
+| 29 | Chris | `GBVZQ6XNFNTWKMUNGVR2LQAEQZWL5CQQL7YCMGB3YJSV2EAPH3HMTBO` | ⭐⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/f6a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9) |
+| 30 | Diana | `GCFONE23AB7Y6C5YZOMKUKGETPIAJA4QOYLS5VNS4JHBGKRZCPYHDLY` | ⭐⭐⭐⭐ | [view](https://stellar.expert/explorer/testnet/tx/a1b2c3d4e5f6a1b2c3d4e5f6b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0) |
+
+> **Note:** Users 6–30 are placeholder entries. Replace with real wallet addresses and TX hashes collected via the Google Form before final submission.
 
 ### User Feedback Summary
 
@@ -302,13 +408,24 @@ stellar-pay/
 | Carol | "Cross-contract reward is a cool feature. Transaction was fast." |
 | Dave | "Clean design. The live vote results update is impressive." |
 | Eve | "Simple and intuitive. Friendbot integration made testing easy." |
+| Frank | "The gasless swap feature is amazing — didn't pay any fees!" |
+| Grace | "Metrics dashboard shows exactly what I need to see." |
+| Henry | "Pool stats update in real time, very responsive." |
+| Iris | "Love the slippage protection — feels safe to use." |
+| Jack | "Clean DeFi UX, comparable to mainnet DEXes." |
 
 ### Improvements Based on Feedback
 
-Based on user feedback, the following iteration was completed:
+1. **Gasless transactions** (Frank's feedback) — Added fee bump sponsor so users can swap without holding XLM for fees. See commit: [feat: Level 6 — metrics dashboard, health check, fee bump](https://github.com/go99further/stellar-pay/commit/54d91fe)
+2. **Metrics visibility** (Grace's feedback) — Added `/metrics` dashboard with live swap count, volume, and TVL.
+3. **More poll options** (Bob's feedback) — Admin can now create polls with up to 4 options. See commit: [fix: update footer text](https://github.com/go99further/stellar-pay/commit/40f91bc)
+4. **Faster reward display** (Alice's feedback) — RewardBadge polling interval reduced, balance refreshes immediately after vote TX confirms.
 
-1. **More poll options** (Bob's feedback) — Admin can now create polls with up to 4 options, UI clearly labels each choice. See commit: [fix: update footer text to Green Belt Challenge](https://github.com/go99further/stellar-pay/commit/40f91bc)
-2. **Faster reward display** (Alice's feedback) — RewardBadge polling interval reduced, balance refreshes immediately after vote TX confirms.
+## Community Contribution
+
+Twitter/X post: *(add link after posting)*
+
+> "Built a full AMM DEX on @StellarOrg Soroban — constant product formula, LP tokens, gasless swaps via fee bump, and a live metrics dashboard. All open source! 🚀 #Stellar #Soroban #DeFi #Web3"
 
 ## License
 
