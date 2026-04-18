@@ -84,6 +84,9 @@ export const CACHE_KEYS = {
   AMM_PRICE: (tokenIn: string, amount: string) => `amm:price:${tokenIn}:${amount}`,
   LP_BALANCE: (addr: string) => `amm:lp:${addr}`,
   LP_SUPPLY: "amm:lp:supply",
+  // Metrics cache keys
+  METRICS_SUMMARY: "metrics:summary",
+  METRICS_RECENT_SWAPS: "metrics:recent_swaps",
 };
 
 // TTL constants
@@ -97,4 +100,6 @@ export const CACHE_TTL = {
   AMM_PRICE: 5_000,      // 5 seconds (short — price moves with reserves)
   LP_BALANCE: 10_000,    // 10 seconds
   LP_SUPPLY: 10_000,     // 10 seconds
+  METRICS_SUMMARY: 30_000,       // 30 seconds
+  METRICS_RECENT_SWAPS: 30_000,  // 30 seconds
 };

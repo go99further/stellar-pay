@@ -30,6 +30,8 @@ export default function SwapCard() {
     txError,
     slippageBps,
     setSlippageBps,
+    gasless,
+    setGasless,
     swap,
     previewSwap,
     resetTx,
@@ -130,6 +132,25 @@ export default function SwapCard() {
           Pool has no liquidity yet. Add liquidity first.
         </p>
       )}
+
+      {/* Gasless toggle */}
+      <label className="flex items-center gap-2 cursor-pointer select-none">
+        <div
+          onClick={() => setGasless((v) => !v)}
+          className={`relative w-9 h-5 rounded-full transition-colors ${
+            gasless ? "bg-indigo-600" : "bg-gray-300 dark:bg-gray-600"
+          }`}
+        >
+          <span
+            className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${
+              gasless ? "translate-x-4" : ""
+            }`}
+          />
+        </div>
+        <span className="text-xs text-gray-500 dark:text-gray-400">
+          ⚡ Gasless (fee sponsored)
+        </span>
+      </label>
 
       {/* Action button */}
       {txStatus === "idle" || txStatus === "error" ? (

@@ -12,6 +12,7 @@ import {
   getTokenAId,
 } from "@/lib/amm-contract";
 import { getSwapOutput, getLpTokensForDeposit, getWithdrawAmounts, applySlippage } from "@/lib/amm-math";
+import { submitGaslessSwap } from "@/lib/fee-bump";
 import { useWallet } from "@/context/WalletContext";
 import { classifyError } from "@/lib/errors";
 import { cache, CACHE_KEYS } from "@/lib/cache";
@@ -43,6 +44,7 @@ export function useAmmContract() {
 
   // Slippage tolerance in basis points (default 50 = 0.5%)
   const [slippageBps, setSlippageBps] = useState<bigint>(50n);
+  const [gasless, setGasless] = useState(false);
 
   const loadAmmState = useCallback(async () => {
     if (!address) {
@@ -119,7 +121,9 @@ export function useAmmContract() {
         const signedXdr = await signTransaction(xdr);
 
         setTxStatus("submitting");
-        const result = await submitAmmTransaction(signedXdr);
+        const result = gasless
+          ? await submitGaslessSwap(signedXdr)
+          : await submitAmmTransaction(signedXdr);
 
         setTxHash(result.hash);
         setTxStatus("success");
@@ -132,7 +136,7 @@ export function useAmmContract() {
         setTxStatus("error");
       }
     },
-    [address, signTransaction, previewSwap, loadAmmState]
+    [address, signTransaction, previewSwap, loadAmmState, gasless]
   );
 
   const addLiquidity = useCallback(
@@ -215,6 +219,8 @@ export function useAmmContract() {
     txError,
     slippageBps,
     setSlippageBps,
+    gasless,
+    setGasless,
     swap,
     addLiquidity,
     removeLiquidity,
