@@ -12,6 +12,7 @@ export default function RewardBadge() {
 
   useEffect(() => {
     if (!address || !getRewardTokenId()) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setLoading(false);
       return;
     }

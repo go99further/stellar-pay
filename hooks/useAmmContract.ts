@@ -3,7 +3,6 @@
 import { useState, useCallback, useEffect } from "react";
 import {
   getReserves,
-  getPrice,
   getLpBalance,
   getLpSupply,
   buildSwapTransaction,
@@ -11,7 +10,6 @@ import {
   buildRemoveLiquidityTransaction,
   submitAmmTransaction,
   getTokenAId,
-  getTokenBId,
 } from "@/lib/amm-contract";
 import { getSwapOutput, getLpTokensForDeposit, getWithdrawAmounts, applySlippage } from "@/lib/amm-math";
 import { useWallet } from "@/context/WalletContext";

@@ -49,6 +49,7 @@ export function useContractEvents(pollInterval = 5000) {
   useEffect(() => {
     if (!getContractId()) return;
 
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setIsPolling(true);
     poll(); // Initial fetch
 

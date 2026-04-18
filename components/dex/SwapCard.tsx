@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAmmContract } from "@/hooks/useAmmContract";
 import { getTokenAId, getTokenBId } from "@/lib/amm-contract";
 import { useWallet } from "@/context/WalletContext";
