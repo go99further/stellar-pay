@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stellar Pay - Screenshot</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      background: linear-gradient(135deg, #020617 0%, #1e1b4b 50%, #0f172a 100%);
+      color: #e2e8f0;
+      min-height: 100vh;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Star background */
+    body::before, body::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+    }
+    body::before {
+      background:
+        radial-gradient(ellipse at 20% 50%, rgba(59,130,246,0.08) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 20%, rgba(139,92,246,0.06) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 80%, rgba(59,130,246,0.04) 0%, transparent 50%);
+    }
+    body::after {
+      background-image:
+        radial-gradient(2px 2px at 20px 30px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 90px 40px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 130px 80px, rgba(255,255,255,0.3), transparent),
+        radial-gradient(2px 2px at 160px 30px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 200px 60px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 60px 100px, rgba(255,255,255,0.3), transparent),
+        radial-gradient(2px 2px at 250px 20px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 280px 90px, rgba(255,255,255,0.3), transparent),
+        radial-gradient(1px 1px at 320px 50px, rgba(255,255,255,0.5), transparent),
+        radial-gradient(1px 1px at 350px 110px, rgba(255,255,255,0.3), transparent),
+        radial-gradient(2px 2px at 400px 40px, rgba(255,255,255,0.2), transparent),
+        radial-gradient(1px 1px at 450px 80px, rgba(255,255,255,0.4), transparent),
+        radial-gradient(1px 1px at 500px 20px, rgba(255,255,255,0.3), transparent),
+        radial-gradient(2px 2px at 550px 60px, rgba(255,255,255,0.2), transparent);
+      background-size: 600px 140px;
+    }
+
+    .container {
+      position: relative;
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 48px 16px;
+    }
+
+    /* Header */
+    .header { text-align: center; margin-bottom: 40px; }
+    .header h1 {
+      font-size: 48px;
+      font-weight: 700;
+      background: linear-gradient(to right, #60a5fa, #a78bfa, #c084fc);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+      padding: 4px 14px;
+      border-radius: 999px;
+      background: rgba(234,179,8,0.1);
+      border: 1px solid rgba(234,179,8,0.2);
+    }
+    .badge-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #facc15;
+      box-shadow: 0 0 6px #facc15;
+    }
+    .badge span { font-size: 12px; font-weight: 500; color: #facc15; }
+    .subtitle {
+      margin-top: 12px;
+      font-size: 14px;
+      color: #94a3b8;
+      max-width: 400px;
+    }
+
+    /* Card */
+    .card {
+      width: 100%;
+      max-width: 448px;
+      padding: 24px;
+      border-radius: 16px;
+      backdrop-filter: blur(24px);
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.1);
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      margin-bottom: 24px;
+    }
+
+    /* Wallet Connected */
+    .wallet-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+    .wallet-info { display: flex; align-items: center; gap: 12px; }
+    .avatar {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #60a5fa, #8b5cf6);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-weight: 700; font-size: 14px;
+    }
+    .wallet-label { font-size: 12px; color: #94a3b8; }
+    .wallet-address { font-size: 14px; font-family: 'JetBrains Mono', monospace; color: white; }
+    .btn-disconnect {
+      padding: 8px 16px;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      color: #cbd5e1;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+
+    /* Balance */
+    .balance-box {
+      margin-top: 20px;
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .balance-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .balance-label {
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .refresh-btn {
+      width: 28px; height: 28px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      color: #94a3b8;
+      background: transparent;
+      border: none;
+    }
+    .balance-value {
+      margin-top: 8px;
+      display: flex;
+      align-items: baseline;
+      gap: 8px;
+    }
+    .balance-number {
+      font-size: 30px;
+      font-weight: 700;
+      color: white;
+    }
+    .balance-unit {
+      font-size: 18px;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+
+    /* Send form */
+    .form-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: white;
+      margin-bottom: 16px;
+    }
+    .field { margin-bottom: 16px; }
+    .field-label {
+      display: block;
+      font-size: 11px;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 6px;
+    }
+    .input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.1);
+      color: white;
+      font-size: 14px;
+      font-family: 'JetBrains Mono', monospace;
+      outline: none;
+    }
+    .input:focus { border-color: rgba(96,165,250,0.5); }
+    .input-wrapper { position: relative; }
+    .max-btn {
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 4px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      color: #60a5fa;
+      background: rgba(96,165,250,0.1);
+      border: none;
+    }
+    .btn-send {
+      width: 100%;
+      padding: 14px;
+      border-radius: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      color: white;
+      background: linear-gradient(to right, #3b82f6, #8b5cf6);
+      border: none;
+      box-shadow: 0 10px 25px -5px rgba(59,130,246,0.25);
+      cursor: pointer;
+    }
+
+    /* Transaction Result */
+    .result-card {
+      width: 100%;
+      max-width: 448px;
+      padding: 20px;
+      border-radius: 16px;
+      margin-bottom: 24px;
+    }
+    .result-success {
+      background: rgba(16,185,129,0.05);
+      border: 1px solid rgba(16,185,129,0.2);
+    }
+    .result-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .result-icon {
+      width: 40px; height: 40px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .result-icon-success {
+      background: rgba(16,185,129,0.2);
+      color: #34d399;
+    }
+    .result-title-success {
+      font-weight: 600;
+      color: #34d399;
+    }
+    .result-body { margin-top: 16px; }
+    .result-hash-label {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .copy-btn {
+      font-size: 12px;
+      color: #60a5fa;
+      background: none;
+      border: none;
+    }
+    .result-hash {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+      color: #cbd5e1;
+      background: rgba(255,255,255,0.05);
+      padding: 12px;
+      border-radius: 8px;
+      word-break: break-all;
+      margin-top: 4px;
+    }
+    .explorer-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #60a5fa;
+      text-decoration: none;
+    }
+
+    /* Footer */
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 12px;
+      color: #475569;
+    }
+    .footer a { color: rgba(96,165,250,0.6); text-decoration: none; }
+
+    /* SVG icons inline */
+    .icon { display: inline-block; vertical-align: middle; }
+
+    /* Hidden by default, shown by page param */
+    .scene { display: none; }
+    .scene.active { display: block; }
+  </style>
+</head>
+<body>
+<div class="container" id="app">
+  <!-- Header (always visible) -->
+  <header class="header">
+    <h1>Stellar Pay</h1>
+    <div class="badge">
+      <div class="badge-dot"></div>
+      <span>Testnet</span>
+    </div>
+    <p class="subtitle">Connect your Freighter wallet, check your balance, and send XLM payments on Stellar Testnet.</p>
+  </header>
+
+  <!-- ====== SCENE 1: Wallet Connected (no balance, just connected) ====== -->
+  <div class="scene" id="scene-wallet">
+    <div class="card">
+      <div class="wallet-row">
+        <div class="wallet-info">
+          <div class="avatar">DA</div>
+          <div>
+            <div class="wallet-label">Connected</div>
+            <div class="wallet-address">GDAZ7N...4FXQ</div>
+          </div>
+        </div>
+        <div class="btn-disconnect">Disconnect</div>
+      </div>
+      <!-- Status message -->
+      <div style="margin-top: 20px; padding: 14px; border-radius: 12px; background: rgba(16,185,129,0.08); border: 1px solid rgba(16,185,129,0.18); display: flex; align-items: center; gap: 10px;">
+        <svg width="18" height="18" fill="none" stroke="#34d399" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span style="font-size: 14px; color: #34d399; font-weight: 500;">Wallet connected successfully</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== SCENE 2: Balance Displayed ====== -->
+  <div class="scene" id="scene-balance">
+    <div class="card">
+      <div class="wallet-row">
+        <div class="wallet-info">
+          <div class="avatar">DA</div>
+          <div>
+            <div class="wallet-label">Connected</div>
+            <div class="wallet-address">GDAZ7N...4FXQ</div>
+          </div>
+        </div>
+        <div class="btn-disconnect">Disconnect</div>
+      </div>
+      <div class="balance-box">
+        <div class="balance-header">
+          <div class="balance-label">XLM Balance</div>
+          <div class="refresh-btn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </div>
+        </div>
+        <div class="balance-value">
+          <span class="balance-number">9,999.9979</span>
+          <span class="balance-unit">XLM</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== SCENE 3: Send Payment Form (Testnet Transaction) ====== -->
+  <div class="scene" id="scene-send">
+    <div class="card">
+      <div class="wallet-row">
+        <div class="wallet-info">
+          <div class="avatar">DA</div>
+          <div>
+            <div class="wallet-label">Connected</div>
+            <div class="wallet-address">GDAZ7N...4FXQ</div>
+          </div>
+        </div>
+        <div class="btn-disconnect">Disconnect</div>
+      </div>
+      <div class="balance-box">
+        <div class="balance-header">
+          <div class="balance-label">XLM Balance</div>
+          <div class="refresh-btn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </div>
+        </div>
+        <div class="balance-value">
+          <span class="balance-number">9,999.9979</span>
+          <span class="balance-unit">XLM</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="form-title">Send XLM</div>
+      <div class="field">
+        <label class="field-label">Destination Address</label>
+        <input class="input" value="GBYRDZRMTCSW63LRUQ3CHLKUEG6DREVBMFYQPSMPTJC6P7IBET4NKFM5" readonly />
+      </div>
+      <div class="field">
+        <label class="field-label">Amount (XLM)</label>
+        <div class="input-wrapper">
+          <input class="input" value="100" readonly style="padding-right: 60px;" />
+          <div class="max-btn">MAX</div>
+        </div>
+      </div>
+      <button class="btn-send">Send Transaction</button>
+    </div>
+  </div>
+
+  <!-- ====== SCENE 4: Transaction Result ====== -->
+  <div class="scene" id="scene-result">
+    <div class="card">
+      <div class="wallet-row">
+        <div class="wallet-info">
+          <div class="avatar">DA</div>
+          <div>
+            <div class="wallet-label">Connected</div>
+            <div class="wallet-address">GDAZ7N...4FXQ</div>
+          </div>
+        </div>
+        <div class="btn-disconnect">Disconnect</div>
+      </div>
+      <div class="balance-box">
+        <div class="balance-header">
+          <div class="balance-label">XLM Balance</div>
+          <div class="refresh-btn">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/></svg>
+          </div>
+        </div>
+        <div class="balance-value">
+          <span class="balance-number">9,899.9978</span>
+          <span class="balance-unit">XLM</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="result-card result-success">
+      <div class="result-header">
+        <div class="result-icon result-icon-success">
+          <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        </div>
+        <div class="result-title-success">Transaction Successful!</div>
+      </div>
+      <div class="result-body">
+        <div class="result-hash-label">
+          Transaction Hash:
+          <span class="copy-btn">Copy</span>
+        </div>
+        <div class="result-hash">a3f8d7c2e1b9054f6ca82d13e7b4f098a2c5d6e1f0b3a4c7d8e9f1a2b3c4d5e6</div>
+        <a href="#" class="explorer-link">
+          View on Stellar Expert
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"/></svg>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- ====== SCENE 5: Multi-Wallet Selection Modal ====== -->
+  <div class="scene" id="scene-wallets">
+    <div class="card" style="text-align: center;">
+      <h3 style="font-size: 18px; font-weight: 600; color: white; margin-bottom: 20px;">Connect a Wallet</h3>
+      <div style="display: flex; flex-direction: column; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+          </div>
+          <div style="text-align: left;">
+            <div style="font-size: 14px; font-weight: 600; color: white;">Freighter</div>
+            <div style="font-size: 11px; color: #94a3b8;">Stellar browser wallet</div>
+          </div>
+          <div style="margin-left: auto; width: 8px; height: 8px; border-radius: 50%; background: #34d399;"></div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #3b82f6, #06b6d4); display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>
+          </div>
+          <div style="text-align: left;">
+            <div style="font-size: 14px; font-weight: 600; color: white;">xBull</div>
+            <div style="font-size: 11px; color: #94a3b8;">Multi-platform wallet</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #f59e0b, #ef4444); display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+          </div>
+          <div style="text-align: left;">
+            <div style="font-size: 14px; font-weight: 600; color: white;">Albedo</div>
+            <div style="font-size: 11px; color: #94a3b8;">Web-based signer</div>
+          </div>
+        </div>
+        <div style="display: flex; align-items: center; gap: 14px; padding: 14px 16px; border-radius: 12px; background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1); cursor: pointer;">
+          <div style="width: 36px; height: 36px; border-radius: 10px; background: linear-gradient(135deg, #10b981, #059669); display: flex; align-items: center; justify-content: center;">
+            <svg width="20" height="20" fill="white" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4"/></svg>
+          </div>
+          <div style="text-align: left;">
+            <div style="font-size: 14px; font-weight: 600; color: white;">LOBSTR</div>
+            <div style="font-size: 11px; color: #94a3b8;">Mobile & web wallet</div>
+          </div>
+        </div>
+      </div>
+      <p style="margin-top: 16px; font-size: 11px; color: #64748b;">Select a wallet to connect to Stellar Testnet</p>
+    </div>
+  </div>
+
+  <!-- ====== SCENE 6: On-Chain Vote with Results ====== -->
+  <div class="scene" id="scene-vote">
+    <div class="card">
+      <h3 style="font-size: 18px; font-weight: 600; color: white; margin-bottom: 4px;">On-Chain Poll</h3>
+      <p style="font-size: 11px; color: #64748b; font-family: 'JetBrains Mono', monospace; margin-bottom: 16px;">Contract: CBW7N5YI...UDMJ5PT</p>
+      <div style="padding: 14px; border-radius: 12px; background: linear-gradient(to right, rgba(59,130,246,0.1), rgba(139,92,246,0.1)); border: 1px solid rgba(59,130,246,0.2); margin-bottom: 16px;">
+        <p style="font-size: 15px; font-weight: 500; color: white;">What is the best Stellar wallet?</p>
+        <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">12 votes so far</p>
+      </div>
+      <!-- Options with progress bars -->
+      <div style="display: flex; flex-direction: column; gap: 8px;">
+        <div style="position: relative; overflow: hidden; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+          <div style="position: absolute; inset: 0; width: 42%; background: linear-gradient(to right, rgba(59,130,246,0.2), rgba(139,92,246,0.2));"></div>
+          <div style="position: relative; display: flex; justify-content: space-between; padding: 12px 16px;">
+            <span style="font-size: 14px; color: white; font-weight: 500;">Freighter</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 12px; color: #94a3b8;">5 votes</span>
+              <span style="font-size: 12px; color: #60a5fa; font-family: 'JetBrains Mono', monospace;">42%</span>
+            </div>
+          </div>
+        </div>
+        <div style="position: relative; overflow: hidden; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+          <div style="position: absolute; inset: 0; width: 25%; background: linear-gradient(to right, rgba(59,130,246,0.2), rgba(139,92,246,0.2));"></div>
+          <div style="position: relative; display: flex; justify-content: space-between; padding: 12px 16px;">
+            <span style="font-size: 14px; color: white; font-weight: 500;">xBull</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 12px; color: #94a3b8;">3 votes</span>
+              <span style="font-size: 12px; color: #60a5fa; font-family: 'JetBrains Mono', monospace;">25%</span>
+            </div>
+          </div>
+        </div>
+        <div style="position: relative; overflow: hidden; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+          <div style="position: absolute; inset: 0; width: 17%; background: linear-gradient(to right, rgba(59,130,246,0.2), rgba(139,92,246,0.2));"></div>
+          <div style="position: relative; display: flex; justify-content: space-between; padding: 12px 16px;">
+            <span style="font-size: 14px; color: white; font-weight: 500;">Albedo</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 12px; color: #94a3b8;">2 votes</span>
+              <span style="font-size: 12px; color: #60a5fa; font-family: 'JetBrains Mono', monospace;">17%</span>
+            </div>
+          </div>
+        </div>
+        <div style="position: relative; overflow: hidden; border-radius: 12px; border: 1px solid rgba(255,255,255,0.1);">
+          <div style="position: absolute; inset: 0; width: 17%; background: linear-gradient(to right, rgba(59,130,246,0.2), rgba(139,92,246,0.2));"></div>
+          <div style="position: relative; display: flex; justify-content: space-between; padding: 12px 16px;">
+            <span style="font-size: 14px; color: white; font-weight: 500;">LOBSTR</span>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <span style="font-size: 12px; color: #94a3b8;">2 votes</span>
+              <span style="font-size: 12px; color: #60a5fa; font-family: 'JetBrains Mono', monospace;">17%</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <!-- Vote success status -->
+      <div style="margin-top: 14px; padding: 12px; border-radius: 12px; background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.2); display: flex; align-items: center; gap: 10px;">
+        <svg width="18" height="18" fill="none" stroke="#34d399" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span style="font-size: 13px; color: #34d399; font-weight: 500;">Vote submitted successfully!</span>
+      </div>
+    </div>
+  </div>
+
+  <footer class="footer">
+    Built for Stellar Yellow Belt Challenge &middot; Powered by <a href="#">Stellar Network</a>
+  </footer>
+</div>
+
+<script>
+  // Activate scene based on URL hash
+  const hash = window.location.hash.replace('#', '') || 'wallet';
+  const el = document.getElementById('scene-' + hash);
+  if (el) el.classList.add('active');
+</script>
+</body>
+</html>

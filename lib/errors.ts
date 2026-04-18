@@ -71,13 +71,31 @@ export function classifyError(err: unknown): Error {
   return err instanceof Error ? err : new Error(message);
 }
 
+export class SlippageError extends Error {
+  constructor(expected?: string, got?: string) {
+    const msg =
+      expected && got
+        ? `Slippage exceeded. Expected at least ${expected}, got ${got}.`
+        : "Slippage tolerance exceeded. Try increasing slippage or reducing the amount.";
+    super(msg);
+    this.name = "SlippageError";
+  }
+}
+
+export class InsufficientLiquidityError extends Error {
+  constructor() {
+    super("Insufficient liquidity in the pool for this trade.");
+    this.name = "InsufficientLiquidityError";
+  }
+}
+
 /**
  * Get a user-friendly error message with icon
  */
 export function getErrorDisplay(err: Error): {
   title: string;
   message: string;
-  type: "wallet" | "rejected" | "balance" | "unknown";
+  type: "wallet" | "rejected" | "balance" | "slippage" | "liquidity" | "unknown";
 } {
   if (err instanceof WalletNotFoundError) {
     return {
@@ -98,6 +116,20 @@ export function getErrorDisplay(err: Error): {
       title: "Insufficient Balance",
       message: err.message,
       type: "balance",
+    };
+  }
+  if (err instanceof SlippageError) {
+    return {
+      title: "Slippage Exceeded",
+      message: err.message,
+      type: "slippage" as const,
+    };
+  }
+  if (err instanceof InsufficientLiquidityError) {
+    return {
+      title: "Insufficient Liquidity",
+      message: err.message,
+      type: "liquidity" as const,
     };
   }
   return {

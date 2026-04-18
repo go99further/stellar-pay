@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+  body {
+    margin: 0; padding: 40px;
+    background: #1e1e2e;
+    font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+    font-size: 14px; color: #cdd6f4;
+  }
+  .header { color: #89b4fa; margin-bottom: 16px; }
+  .pass { color: #a6e3a1; }
+  .file { color: #f9e2af; }
+  .dim { color: #6c7086; }
+  .bold { font-weight: bold; }
+  .line { margin: 2px 0; }
+  .section { margin: 12px 0; }
+  .bar { display: inline-block; background: #a6e3a1; height: 2px; width: 100%; margin: 8px 0; }
+</style>
+</head>
+<body>
+<div class="header bold"> RUN  v4.1.4 G:/github/Dapp/stellar-pay</div>
+<div class="bar"></div>
+
+<div class="section">
+<div class="line"><span class="pass bold"> ✓ </span><span class="file">__tests__/cache.test.ts</span> <span class="dim">(9 tests)</span></div>
+<div class="line dim">   ✓ MemoryCache &gt; stores and retrieves values</div>
+<div class="line dim">   ✓ MemoryCache &gt; returns undefined for missing keys</div>
+<div class="line dim">   ✓ MemoryCache &gt; expires entries after TTL</div>
+<div class="line dim">   ✓ MemoryCache &gt; invalidates specific keys</div>
+<div class="line dim">   ✓ MemoryCache &gt; clears all entries</div>
+<div class="line dim">   ✓ MemoryCache &gt; has() returns correct boolean</div>
+<div class="line dim">   ✓ MemoryCache &gt; stores complex objects</div>
+<div class="line dim">   ✓ MemoryCache &gt; CACHE_KEYS generates correct keys</div>
+<div class="line dim">   ✓ MemoryCache &gt; CACHE_TTL values are reasonable</div>
+</div>
+
+<div class="section">
+<div class="line"><span class="pass bold"> ✓ </span><span class="file">__tests__/errors.test.ts</span> <span class="dim">(6 tests)</span></div>
+<div class="line dim">   ✓ Error Classification &gt; classifies wallet not found errors</div>
+<div class="line dim">   ✓ Error Classification &gt; classifies transaction rejected errors</div>
+<div class="line dim">   ✓ Error Classification &gt; classifies insufficient balance errors</div>
+<div class="line dim">   ✓ Error Classification &gt; returns original error for unknown types</div>
+<div class="line dim">   ✓ Error Classification &gt; handles string errors</div>
+<div class="line dim">   ✓ Error Classification &gt; getErrorDisplay returns correct type</div>
+</div>
+
+<div class="section">
+<div class="line"><span class="pass bold"> ✓ </span><span class="file">__tests__/validation.test.ts</span> <span class="dim">(4 tests)</span></div>
+<div class="line dim">   ✓ SendPayment Validation &gt; validates correct Stellar addresses</div>
+<div class="line dim">   ✓ SendPayment Validation &gt; rejects invalid Stellar addresses</div>
+<div class="line dim">   ✓ SendPayment Validation &gt; validates amounts correctly</div>
+<div class="line dim">   ✓ SendPayment Validation &gt; calculates MAX amount correctly</div>
+</div>
+
+<div class="bar"></div>
+<div class="section">
+<div class="line"><span class="pass bold"> Test Files  3 passed</span> <span class="dim">(3)</span></div>
+<div class="line"><span class="pass bold">      Tests  19 passed</span> <span class="dim">(19)</span></div>
+<div class="line dim">   Duration  2.30s</div>
+</div>
+</body>
+</html>

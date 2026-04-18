@@ -42,3 +42,5 @@ next-env.d.ts
 
 # rust build artifacts
 **/target/
+
+.vercel

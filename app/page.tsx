@@ -10,12 +10,16 @@ import TransactionResult, {
 } from "@/components/TransactionResult";
 import PollCard from "@/components/poll/PollCard";
 import RewardBadge from "@/components/RewardBadge";
+import SwapCard from "@/components/dex/SwapCard";
+import LiquidityCard from "@/components/dex/LiquidityCard";
+import PoolStats from "@/components/dex/PoolStats";
+import SwapEventFeed from "@/components/dex/SwapEventFeed";
 import { sendPayment, fundWithFriendbot } from "@/lib/stellar";
 import { classifyError } from "@/lib/errors";
 
 function AppContent() {
   const { address, balance, balanceLoading, refreshBalance } = useWallet();
-  const [activeTab, setActiveTab] = useState<"pay" | "vote">("pay");
+  const [activeTab, setActiveTab] = useState<"pay" | "vote" | "swap">("pay");
   const [txResult, setTxResult] = useState<TransactionResultData | null>(null);
   const [appError, setAppError] = useState<string | null>(null);
   const [fundingLoading, setFundingLoading] = useState(false);
@@ -64,7 +68,7 @@ function AppContent() {
         {/* Header */}
         <header className="text-center mb-10">
           <h1 className="text-4xl md:text-5xl font-bold bg-gradient-to-r from-blue-400 via-violet-400 to-purple-400 bg-clip-text text-transparent">
-            Stellar Pay + Vote
+            Stellar Pay + Vote + Swap
           </h1>
           <div className="mt-3 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500/10 border border-yellow-500/20">
             <span className="w-2 h-2 rounded-full bg-yellow-400 animate-pulse" />
@@ -73,12 +77,12 @@ function AppContent() {
             </span>
           </div>
           <p className="mt-3 text-slate-400 text-sm max-w-md">
-            Multi-wallet dApp with XLM payments and on-chain voting via Soroban smart contract.
+            Multi-wallet dApp with XLM payments, on-chain voting, and AMM token swap via Soroban smart contracts.
           </p>
         </header>
 
         {/* Main Content */}
-        <div className="w-full max-w-md space-y-6">
+        <div className={`w-full ${activeTab === "swap" ? "max-w-5xl" : "max-w-md"} space-y-6`}>
           {/* Wallet Card */}
           <section className="p-6 rounded-2xl backdrop-blur-xl bg-white/[0.03] border border-white/10 shadow-2xl animate-fade-in">
             <WalletConnect />
@@ -139,6 +143,16 @@ function AppContent() {
                 >
                   On-Chain Vote
                 </button>
+                <button
+                  onClick={() => setActiveTab("swap")}
+                  className={`flex-1 py-2.5 rounded-lg text-sm font-medium transition-all duration-200 cursor-pointer ${
+                    activeTab === "swap"
+                      ? "bg-gradient-to-r from-blue-500/20 to-violet-500/20 text-white border border-white/10"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  Token Swap
+                </button>
               </div>
 
               {/* Pay Tab */}
@@ -156,6 +170,22 @@ function AppContent() {
               {activeTab === "vote" && (
                 <div className="animate-fade-in-up">
                   <PollCard />
+                </div>
+              )}
+
+              {/* Swap Tab */}
+              {activeTab === "swap" && (
+                <div className="animate-fade-in-up space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-4">
+                      <SwapCard />
+                      <LiquidityCard />
+                    </div>
+                    <div className="space-y-4">
+                      <PoolStats />
+                      <SwapEventFeed />
+                    </div>
+                  </div>
                 </div>
               )}
             </>
@@ -187,7 +217,7 @@ function AppContent() {
         {/* Footer */}
         <footer className="mt-16 text-center">
           <p className="text-xs text-slate-500">
-            Built for Stellar Green Belt Challenge &middot; Powered by{" "}
+            Built for Stellar Blue Belt Challenge &middot; Powered by{" "}
             <a
               href="https://stellar.org"
               target="_blank"

@@ -79,6 +79,11 @@ export const CACHE_KEYS = {
   POLL_VOTES: "poll:votes",
   POLL_TOTAL: "poll:total",
   HAS_VOTED: (addr: string) => `poll:voted:${addr}`,
+  // AMM cache keys
+  AMM_RESERVES: "amm:reserves",
+  AMM_PRICE: (tokenIn: string, amount: string) => `amm:price:${tokenIn}:${amount}`,
+  LP_BALANCE: (addr: string) => `amm:lp:${addr}`,
+  LP_SUPPLY: "amm:lp:supply",
 };
 
 // TTL constants
@@ -87,4 +92,9 @@ export const CACHE_TTL = {
   POLL_STATIC: 120_000,  // 2 minutes (question, options rarely change)
   POLL_VOTES: 10_000,    // 10 seconds (votes change more often)
   HAS_VOTED: 60_000,     // 1 minute
+  // AMM TTLs
+  AMM_RESERVES: 10_000,  // 10 seconds (changes on every swap/liquidity op)
+  AMM_PRICE: 5_000,      // 5 seconds (short — price moves with reserves)
+  LP_BALANCE: 10_000,    // 10 seconds
+  LP_SUPPLY: 10_000,     // 10 seconds
 };
