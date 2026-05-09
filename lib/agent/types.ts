@@ -22,3 +22,16 @@ export type AgentStreamEvent =
   | { type: "usage"; inputTokens: number; outputTokens: number; agent: string }
   | { type: "done" }
   | { type: "error"; message: string };
+
+export interface BatchOperation {
+  step: number;
+  total: number;
+  type: "swap" | "add_liquidity" | "remove_liquidity";
+  description: string;
+  completed: boolean;
+}
+
+export interface BatchOperationState {
+  operations: BatchOperation[];
+  currentStep: number;
+}

@@ -1,6 +1,7 @@
 import type Anthropic from "@anthropic-ai/sdk";
 import { getReserves, getTokenAId, getTokenBId } from "@/lib/amm-contract";
 import { getSwapOutput, getPriceImpact, applySlippage } from "@/lib/amm-math";
+import { calculateRecommendedSlippage } from "@/lib/agent/utils";
 
 const DECIMALS = 7;
 const DUMMY_READER = "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN";
@@ -50,6 +51,7 @@ export interface SimulateSwapResult {
   priceImpactPct: string;
   feePct: string;
   slippageBps: number;
+  recommendedSlippageBps: number;
   reserveIn: string;
   reserveOut: string;
 }
@@ -72,6 +74,13 @@ export async function simulateSwapHandler(input: {
   const minAmountOutRaw = applySlippage(estimatedOutRaw, BigInt(slippageBps));
   const priceImpact = getPriceImpact(amountInRaw, reserveIn, reserveOut);
 
+  // Calculate recommended slippage based on trade size
+  const recommendedSlippageBps = calculateRecommendedSlippage(
+    amountInRaw,
+    reserveIn,
+    reserveOut
+  );
+
   return {
     tokenIn: input.tokenIn,
     tokenOut,
@@ -81,6 +90,7 @@ export async function simulateSwapHandler(input: {
     priceImpactPct: priceImpact.toFixed(4),
     feePct: "0.3",
     slippageBps,
+    recommendedSlippageBps,
     reserveIn: formatAmount(reserveIn),
     reserveOut: formatAmount(reserveOut),
   };

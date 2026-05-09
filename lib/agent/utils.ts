@@ -159,3 +159,52 @@ export function parseContractError(raw: string): string {
   }
   return raw;
 }
+
+// ---------------------------------------------------------------------------
+// calculateRecommendedSlippage — intelligent slippage based on trade size
+// ---------------------------------------------------------------------------
+
+/**
+ * Calculate recommended slippage tolerance based on trade size relative to pool reserves.
+ *
+ * @param amountIn - Amount being traded (in raw units)
+ * @param reserveIn - Input token reserve in the pool (in raw units)
+ * @param reserveOut - Output token reserve in the pool (in raw units)
+ * @returns Recommended slippage in basis points (100 = 1%)
+ *
+ * Logic:
+ * - Small trades (<1% of reserves): 50 bps (0.5%)
+ * - Medium trades (1-5% of reserves): 100 bps (1%)
+ * - Large trades (5-10% of reserves): 200 bps (2%)
+ * - Very large trades (>10% of reserves): 300 bps (3%)
+ */
+export function calculateRecommendedSlippage(
+  amountIn: bigint,
+  reserveIn: bigint,
+  reserveOut: bigint
+): number {
+  // Avoid division by zero
+  if (reserveIn === 0n) {
+    return 300; // Maximum slippage for empty pools
+  }
+
+  // Calculate trade size as percentage of reserve (in basis points)
+  // tradeSizeBps = (amountIn * 10000) / reserveIn
+  const tradeSizeBps = (amountIn * 10000n) / reserveIn;
+
+  // Thresholds in basis points:
+  // 1% = 100 bps, 5% = 500 bps, 10% = 1000 bps
+  if (tradeSizeBps < 100n) {
+    // < 1% of pool: low slippage
+    return 50;
+  } else if (tradeSizeBps < 500n) {
+    // 1-5% of pool: medium slippage
+    return 100;
+  } else if (tradeSizeBps < 1000n) {
+    // 5-10% of pool: high slippage
+    return 200;
+  } else {
+    // > 10% of pool: very high slippage
+    return 300;
+  }
+}

@@ -6,6 +6,11 @@ import { useWallet } from "@/context/WalletContext";
 import { submitAmmTransaction } from "@/lib/amm-contract";
 import { ConfirmationCard } from "@/components/agent/ConfirmationCard";
 import { ToolCallStatus } from "@/components/agent/ToolCallStatus";
+import { handleAgentError, type ErrorRecovery } from "@/lib/agent/error-handler";
+import { ErrorMessage, RetryStatus } from "@/components/agent/ErrorMessage";
+import { TransactionHistory } from "@/components/agent/TransactionHistory";
+import { saveTransaction } from "@/lib/agent/transaction-history";
+import { PriceAlerts } from "@/components/agent/PriceAlerts";
 
 const HISTORY_KEY = "stellar-pay-agent-history";
 const MAX_STORED_TURNS = 50;
@@ -37,10 +42,12 @@ export default function AgentPage() {
   const [turns, setTurns] = useState<ChatTurn[]>([]);
   const [input, setInput] = useState("");
   const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [error, setError] = useState<ErrorRecovery | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const [historyLoaded, setHistoryLoaded] = useState(false);
+  const [retryAttempt, setRetryAttempt] = useState<number | null>(null);
+  const [showPriceAlerts, setShowPriceAlerts] = useState(false);
 
   // Load history from localStorage on mount
   useEffect(() => {
@@ -186,7 +193,8 @@ export default function AgentPage() {
       }
     } catch (err) {
       if ((err as Error).name !== "AbortError") {
-        setError(err instanceof Error ? err.message : "request failed");
+        const errorRecovery = handleAgentError(err instanceof Error ? err : new Error("request failed"));
+        setError(errorRecovery);
       }
     } finally {
       setBusy(false);
@@ -203,6 +211,19 @@ export default function AgentPage() {
         const signed = await signTransaction(xdr);
         const result = await submitAmmTransaction(signed);
         setTxHash(result.hash);
+
+        // Get the pending XDR details before clearing
+        const pendingXdr = turns[turnIndex]?.pendingXdr;
+        if (pendingXdr) {
+          // Save transaction to history
+          saveTransaction({
+            type: pendingXdr.operationType,
+            details: pendingXdr.details,
+            txHash: result.hash,
+            status: result.status === "SUCCESS" ? "success" : "failed",
+          });
+        }
+
         // Clear the pending XDR from the turn
         setTurns((prev) => {
           const copy = [...prev];
@@ -210,12 +231,13 @@ export default function AgentPage() {
           return copy;
         });
       } catch (err) {
-        setError(err instanceof Error ? err.message : "signing failed");
+        const errorRecovery = handleAgentError(err);
+        setError(errorRecovery);
       } finally {
         setBusy(false);
       }
     },
-    [signTransaction]
+    [signTransaction, turns]
   );
 
   return (
@@ -253,6 +275,26 @@ export default function AgentPage() {
           )}
         </div>
       </header>
+
+      <TransactionHistory limit={10} />
+
+      {/* Price Alerts Section */}
+      <div className="rounded border border-neutral-200 bg-white dark:border-neutral-800 dark:bg-neutral-900">
+        <button
+          onClick={() => setShowPriceAlerts(!showPriceAlerts)}
+          className="flex w-full items-center justify-between p-3 text-left transition-colors hover:bg-neutral-50 dark:hover:bg-neutral-800"
+        >
+          <span className="text-sm font-medium">Price Alerts</span>
+          <span className="text-xs text-neutral-500">
+            {showPriceAlerts ? "Hide" : "Show"}
+          </span>
+        </button>
+        {showPriceAlerts && (
+          <div className="border-t border-neutral-200 p-4 dark:border-neutral-800">
+            <PriceAlerts walletAddress={address} enabled={showPriceAlerts} />
+          </div>
+        )}
+      </div>
 
       <section className="flex-1 space-y-3 overflow-y-auto rounded border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
         {turns.length === 0 && (
@@ -297,6 +339,10 @@ export default function AgentPage() {
         ))}
       </section>
 
+      {retryAttempt && (
+        <RetryStatus attempt={retryAttempt} maxAttempts={3} />
+      )}
+
       {txHash && (
         <div className="rounded border border-emerald-400 bg-emerald-50 p-2 text-sm text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
           ✓ Transaction confirmed:{" "}
@@ -312,9 +358,11 @@ export default function AgentPage() {
       )}
 
       {error && (
-        <div className="rounded border border-red-400 bg-red-50 p-2 text-sm text-red-700 dark:border-red-700 dark:bg-red-950 dark:text-red-300">
-          {error}
-        </div>
+        <ErrorMessage
+          recovery={error}
+          onRetry={error.retryable ? () => void send() : undefined}
+          onDismiss={() => setError(null)}
+        />
       )}
 
       <form
