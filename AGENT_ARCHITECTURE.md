@@ -710,7 +710,617 @@ test("minAmountOut = estimatedOut * (1 - slippageBps/10000)", () => {
 
 ---
 
-## 十一、文件结构（完成后）
+## 十一、Phase 3 优化方案（2026-05-10）
+
+### 当前完成状态总结
+
+**✅ Phase 1 完成（核心交易流程）**
+- ConfirmationCard 组件 - 美观的交易确认 UI
+- ToolCallStatus 组件 - 12 种工具状态可视化
+- 历史对话持久化 - localStorage，最多 50 条
+- `/api/agent/confirm` 端点 - XDR 提交
+
+**✅ DeepSeek 集成完成**
+- Router/Analytics/Trading/Security 全部支持双提供商
+- OpenAI 适配器自动格式转换
+- 成本降低 10-20 倍
+
+**✅ Phase 2 完成（6 大高级特性）**
+1. 交易历史追踪 - TransactionHistory 组件
+2. 智能滑点建议 - 基于交易规模自动推荐
+3. 多轮上下文理解 - "再换 50 TKNA" 引用上文
+4. 错误恢复处理 - 13+ 种错误场景，友好提示
+5. 批量操作支持 - "先换后添加流动性"
+6. 价格预警系统 - PriceAlerts 组件 + 后台监控
+
+### Phase 3 优化方向
+
+#### 3.1 性能优化
+
+**3.1.1 Prompt Caching 效果验证**
+
+当前状态：已在所有 Agent 的 System Prompt 中启用 `cache_control: { type: "ephemeral" }`
+
+优化目标：
+- 验证缓存命中率（目标 >80%）
+- 监控成本节省效果
+- 优化 System Prompt 长度以最大化缓存收益
+
+实现方案：
+```typescript
+// lib/agent/analytics.ts 添加缓存监控
+if (finalMessage.usage) {
+  const cacheHitRate = finalMessage.usage.cache_read_input_tokens 
+    / (finalMessage.usage.input_tokens + finalMessage.usage.cache_read_input_tokens);
+  
+  yield {
+    type: "usage",
+    inputTokens: finalMessage.usage.input_tokens,
+    outputTokens: finalMessage.usage.output_tokens,
+    cacheReadTokens: finalMessage.usage.cache_read_input_tokens,
+    cacheHitRate,
+    agent: "analytics",
+  };
+}
+```
+
+**3.1.2 响应速度优化**
+
+当前瓶颈：
+- Router 分类：~300ms（Haiku）
+- 首个 token：~600ms（Sonnet streaming）
+- RPC 调用：~200-500ms（Stellar testnet）
+
+优化方案：
+1. **并行化 Router + 预加载池子数据**
+   ```typescript
+   // 在 Router 分类的同时，预加载常用数据
+   const [routed, poolStats] = await Promise.all([
+     classifyIntent(history),
+     getReserves(DUMMY_READER), // 预加载，写入 cache
+   ]);
+   ```
+
+2. **工具结果流式返回**
+   ```typescript
+   // 当前：等待完整 RPC 响应后返回
+   // 优化：RPC 响应分块时立即 yield
+   for await (const chunk of rpcStream) {
+     yield { type: "tool_partial", name: "get_pool_stats", chunk };
+   }
+   ```
+
+3. **WebSocket 替代 SSE**
+   - SSE 是单向的，WebSocket 支持双向通信
+   - 可以实现用户中断长时间运行的 Agent
+   - 更好的错误恢复和重连机制
+
+**3.1.3 内存和缓存优化**
+
+当前问题：
+- 对话历史无限增长（前端 localStorage）
+- 工具结果 JSON 占用大量 token
+
+优化方案：
+```typescript
+// lib/agent/utils.ts - 对话历史压缩
+export function compressHistory(
+  history: AgentMessage[],
+  maxTokens: number = 4000
+): AgentMessage[] {
+  // 1. 保留最近 3 轮完整对话
+  // 2. 旧对话用 Analytics Agent 生成摘要
+  // 3. 工具结果只保留关键字段
+  const recent = history.slice(-6); // 最近 3 轮（user + assistant）
+  const old = history.slice(0, -6);
+  
+  if (old.length === 0) return recent;
+  
+  const summary = summarizeOldHistory(old);
+  return [
+    { role: "user", content: `[历史摘要] ${summary}` },
+    ...recent,
+  ];
+}
+```
+
+#### 3.2 用户体验优化
+
+**3.2.1 实时协作功能**
+
+目标：多个用户可以看到同一个池子的实时交易活动
+
+实现方案：
+```typescript
+// hooks/useRealtimePoolActivity.ts
+export function useRealtimePoolActivity() {
+  const [activities, setActivities] = useState<Activity[]>([]);
+  
+  useEffect(() => {
+    // WebSocket 连接到后端
+    const ws = new WebSocket('wss://your-domain.com/pool-activity');
+    
+    ws.onmessage = (event) => {
+      const activity = JSON.parse(event.data);
+      setActivities(prev => [activity, ...prev].slice(0, 20));
+    };
+    
+    return () => ws.close();
+  }, []);
+  
+  return activities;
+}
+```
+
+**3.2.2 语音输入支持**
+
+目标：用户可以通过语音输入交易指令
+
+实现方案：
+```typescript
+// components/agent/VoiceInput.tsx
+import { useState } from 'react';
+
+export function VoiceInput({ onTranscript }: { onTranscript: (text: string) => void }) {
+  const [isListening, setIsListening] = useState(false);
+  
+  const startListening = () => {
+    const recognition = new (window as any).webkitSpeechRecognition();
+    recognition.lang = 'zh-CN';
+    recognition.onresult = (event: any) => {
+      const transcript = event.results[0][0].transcript;
+      onTranscript(transcript);
+    };
+    recognition.start();
+    setIsListening(true);
+  };
+  
+  return (
+    <button onClick={startListening} disabled={isListening}>
+      {isListening ? '🎤 听取中...' : '🎤 语音输入'}
+    </button>
+  );
+}
+```
+
+**3.2.3 移动端优化**
+
+当前问题：
+- 确认卡片在小屏幕上显示不完整
+- 工具调用状态堆叠过多
+
+优化方案：
+```css
+/* app/globals.css - 移动端适配 */
+@media (max-width: 640px) {
+  .confirmation-card {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    max-height: 70vh;
+    overflow-y: auto;
+    border-radius: 16px 16px 0 0;
+  }
+  
+  .tool-status {
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+```
+
+#### 3.3 安全性增强
+
+**3.3.1 交易模拟沙箱**
+
+目标：在真实提交前，在沙箱环境中模拟交易
+
+实现方案：
+```typescript
+// lib/agent/sandbox.ts
+export async function simulateInSandbox(xdr: string): Promise<SimulationResult> {
+  // 使用 Stellar SDK 的 simulateTransaction
+  const tx = TransactionBuilder.fromXDR(xdr, Networks.TESTNET);
+  const simulation = await server.simulateTransaction(tx);
+  
+  return {
+    success: simulation.results?.[0]?.auth?.length > 0,
+    gasUsed: simulation.cost?.cpuInsns || 0,
+    stateChanges: simulation.results?.[0]?.xdr || '',
+    warnings: detectWarnings(simulation),
+  };
+}
+
+function detectWarnings(sim: any): string[] {
+  const warnings: string[] = [];
+  
+  // 检测异常高的 gas 消耗
+  if (sim.cost?.cpuInsns > 10_000_000) {
+    warnings.push('⚠️ Gas 消耗异常高，可能存在问题');
+  }
+  
+  // 检测余额变化异常
+  // ... 更多检测逻辑
+  
+  return warnings;
+}
+```
+
+**3.3.2 交易签名二次确认**
+
+对于大额交易（>1000 TKNA），要求用户输入确认码
+
+实现方案：
+```typescript
+// components/agent/ConfirmationCard.tsx
+const [confirmCode, setConfirmCode] = useState('');
+const requireConfirmCode = details.amountIn > 1000;
+
+if (requireConfirmCode) {
+  const expectedCode = Math.floor(Math.random() * 9000) + 1000;
+  
+  return (
+    <div>
+      <p>⚠️ 大额交易需要二次确认</p>
+      <p>请输入确认码：<strong>{expectedCode}</strong></p>
+      <input 
+        value={confirmCode}
+        onChange={(e) => setConfirmCode(e.target.value)}
+        placeholder="输入确认码"
+      />
+      <button 
+        disabled={confirmCode !== String(expectedCode)}
+        onClick={onConfirm}
+      >
+        确认并签名
+      </button>
+    </div>
+  );
+}
+```
+
+**3.3.3 异常行为检测**
+
+目标：检测并阻止可疑的交易模式
+
+实现方案：
+```typescript
+// lib/agent/anomaly-detector.ts
+export function detectAnomalousPattern(
+  history: TransactionRecord[]
+): { isAnomalous: boolean; reason: string } {
+  // 1. 检测短时间内大量交易
+  const recentTxs = history.filter(tx => 
+    Date.now() - tx.timestamp < 60_000 // 1 分钟内
+  );
+  
+  if (recentTxs.length > 10) {
+    return {
+      isAnomalous: true,
+      reason: '1 分钟内交易次数过多（>10 次），可能是自动化攻击',
+    };
+  }
+  
+  // 2. 检测来回交易（swap A→B 后立即 B→A）
+  const lastTwo = history.slice(-2);
+  if (lastTwo.length === 2 && 
+      lastTwo[0].type === 'swap' && 
+      lastTwo[1].type === 'swap') {
+    const [tx1, tx2] = lastTwo;
+    if (tx1.details.tokenIn === tx2.details.tokenOut &&
+        tx1.details.tokenOut === tx2.details.tokenIn) {
+      return {
+        isAnomalous: true,
+        reason: '检测到来回交易模式，可能是套利机器人或测试行为',
+      };
+    }
+  }
+  
+  return { isAnomalous: false, reason: '' };
+}
+```
+
+#### 3.4 可观测性和监控
+
+**3.4.1 Agent 性能监控**
+
+实现方案：
+```typescript
+// lib/agent/telemetry.ts
+export interface AgentMetrics {
+  agentName: string;
+  requestId: string;
+  startTime: number;
+  endTime: number;
+  toolCalls: number;
+  tokensUsed: { input: number; output: number; cached: number };
+  cacheHitRate: number;
+  errorCount: number;
+}
+
+export function trackAgentExecution(
+  agentName: string,
+  fn: () => AsyncGenerator<AgentStreamEvent>
+): AsyncGenerator<AgentStreamEvent> {
+  const metrics: Partial<AgentMetrics> = {
+    agentName,
+    requestId: crypto.randomUUID(),
+    startTime: Date.now(),
+    toolCalls: 0,
+    errorCount: 0,
+  };
+  
+  return (async function* () {
+    try {
+      for await (const event of fn()) {
+        if (event.type === 'tool_use') metrics.toolCalls!++;
+        if (event.type === 'error') metrics.errorCount!++;
+        if (event.type === 'usage') {
+          metrics.tokensUsed = {
+            input: event.inputTokens,
+            output: event.outputTokens,
+            cached: event.cacheReadTokens || 0,
+          };
+        }
+        yield event;
+      }
+    } finally {
+      metrics.endTime = Date.now();
+      // 发送到监控系统（如 Datadog, New Relic）
+      sendMetrics(metrics as AgentMetrics);
+    }
+  })();
+}
+```
+
+**3.4.2 用户行为分析**
+
+目标：了解用户最常用的功能，优化产品方向
+
+实现方案：
+```typescript
+// lib/analytics.ts
+export function trackUserAction(action: string, properties?: Record<string, any>) {
+  // 使用 PostHog / Mixpanel / Google Analytics
+  if (typeof window !== 'undefined' && (window as any).posthog) {
+    (window as any).posthog.capture(action, properties);
+  }
+}
+
+// 在关键位置埋点
+trackUserAction('agent_query', { intent: 'trading', query: userInput });
+trackUserAction('transaction_confirmed', { type: 'swap', amount: 100 });
+trackUserAction('error_occurred', { errorType: 'insufficient_balance' });
+```
+
+#### 3.5 可借鉴的 Hooks 模式
+
+**项目中已有的优秀 Hooks：**
+
+1. **useAmmContract** - 完整的交易生命周期管理
+   - 状态管理：`ammState`, `txStatus`, `txHash`, `txError`
+   - 预览功能：`previewSwap`, `previewAddLiquidity`
+   - 缓存失效：交易成功后自动 `cache.invalidate()`
+   - 错误分类：使用 `classifyError()` 统一处理
+
+2. **usePollContract** - 缓存优先的数据加载
+   - 静态数据缓存（question/options）：2 分钟 TTL
+   - 动态数据缓存（votes/total）：10 秒 TTL
+   - 自动缓存失效：投票后清除相关缓存
+
+3. **useContractEvents** - 轮询模式的事件监听
+   - 使用 `useRef` 追踪 `lastLedger`，避免重复拉取
+   - 自动清理：`useEffect` 返回 cleanup 函数
+   - 错误静默：轮询失败不影响 UI
+
+**可以新增的 Hooks：**
+
+```typescript
+// hooks/useAgentConversation.ts - Agent 对话管理
+export function useAgentConversation() {
+  const [messages, setMessages] = useState<AgentMessage[]>([]);
+  const [isStreaming, setIsStreaming] = useState(false);
+  
+  const sendMessage = useCallback(async (text: string) => {
+    setIsStreaming(true);
+    // SSE 流式接收
+    const response = await fetch('/api/agent', {
+      method: 'POST',
+      body: JSON.stringify({ messages: [...messages, { role: 'user', content: text }] }),
+    });
+    
+    // 处理流式响应...
+  }, [messages]);
+  
+  return { messages, sendMessage, isStreaming };
+}
+
+// hooks/useTransactionQueue.ts - 批量交易队列
+export function useTransactionQueue() {
+  const [queue, setQueue] = useState<Transaction[]>([]);
+  const [currentIndex, setCurrentIndex] = useState(0);
+  
+  const addToQueue = (tx: Transaction) => {
+    setQueue(prev => [...prev, tx]);
+  };
+  
+  const executeNext = async () => {
+    if (currentIndex >= queue.length) return;
+    const tx = queue[currentIndex];
+    await executeTx(tx);
+    setCurrentIndex(prev => prev + 1);
+  };
+  
+  return { queue, currentIndex, addToQueue, executeNext };
+}
+```
+
+#### 3.6 Claw-Code 模式应用
+
+**已实现的 Claw-Code 模式：**
+
+1. **AgentRegistry** (`lib/agent/registry.ts`)
+   - 集中管理所有 Agent 定义
+   - 类型安全的 Agent 查找
+   - 易于扩展新 Agent
+
+2. **StellarPayConfig** (`lib/agent/config.ts`)
+   - 环境变量驱动的配置
+   - 运行时可调整参数（maxTurns, maxHistory）
+   - 便于 A/B 测试
+
+3. **PermissionContext** (`lib/agent/permissions.ts`)
+   - 细粒度的操作权限控制
+   - 可配置的交易限额
+   - 支持黑名单/白名单
+
+**可以增强的 Claw-Code 模式：**
+
+```typescript
+// lib/agent/middleware.ts - Agent 中间件模式
+export type AgentMiddleware = (
+  next: AgentHandler
+) => AgentHandler;
+
+export function withRateLimiting(maxRequestsPerMinute: number): AgentMiddleware {
+  const requests = new Map<string, number[]>();
+  
+  return (next) => async function* (history, userKey) {
+    const now = Date.now();
+    const userRequests = requests.get(userKey) || [];
+    const recentRequests = userRequests.filter(t => now - t < 60_000);
+    
+    if (recentRequests.length >= maxRequestsPerMinute) {
+      yield { type: 'error', message: '请求过于频繁，请稍后再试' };
+      return;
+    }
+    
+    requests.set(userKey, [...recentRequests, now]);
+    yield* next(history, userKey);
+  };
+}
+
+export function withLogging(): AgentMiddleware {
+  return (next) => async function* (history, userKey) {
+    console.log(`[Agent] Start - User: ${userKey}, History: ${history.length} messages`);
+    const start = Date.now();
+    
+    try {
+      yield* next(history, userKey);
+    } finally {
+      console.log(`[Agent] End - Duration: ${Date.now() - start}ms`);
+    }
+  };
+}
+
+// 使用中间件
+const enhancedTrading = compose(
+  withRateLimiting(10),
+  withLogging(),
+  withErrorRecovery()
+)(runTrading);
+```
+
+#### 3.7 测试和质量保证
+
+**3.7.1 E2E 测试**
+
+```typescript
+// __tests__/e2e/agent-trading.test.ts
+import { test, expect } from '@playwright/test';
+
+test('complete swap flow', async ({ page }) => {
+  await page.goto('http://localhost:3000/agent');
+  
+  // 连接钱包
+  await page.click('text=Connect Wallet');
+  // ... Freighter 交互
+  
+  // 输入交易指令
+  await page.fill('input[placeholder*="Ask about"]', '用 10 TKNA 换 TKNB');
+  await page.click('button:has-text("Send")');
+  
+  // 等待模拟结果
+  await expect(page.locator('text=Simulating swap')).toBeVisible();
+  await expect(page.locator('text=✓ Simulating swap')).toBeVisible({ timeout: 10000 });
+  
+  // 确认交易
+  await expect(page.locator('text=Confirm Swap')).toBeVisible();
+  await page.click('button:has-text("Sign & Submit")');
+  
+  // 验证成功
+  await expect(page.locator('text=Transaction confirmed')).toBeVisible({ timeout: 30000 });
+});
+```
+
+**3.7.2 Agent 质量评估**
+
+```typescript
+// scripts/eval-agents.ts
+const testCases = [
+  {
+    input: "池子 TVL 多少？",
+    expectedIntent: "analytics",
+    expectedTools: ["get_pool_stats", "get_metrics"],
+  },
+  {
+    input: "用 100 TKNA 换 TKNB",
+    expectedIntent: "trading",
+    expectedTools: ["simulate_swap", "build_swap_xdr"],
+  },
+  // ... 50+ 测试用例
+];
+
+async function evaluateAgents() {
+  let correct = 0;
+  
+  for (const testCase of testCases) {
+    const result = await runAgent(testCase.input);
+    if (result.intent === testCase.expectedIntent &&
+        testCase.expectedTools.every(t => result.toolsCalled.includes(t))) {
+      correct++;
+    }
+  }
+  
+  const accuracy = correct / testCases.length;
+  console.log(`Agent Accuracy: ${(accuracy * 100).toFixed(2)}%`);
+  
+  if (accuracy < 0.95) {
+    throw new Error('Agent accuracy below threshold!');
+  }
+}
+```
+
+#### 3.8 部署和运维
+
+**3.8.1 生产环境清单**
+
+- [ ] 数据库持久化（PostgreSQL 存对话历史）
+- [ ] Redis 缓存层（替代内存 cache）
+- [ ] JWT 认证（保护 `/api/agent` 端点）
+- [ ] Rate Limiting（防止 API 滥用）
+- [ ] 多 RPC 节点轮询（高可用）
+- [ ] CDN 加速（静态资源）
+- [ ] 错误追踪（Sentry）
+- [ ] 性能监控（Datadog / New Relic）
+- [ ] 日志聚合（ELK Stack）
+
+**3.8.2 成本优化**
+
+当前成本估算（1000 DAU）：
+- 无缓存：~$135/月
+- 启用 Prompt Caching：~$50/月
+- 使用 DeepSeek：~$5-10/月
+
+进一步优化：
+1. 对高频查询启用 Redis 缓存（24h TTL）
+2. 批量处理 RPC 请求
+3. 使用 Cloudflare Workers 做边缘计算
+
+---
+
+## 十二、文件结构（完成后）
 
 ```
 lib/agent/
