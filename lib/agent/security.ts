@@ -1,8 +1,18 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { getAnthropicClient, MODEL_ANALYTICS } from "./anthropic";
+import OpenAI from "openai";
+import {
+  getAnthropicClient,
+  getOpenAIClient,
+  hasDeepSeekKey,
+  MODEL_ANALYTICS,
+} from "./anthropic";
 import { securityTools, runTool } from "./tools";
 import type { AgentMessage, AgentStreamEvent } from "./types";
 import { config } from "./config";
+import {
+  convertAnthropicToOpenAI,
+  convertAnthropicToolsToOpenAI,
+} from "./openai-adapter";
 
 const MODEL_SECURITY = MODEL_ANALYTICS; // claude-sonnet-4-6
 
@@ -23,22 +33,23 @@ function toAnthropicMessages(history: AgentMessage[]): Anthropic.MessageParam[] 
   return history.map((m) => ({ role: m.role, content: m.content }));
 }
 
-interface ToolUseAccumulator {
-  id: string;
-  name: string;
-  jsonInput: string;
+export async function* runSecurity(
+  history: AgentMessage[]
+): AsyncGenerator<AgentStreamEvent> {
+  if (hasDeepSeekKey()) {
+    yield* runSecurityOpenAI(history);
+  } else {
+    yield* runSecurityAnthropic(history);
+  }
 }
 
-export async function* runSecurity(
+async function* runSecurityAnthropic(
   history: AgentMessage[]
 ): AsyncGenerator<AgentStreamEvent> {
   const client = getAnthropicClient();
   const messages: Anthropic.MessageParam[] = toAnthropicMessages(history);
 
   for (let turn = 0; turn < config.securityMaxTurns; turn++) {
-    const toolAcc = new Map<number, ToolUseAccumulator>();
-    let stopReason: string | null = null;
-
     const stream = client.messages.stream({
       model: MODEL_SECURITY,
       max_tokens: config.maxTokens,
@@ -54,21 +65,11 @@ export async function* runSecurity(
     });
 
     for await (const event of stream) {
-      if (event.type === "content_block_start") {
-        const block = event.content_block;
-        if (block.type === "tool_use") {
-          toolAcc.set(event.index, { id: block.id, name: block.name, jsonInput: "" });
-        }
-      } else if (event.type === "content_block_delta") {
+      if (event.type === "content_block_delta") {
         const delta = event.delta;
         if (delta.type === "text_delta") {
           yield { type: "text", delta: delta.text };
-        } else if (delta.type === "input_json_delta") {
-          const acc = toolAcc.get(event.index);
-          if (acc) acc.jsonInput += delta.partial_json;
         }
-      } else if (event.type === "message_delta") {
-        if (event.delta.stop_reason) stopReason = event.delta.stop_reason;
       }
     }
 
@@ -85,13 +86,14 @@ export async function* runSecurity(
     if (turn === config.turnLimitWarning - 1) {
       messages.push({
         role: "user",
-        content: "You have called 4 tools. Please summarize with the data you have. Do not call any more tools.",
+        content:
+          "You have called 4 tools. Please summarize with the data you have. Do not call any more tools.",
       });
     }
 
     messages.push({ role: "assistant", content: finalMessage.content });
 
-    if (stopReason !== "tool_use") break;
+    if (finalMessage.stop_reason !== "tool_use") break;
 
     const toolResults: Anthropic.ToolResultBlockParam[] = [];
     for (const block of finalMessage.content) {
@@ -118,6 +120,129 @@ export async function* runSecurity(
     }
 
     messages.push({ role: "user", content: toolResults });
+  }
+
+  yield { type: "done" };
+}
+
+async function* runSecurityOpenAI(
+  history: AgentMessage[]
+): AsyncGenerator<AgentStreamEvent> {
+  const client = getOpenAIClient();
+  const messages = convertAnthropicToOpenAI(toAnthropicMessages(history));
+  const tools = convertAnthropicToolsToOpenAI(securityTools);
+
+  for (let turn = 0; turn < config.securityMaxTurns; turn++) {
+    const stream = await client.chat.completions.create({
+      model: MODEL_SECURITY,
+      max_tokens: config.maxTokens,
+      messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+      tools,
+      stream: true,
+    });
+
+    let currentToolCalls: Map<
+      number,
+      { id: string; name: string; arguments: string }
+    > = new Map();
+    let textContent = "";
+    let finishReason: string | null = null;
+
+    for await (const chunk of stream) {
+      const choice = chunk.choices[0];
+      if (!choice) continue;
+
+      const delta = choice.delta;
+
+      // Handle text content
+      if (delta.content) {
+        textContent += delta.content;
+        yield { type: "text", delta: delta.content };
+      }
+
+      // Handle tool calls
+      if (delta.tool_calls) {
+        for (const toolCall of delta.tool_calls) {
+          const index = toolCall.index;
+          const existing = currentToolCalls.get(index);
+
+          if (!existing) {
+            currentToolCalls.set(index, {
+              id: toolCall.id || `tool_${index}`,
+              name: toolCall.function?.name || "",
+              arguments: toolCall.function?.arguments || "",
+            });
+          } else {
+            if (toolCall.function?.arguments) {
+              existing.arguments += toolCall.function.arguments;
+            }
+          }
+        }
+      }
+
+      if (choice.finish_reason) {
+        finishReason = choice.finish_reason;
+      }
+    }
+
+    // Yield usage (OpenAI doesn't provide this in streaming, so we skip it)
+
+    if (turn === config.turnLimitWarning - 1) {
+      messages.push({
+        role: "user",
+        content:
+          "You have called 4 tools. Please summarize with the data you have. Do not call any more tools.",
+      });
+    }
+
+    // Build assistant message
+    const assistantMessage: OpenAI.Chat.Completions.ChatCompletionMessageParam = {
+      role: "assistant",
+      content: textContent || null,
+    };
+
+    if (currentToolCalls.size > 0) {
+      assistantMessage.tool_calls = Array.from(currentToolCalls.values()).map((tc) => ({
+        id: tc.id,
+        type: "function" as const,
+        function: {
+          name: tc.name,
+          arguments: tc.arguments,
+        },
+      }));
+    }
+
+    messages.push(assistantMessage);
+
+    if (finishReason !== "tool_calls") break;
+
+    // Execute tools
+    const toolMessages: OpenAI.Chat.Completions.ChatCompletionToolMessageParam[] = [];
+    for (const [, toolCall] of currentToolCalls) {
+      const input = JSON.parse(toolCall.arguments);
+      yield { type: "tool_use", name: toolCall.name, input };
+
+      try {
+        const output = await runTool(toolCall.name, input);
+        yield { type: "tool_result", name: toolCall.name, output };
+        toolMessages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: JSON.stringify(output),
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "tool failed";
+        yield { type: "tool_result", name: toolCall.name, output: message, isError: true };
+        toolMessages.push({
+          role: "tool",
+          tool_call_id: toolCall.id,
+          content: message,
+        });
+      }
+    }
+
+    messages.push(...toolMessages);
+    currentToolCalls.clear();
   }
 
   yield { type: "done" };
