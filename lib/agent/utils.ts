@@ -93,6 +93,45 @@ export function validateMessages(
 }
 
 // ---------------------------------------------------------------------------
+// trimHistory — safe MAX_HISTORY slice that never orphans a tool-result
+//
+// Anthropic rejects a message array where the first message is a user turn
+// whose content is a ToolResult block with no preceding assistant ToolUse.
+// Plain slice(-N) can produce exactly that. We walk the boundary forward
+// until we land on a safe split point (a user text message or the start).
+// ---------------------------------------------------------------------------
+
+export function trimHistory<T extends { role: string; content: unknown }>(
+  messages: T[],
+  maxMessages: number
+): T[] {
+  if (messages.length <= maxMessages) return messages;
+
+  let start = messages.length - maxMessages;
+
+  // Walk forward until the first kept message is NOT a pure tool-result turn.
+  // A tool-result turn is a user message whose every content block is a
+  // tool_result — it must be preceded by the assistant message that issued
+  // the matching tool_use.
+  while (start < messages.length) {
+    const first = messages[start];
+    if (first.role !== "user") break;
+
+    const content = first.content;
+    const isToolResultTurn =
+      Array.isArray(content) &&
+      content.length > 0 &&
+      content.every((b) => typeof b === "object" && b !== null && "type" in b && (b as { type: string }).type === "tool_result");
+
+    if (!isToolResultTurn) break;
+
+    start += 1;
+  }
+
+  return messages.slice(start);
+}
+
+// ---------------------------------------------------------------------------
 // parseContractError — map AMM panic strings to friendly messages
 // ---------------------------------------------------------------------------
 

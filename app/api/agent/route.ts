@@ -4,6 +4,7 @@ import { classifyIntent } from "@/lib/agent/router";
 import { runAnalytics } from "@/lib/agent/analytics";
 import { runTrading } from "@/lib/agent/trading";
 import { runSecurity } from "@/lib/agent/security";
+import { trimHistory } from "@/lib/agent/utils";
 import type { AgentMessage, AgentStreamEvent } from "@/lib/agent/types";
 
 export const runtime = "nodejs";
@@ -34,7 +35,8 @@ export async function POST(req: NextRequest) {
   }
 
   const MAX_HISTORY = 20;
-  const history = (Array.isArray(body.messages) ? body.messages : []).slice(-MAX_HISTORY);
+  const rawHistory = Array.isArray(body.messages) ? body.messages : [];
+  const history = trimHistory(rawHistory, MAX_HISTORY);
   if (history.length === 0) {
     return new Response(JSON.stringify({ error: "messages is required" }), {
       status: 400,
