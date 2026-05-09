@@ -2,6 +2,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { getAnthropicClient, MODEL_ANALYTICS } from "./anthropic";
 import { securityTools, runTool } from "./tools";
 import type { AgentMessage, AgentStreamEvent } from "./types";
+import { config } from "./config";
 
 const MODEL_SECURITY = MODEL_ANALYTICS; // claude-sonnet-4-6
 
@@ -34,13 +35,13 @@ export async function* runSecurity(
   const client = getAnthropicClient();
   const messages: Anthropic.MessageParam[] = toAnthropicMessages(history);
 
-  for (let turn = 0; turn < 5; turn++) {
+  for (let turn = 0; turn < config.securityMaxTurns; turn++) {
     const toolAcc = new Map<number, ToolUseAccumulator>();
     let stopReason: string | null = null;
 
     const stream = client.messages.stream({
       model: MODEL_SECURITY,
-      max_tokens: 1024,
+      max_tokens: config.maxTokens,
       system: [
         {
           type: "text" as const,
@@ -72,8 +73,16 @@ export async function* runSecurity(
     }
 
     const finalMessage = await stream.finalMessage();
+    if (finalMessage.usage) {
+      yield {
+        type: "usage" as const,
+        inputTokens: finalMessage.usage.input_tokens,
+        outputTokens: finalMessage.usage.output_tokens,
+        agent: "security",
+      };
+    }
 
-    if (turn === 3) {
+    if (turn === config.turnLimitWarning - 1) {
       messages.push({
         role: "user",
         content: "You have called 4 tools. Please summarize with the data you have. Do not call any more tools.",

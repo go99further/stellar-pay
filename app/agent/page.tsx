@@ -21,6 +21,7 @@ interface ChatTurn {
   router?: RouterOutput;
   toolCalls?: ToolCall[];
   pendingXdr?: PendingXdr;
+  agentStatus?: string | null;
 }
 
 export default function AgentPage() {
@@ -118,6 +119,10 @@ export default function AgentPage() {
                 }
               } else if (evt.type === "error") {
                 last.text += `\n[error] ${evt.message}`;
+              } else if (evt.type === "agent_start") {
+                last.agentStatus = `⏳ ${evt.agent}…`;
+              } else if (evt.type === "agent_complete") {
+                last.agentStatus = `✓ ${evt.agent} (${(evt.elapsedMs / 1000).toFixed(1)}s)`;
               }
               copy[copy.length - 1] = last;
               return copy;
@@ -200,6 +205,9 @@ export default function AgentPage() {
               <div className="text-xs text-indigo-500">
                 intent: {t.router.intent} — {t.router.reason}
               </div>
+            )}
+            {t.agentStatus && (
+              <div className="text-xs text-neutral-400">{t.agentStatus}</div>
             )}
             {t.toolCalls?.map((c, j) => (
               <div key={j} className="rounded bg-neutral-50 px-2 py-1 text-xs font-mono text-emerald-700 dark:bg-neutral-800 dark:text-emerald-400">

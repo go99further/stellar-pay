@@ -2,6 +2,7 @@ import type Anthropic from "@anthropic-ai/sdk";
 import { getAnthropicClient, MODEL_ANALYTICS } from "./anthropic";
 import { analyticsTools, runTool } from "./tools";
 import type { AgentMessage, AgentStreamEvent } from "./types";
+import { config } from "./config";
 
 const SYSTEM_PROMPT = `You are the Analytics agent for a Stellar AMM on testnet. You answer read-only questions about pool state, swap metrics, and recent events by calling tools. Rules:
 - Always base numeric answers on tool output, never on memory.
@@ -27,14 +28,14 @@ export async function* runAnalytics(
   const client = getAnthropicClient();
   const messages: Anthropic.MessageParam[] = toAnthropicMessages(history);
 
-  for (let turn = 0; turn < 5; turn++) {
+  for (let turn = 0; turn < config.analyticsMaxTurns; turn++) {
     const assistantBlocks: Anthropic.ContentBlock[] = [];
     const toolAcc = new Map<number, ToolUseAccumulator>();
     let stopReason: string | null = null;
 
     const stream = client.messages.stream({
       model: MODEL_ANALYTICS,
-      max_tokens: 1024,
+      max_tokens: config.maxTokens,
       system: [
         {
           type: "text" as const,
@@ -70,9 +71,17 @@ export async function* runAnalytics(
     }
 
     const finalMessage = await stream.finalMessage();
+    if (finalMessage.usage) {
+      yield {
+        type: "usage" as const,
+        inputTokens: finalMessage.usage.input_tokens,
+        outputTokens: finalMessage.usage.output_tokens,
+        agent: "analytics",
+      };
+    }
     assistantBlocks.push(...finalMessage.content);
 
-    if (turn === 3) {
+    if (turn === config.turnLimitWarning - 1) {
       messages.push({
         role: "user",
         content: "You have called 4 tools. Please summarize with the data you have. Do not call any more tools.",
