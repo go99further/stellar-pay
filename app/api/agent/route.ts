@@ -1,0 +1,95 @@
+import { NextRequest } from "next/server";
+import { hasAnthropicKey } from "@/lib/agent/anthropic";
+import { classifyIntent } from "@/lib/agent/router";
+import { runAnalytics } from "@/lib/agent/analytics";
+import { runTrading } from "@/lib/agent/trading";
+import { runSecurity } from "@/lib/agent/security";
+import type { AgentMessage, AgentStreamEvent } from "@/lib/agent/types";
+
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+function sseLine(event: AgentStreamEvent): string {
+  return `data: ${JSON.stringify(event)}\n\n`;
+}
+
+export async function POST(req: NextRequest) {
+  if (!hasAnthropicKey()) {
+    return new Response(
+      JSON.stringify({
+        error: "ANTHROPIC_API_KEY is not set on the server. Add it to .env.local and restart.",
+      }),
+      { status: 503, headers: { "content-type": "application/json" } }
+    );
+  }
+
+  let body: { messages?: AgentMessage[]; walletAddress?: string };
+  try {
+    body = await req.json();
+  } catch {
+    return new Response(JSON.stringify({ error: "invalid JSON body" }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  const history = Array.isArray(body.messages) ? body.messages : [];
+  if (history.length === 0) {
+    return new Response(JSON.stringify({ error: "messages is required" }), {
+      status: 400,
+      headers: { "content-type": "application/json" },
+    });
+  }
+
+  // walletAddress is optional — only needed for build_*_xdr tools
+  const walletAddress = typeof body.walletAddress === "string" ? body.walletAddress : undefined;
+
+  const encoder = new TextEncoder();
+  const stream = new ReadableStream({
+    async start(controller) {
+      const send = (evt: AgentStreamEvent) => {
+        controller.enqueue(encoder.encode(sseLine(evt)));
+      };
+      try {
+        const routed = await classifyIntent(history);
+        send({ type: "router", output: routed });
+
+        if (routed.intent === "analytics") {
+          for await (const evt of runAnalytics(history)) {
+            send(evt);
+          }
+        } else if (routed.intent === "trading") {
+          for await (const evt of runTrading(history, walletAddress)) {
+            send(evt);
+          }
+        } else if (routed.intent === "security") {
+          for await (const evt of runSecurity(history)) {
+            send(evt);
+          }
+        } else {
+          send({
+            type: "text",
+            delta:
+              "Could you rephrase? I can answer questions about the AMM pool, execute swaps, manage liquidity, or analyze risks.",
+          });
+          send({ type: "done" });
+        }
+      } catch (err) {
+        send({
+          type: "error",
+          message: err instanceof Error ? err.message : "agent error",
+        });
+      } finally {
+        controller.close();
+      }
+    },
+  });
+
+  return new Response(stream, {
+    headers: {
+      "content-type": "text/event-stream",
+      "cache-control": "no-cache, no-transform",
+      connection: "keep-alive",
+    },
+  });
+}
