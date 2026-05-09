@@ -1,16 +1,15 @@
 ---
 name: no-dead-loop
-enabled: true
+enabled: false
 event: bash
 pattern: ^(npx tsc|tsc|cat |sed -n|grep )
-action: warn
+action: block
 ---
 
-⚠️ **LOOP GUARD**: You are about to run a read/check command.
+This rule is disabled. The hook approach is wrong for preventing verification loops.
 
-Before proceeding, ask yourself:
-1. Have you run this exact command in the last 2 turns WITHOUT making any code changes in between?
-2. If YES — STOP. Running the same check again will not fix anything.
+Hooks are for blocking DANGEROUS operations (rm -rf, force push, etc.).
+Behavioral guidance belongs in memory rules, not hooks.
 
-**Rule**: After any failing `tsc` or `cat`, you MUST edit a file before running `tsc` again.
-If you don't know what to change, STOP and tell the user what the error is and ask for guidance.
+The actual loop command was "git log && git status && npx tsc" which starts with "git"
+and bypasses the ^ anchor pattern entirely — making this hook completely ineffective.
