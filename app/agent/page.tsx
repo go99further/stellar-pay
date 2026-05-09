@@ -1,18 +1,26 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { AgentMessage, AgentStreamEvent, RouterOutput } from "@/lib/agent/types";
 import { useWallet } from "@/context/WalletContext";
 import { submitAmmTransaction } from "@/lib/amm-contract";
+import { ConfirmationCard } from "@/components/agent/ConfirmationCard";
+import { ToolCallStatus } from "@/components/agent/ToolCallStatus";
+
+const HISTORY_KEY = "stellar-pay-agent-history";
+const MAX_STORED_TURNS = 50;
 
 interface ToolCall {
   name: string;
   input: unknown;
+  status: "running" | "completed" | "error";
+  error?: string;
 }
 
 interface PendingXdr {
   xdr: string;
-  summary: string;
+  operationType: "swap" | "add_liquidity" | "remove_liquidity";
+  details: Record<string, unknown>;
 }
 
 interface ChatTurn {
@@ -32,6 +40,41 @@ export default function AgentPage() {
   const [error, setError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
+  const [historyLoaded, setHistoryLoaded] = useState(false);
+
+  // Load history from localStorage on mount
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(HISTORY_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved) as ChatTurn[];
+        // Filter out any pending XDRs (they shouldn't persist)
+        const cleaned = parsed.map((t) => ({ ...t, pendingXdr: undefined }));
+        setTurns(cleaned);
+      }
+    } catch {
+      // Ignore parse errors
+    } finally {
+      setHistoryLoaded(true);
+    }
+  }, []);
+
+  // Save history to localStorage whenever turns change
+  useEffect(() => {
+    if (!historyLoaded) return;
+    try {
+      // Only save the last MAX_STORED_TURNS turns
+      const toSave = turns.slice(-MAX_STORED_TURNS);
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(toSave));
+    } catch {
+      // Ignore storage errors
+    }
+  }, [turns, historyLoaded]);
+
+  const clearHistory = useCallback(() => {
+    setTurns([]);
+    localStorage.removeItem(HISTORY_KEY);
+  }, []);
 
   const send = useCallback(async () => {
     const text = input.trim();
@@ -99,23 +142,32 @@ export default function AgentPage() {
               } else if (evt.type === "tool_use") {
                 last.toolCalls = [
                   ...(last.toolCalls ?? []),
-                  { name: evt.name, input: evt.input },
+                  { name: evt.name, input: evt.input, status: "running" },
                 ];
-                // Detect XDR build tools and surface a confirm button
-                if (
-                  evt.name === "build_swap_xdr" ||
-                  evt.name === "build_add_liquidity_xdr" ||
-                  evt.name === "build_remove_liquidity_xdr"
-                ) {
-                  // XDR will arrive in tool_result; mark pending
-                  last.pendingXdr = undefined;
-                }
               } else if (evt.type === "tool_result") {
+                // Mark the tool as completed or error
+                const toolCalls = last.toolCalls ?? [];
+                const lastToolIdx = toolCalls.length - 1;
+                if (lastToolIdx >= 0) {
+                  toolCalls[lastToolIdx] = {
+                    ...toolCalls[lastToolIdx],
+                    status: evt.isError ? "error" : "completed",
+                    error: evt.isError ? String(evt.output) : undefined,
+                  };
+                  last.toolCalls = toolCalls;
+                }
+
                 // If the result contains an XDR, surface it for signing
                 const output = evt.output as Record<string, unknown> | null;
                 if (output && typeof output.xdr === "string") {
-                  const summary = buildXdrSummary(evt.name, output);
-                  last.pendingXdr = { xdr: output.xdr, summary };
+                  const operationType = getOperationType(evt.name);
+                  if (operationType) {
+                    last.pendingXdr = {
+                      xdr: output.xdr,
+                      operationType,
+                      details: output,
+                    };
+                  }
                 }
               } else if (evt.type === "error") {
                 last.text += `\n[error] ${evt.message}`;
@@ -175,7 +227,17 @@ export default function AgentPage() {
             Ask about the pool, swap tokens, or check risks.
           </p>
         </div>
-        <div className="text-right">
+        <div className="flex items-center gap-2 text-right">
+          {turns.length > 0 && (
+            <button
+              onClick={clearHistory}
+              disabled={busy}
+              className="rounded border border-neutral-300 px-2 py-1 text-xs text-neutral-600 transition-colors hover:bg-neutral-100 disabled:opacity-50 dark:border-neutral-600 dark:text-neutral-400 dark:hover:bg-neutral-800"
+              title="Clear conversation history"
+            >
+              Clear
+            </button>
+          )}
           {address ? (
             <span className="rounded bg-emerald-100 px-2 py-1 text-xs font-mono text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200">
               {address.slice(0, 6)}…{address.slice(-4)}
@@ -210,46 +272,26 @@ export default function AgentPage() {
               <div className="text-xs text-neutral-400">{t.agentStatus}</div>
             )}
             {t.toolCalls?.map((c, j) => (
-              <div key={j} className="rounded bg-neutral-50 px-2 py-1 text-xs font-mono text-emerald-700 dark:bg-neutral-800 dark:text-emerald-400">
-                ⚙ {c.name}
-              </div>
+              <ToolCallStatus key={j} toolName={c.name} status={c.status} error={c.error} />
             ))}
             {t.text && (
               <div className="whitespace-pre-wrap text-sm">{t.text}</div>
             )}
             {t.pendingXdr && (
-              <div className="mt-2 rounded border border-amber-300 bg-amber-50 p-3 dark:border-amber-700 dark:bg-amber-950">
-                <p className="mb-2 text-xs font-semibold text-amber-800 dark:text-amber-300">
-                  ⚠ Transaction ready to sign
-                </p>
-                <p className="mb-3 text-xs text-amber-700 dark:text-amber-400">
-                  {t.pendingXdr.summary}
-                </p>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => void handleSign(t.pendingXdr!.xdr, i)}
-                    disabled={busy || !address}
-                    className="rounded bg-indigo-600 px-3 py-1 text-xs font-medium text-white disabled:opacity-50"
-                  >
-                    Sign &amp; Submit
-                  </button>
-                  <button
-                    onClick={() =>
-                      setTurns((prev) => {
-                        const copy = [...prev];
-                        copy[i] = { ...copy[i], pendingXdr: undefined };
-                        return copy;
-                      })
-                    }
-                    className="rounded border border-neutral-300 px-3 py-1 text-xs text-neutral-600 dark:border-neutral-600 dark:text-neutral-400"
-                  >
-                    Cancel
-                  </button>
-                </div>
-                {!address && (
-                  <p className="mt-1 text-xs text-red-500">Connect wallet to sign.</p>
-                )}
-              </div>
+              <ConfirmationCard
+                operationType={t.pendingXdr.operationType}
+                details={t.pendingXdr.details}
+                onConfirm={() => void handleSign(t.pendingXdr!.xdr, i)}
+                onCancel={() =>
+                  setTurns((prev) => {
+                    const copy = [...prev];
+                    copy[i] = { ...copy[i], pendingXdr: undefined };
+                    return copy;
+                  })
+                }
+                disabled={busy}
+                walletConnected={!!address}
+              />
             )}
           </div>
         ))}
@@ -302,15 +344,14 @@ export default function AgentPage() {
   );
 }
 
-function buildXdrSummary(toolName: string, output: Record<string, unknown>): string {
-  if (toolName === "build_swap_xdr") {
-    return `Swap ${output.amountIn} ${output.tokenIn} → min ${output.minAmountOut} ${output.tokenOut}`;
-  }
-  if (toolName === "build_add_liquidity_xdr") {
-    return `Add liquidity: ${output.amountA} TKNA + ${output.amountB} TKNB, min LP: ${output.minLp}`;
-  }
-  if (toolName === "build_remove_liquidity_xdr") {
-    return `Remove ${output.lpAmount} LP → min ${output.minA} TKNA + ${output.minB} TKNB`;
-  }
-  return "Review transaction details before signing.";
+function getOperationType(
+  toolName: string
+): "swap" | "add_liquidity" | "remove_liquidity" | null {
+  if (toolName === "build_swap_xdr") return "swap";
+  if (toolName === "build_add_liquidity_xdr") return "add_liquidity";
+  if (toolName === "build_remove_liquidity_xdr") return "remove_liquidity";
+  return null;
 }
+
+// Force dynamic rendering to avoid SSR issues with WalletProvider
+export const dynamic = "force-dynamic";

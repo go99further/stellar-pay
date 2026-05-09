@@ -31,6 +31,17 @@ Built as a **Level 6 (Black Belt)** project for the Stellar dApp development cou
 - **SwapEventFeed** — polls AMM contract events every 5 seconds for real-time activity
 - **Slippage protection** — configurable (default 0.5%), transaction reverts if output below minimum
 
+### 🤖 Multi-Agent AI Assistant (NEW)
+- **Natural language trading** — "Swap 100 TKNA for TKNB" → automatic simulation → confirmation → on-chain execution
+- **4-Agent architecture** — Router (Haiku) → Analytics/Trading/Security (Sonnet)
+- **11 specialized tools** — pool stats, metrics, events, swap simulation, liquidity management, risk analysis
+- **Human-in-the-loop (HITL)** — all write operations require explicit user confirmation before signing
+- **Real-time tool status** — visual feedback for each tool call (running/completed/error)
+- **Conversation persistence** — chat history saved to localStorage, survives page refresh
+- **Risk analysis** — price impact warnings, liquidity depth analysis, anomaly detection
+- **Prompt caching** — system prompts cached for cost optimization
+- Access at [`/agent`](/agent) — connect wallet to execute trades
+
 ### Advanced Feature: Fee Bump (Gasless Transactions)
 - **⚡ Gasless toggle** in SwapCard — user signs the inner transaction but pays zero XLM fees
 - Server-side fee bump sponsor wraps the signed inner XDR in a `FeeBumpTransaction` and pays the fee
@@ -86,11 +97,56 @@ Built as a **Level 6 (Black Belt)** project for the Stellar dApp development cou
 - Balance display with refresh
 - Friendbot integration for testnet funding
 
+## Multi-Agent Architecture
+
+```
+User: "Swap 100 TKNA for TKNB with 1% slippage"
+        ↓
+  Router Agent (Haiku 4.5)
+  - Intent classification
+  - Cost-optimized routing
+        ↓ intent: "trading"
+  Trading Agent (Sonnet 4.6)
+  - Simulate swap → display results
+  - Build XDR → show confirmation card
+        ↓
+  User confirms in UI
+        ↓
+  Freighter signs transaction
+        ↓
+  Submit to Stellar network
+        ↓
+  ✓ Transaction confirmed
+  🔗 Stellar Expert link
+```
+
+### Agent Capabilities
+
+| Agent | Model | Tools | Purpose |
+|-------|-------|-------|---------|
+| **Router** | Haiku 4.5 | `route_intent` | Fast intent classification (analytics/trading/security/clarify) |
+| **Analytics** | Sonnet 4.6 | `get_pool_stats`, `get_metrics`, `get_recent_events` | Read-only pool queries |
+| **Trading** | Sonnet 4.6 | `simulate_swap`, `build_swap_xdr`, `simulate_add_liquidity`, `build_add_liquidity_xdr`, `build_remove_liquidity_xdr` | Execute trades with HITL confirmation |
+| **Security** | Sonnet 4.6 | `check_price_impact`, `analyze_liquidity_depth`, `scan_recent_anomalies` | Risk analysis and anomaly detection |
+
+### Example Queries
+
+```
+"What's the current TKNA/TKNB price?"           → Analytics Agent
+"Swap 50 TKNA for TKNB"                         → Trading Agent
+"Is this pool safe right now?"                  → Security Agent
+"Add 100 TKNA and 100 TKNB liquidity"           → Trading Agent
+"Check if there's any suspicious activity"      → Security Agent
+```
+
+See [AGENT_ARCHITECTURE.md](./AGENT_ARCHITECTURE.md) for full technical details.
+
 ## Tech Stack
 
 | Layer | Technology |
 |-------|-----------|
-| AI | Alibaba DashScope (Qwen Turbo) |
+| AI | Anthropic Claude (Sonnet 4.6 + Haiku 4.5) — Multi-Agent system |
+| AI (Vote Insight) | Alibaba DashScope (Qwen Turbo) |
 | Framework | Next.js 16 (App Router) + TypeScript |
 | Styling | Tailwind CSS 4 |
 | Multi-Wallet | @creit.tech/stellar-wallets-kit v2.1.0 |
