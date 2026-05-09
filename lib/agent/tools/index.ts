@@ -1,4 +1,5 @@
 import type Anthropic from "@anthropic-ai/sdk";
+import { parseContractError } from "../utils";
 import { getPoolStatsSchema, getPoolStatsHandler } from "./get-pool-stats";
 import { getMetricsSchema, getMetricsHandler } from "./get-metrics";
 import { getRecentEventsSchema, getRecentEventsHandler } from "./get-recent-events";
@@ -42,7 +43,7 @@ export const securityTools: Anthropic.Tool[] = [
   scanRecentAnomaliesSchema,
 ];
 
-export async function runTool(
+async function dispatchTool(
   name: string,
   input: unknown,
   userPublicKey?: string
@@ -97,5 +98,19 @@ export async function runTool(
 
     default:
       throw new Error(`Unknown tool: ${name}`);
+  }
+}
+
+export async function runTool(
+  name: string,
+  input: unknown,
+  userPublicKey?: string
+): Promise<unknown> {
+  try {
+    return await dispatchTool(name, input, userPublicKey);
+  } catch (err) {
+    const raw = err instanceof Error ? err.message : "tool failed";
+    const message = parseContractError(raw);
+    throw new Error(message);
   }
 }

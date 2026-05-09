@@ -43,7 +43,13 @@ export async function* runTrading(
     const stream = client.messages.stream({
       model: MODEL_TRADING,
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      system: [
+        {
+          type: "text" as const,
+          text: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" as const },
+        },
+      ],
       tools: tradingTools,
       messages,
     });
@@ -68,6 +74,14 @@ export async function* runTrading(
     }
 
     const finalMessage = await stream.finalMessage();
+
+    if (turn === 4) {
+      messages.push({
+        role: "user",
+        content: "You have called 4 tools. Please summarize with the data you have. Do not call any more tools.",
+      });
+    }
+
     messages.push({ role: "assistant", content: finalMessage.content });
 
     if (stopReason !== "tool_use") {

@@ -33,7 +33,8 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  const history = Array.isArray(body.messages) ? body.messages : [];
+  const MAX_HISTORY = 20;
+  const history = (Array.isArray(body.messages) ? body.messages : []).slice(-MAX_HISTORY);
   if (history.length === 0) {
     return new Response(JSON.stringify({ error: "messages is required" }), {
       status: 400,

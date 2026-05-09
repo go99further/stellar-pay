@@ -35,7 +35,13 @@ export async function* runAnalytics(
     const stream = client.messages.stream({
       model: MODEL_ANALYTICS,
       max_tokens: 1024,
-      system: SYSTEM_PROMPT,
+      system: [
+        {
+          type: "text" as const,
+          text: SYSTEM_PROMPT,
+          cache_control: { type: "ephemeral" as const },
+        },
+      ],
       tools: analyticsTools,
       messages,
     });
@@ -65,6 +71,14 @@ export async function* runAnalytics(
 
     const finalMessage = await stream.finalMessage();
     assistantBlocks.push(...finalMessage.content);
+
+    if (turn === 3) {
+      messages.push({
+        role: "user",
+        content: "You have called 4 tools. Please summarize with the data you have. Do not call any more tools.",
+      });
+    }
+
     messages.push({ role: "assistant", content: finalMessage.content });
 
     if (stopReason !== "tool_use") {
