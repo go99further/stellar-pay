@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { hasAnthropicKey } from "@/lib/agent/anthropic";
+import { hasAnyKey } from "@/lib/agent/anthropic";
 import { DEFAULT_PERMISSION_CONTEXT, isOperationAllowed } from "@/lib/agent/permissions";
 import { classifyIntent } from "@/lib/agent/router";
 import { defaultRegistry } from "@/lib/agent/registry";
@@ -15,10 +15,10 @@ function sseLine(event: AgentStreamEvent): string {
 }
 
 export async function POST(req: NextRequest) {
-  if (!hasAnthropicKey()) {
+  if (!hasAnyKey()) {
     return new Response(
       JSON.stringify({
-        error: "ANTHROPIC_API_KEY is not set on the server. Add it to .env.local and restart.",
+        error: "ANTHROPIC_API_KEY or DEEPSEEK_API_KEY is not set on the server. Add it to .env.local and restart.",
       }),
       { status: 503, headers: { "content-type": "application/json" } }
     );

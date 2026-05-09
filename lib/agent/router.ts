@@ -1,6 +1,17 @@
 import type Anthropic from "@anthropic-ai/sdk";
-import { getAnthropicClient, MODEL_ROUTER } from "./anthropic";
+import {
+  getAnthropicClient,
+  getOpenAIClient,
+  hasDeepSeekKey,
+  MODEL_ROUTER,
+  PROVIDER,
+} from "./anthropic";
 import type { AgentMessage, RouterOutput, RouterIntent } from "./types";
+import {
+  convertAnthropicToOpenAI,
+  convertAnthropicToolsToOpenAI,
+  buildFinalMessageFromOpenAI,
+} from "./openai-adapter";
 
 const ROUTE_TOOL: Anthropic.Tool = {
   name: "route_intent",
@@ -35,46 +46,81 @@ Examples:
 
 const VALID_INTENTS: RouterIntent[] = ["analytics", "trading", "security", "clarify"];
 
-function toAnthropicMessages(
-  history: AgentMessage[]
-): Anthropic.MessageParam[] {
+function toAnthropicMessages(history: AgentMessage[]): Anthropic.MessageParam[] {
   return history.map((m) => ({ role: m.role, content: m.content }));
 }
 
-export async function classifyIntent(
-  history: AgentMessage[]
-): Promise<RouterOutput> {
+export async function classifyIntent(history: AgentMessage[]): Promise<RouterOutput> {
   try {
-    const client = getAnthropicClient();
-    const response = await client.messages.create({
-      model: MODEL_ROUTER,
-      max_tokens: 256,
-      system: SYSTEM_PROMPT,
-      tools: [ROUTE_TOOL],
-      tool_choice: { type: "tool", name: "route_intent" },
-      messages: toAnthropicMessages(history),
-    });
-
-    const toolUse = response.content.find(
-      (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
-    );
-    if (!toolUse) {
-      return { intent: "clarify", reason: "router produced no tool call" };
+    if (hasDeepSeekKey()) {
+      return await classifyIntentOpenAI(history);
     }
-
-    const parsed = toolUse.input as { intent?: string; reason?: string };
-    const intent = VALID_INTENTS.includes(parsed.intent as RouterIntent)
-      ? (parsed.intent as RouterIntent)
-      : "clarify";
-    const reason =
-      typeof parsed.reason === "string" && parsed.reason.length > 0
-        ? parsed.reason
-        : "no reason provided";
-    return { intent, reason };
+    return await classifyIntentAnthropic(history);
   } catch (err) {
     return {
       intent: "clarify",
       reason: err instanceof Error ? `router error: ${err.message}` : "router error",
     };
   }
+}
+
+async function classifyIntentAnthropic(history: AgentMessage[]): Promise<RouterOutput> {
+  const client = getAnthropicClient();
+  const response = await client.messages.create({
+    model: MODEL_ROUTER,
+    max_tokens: 256,
+    system: SYSTEM_PROMPT,
+    tools: [ROUTE_TOOL],
+    tool_choice: { type: "tool", name: "route_intent" },
+    messages: toAnthropicMessages(history),
+  });
+
+  const toolUse = response.content.find(
+    (block): block is Anthropic.ToolUseBlock => block.type === "tool_use"
+  );
+  if (!toolUse) {
+    return { intent: "clarify", reason: "router produced no tool call" };
+  }
+
+  const parsed = toolUse.input as { intent?: string; reason?: string };
+  const intent = VALID_INTENTS.includes(parsed.intent as RouterIntent)
+    ? (parsed.intent as RouterIntent)
+    : "clarify";
+  const reason =
+    typeof parsed.reason === "string" && parsed.reason.length > 0
+      ? parsed.reason
+      : "no reason provided";
+  return { intent, reason };
+}
+
+async function classifyIntentOpenAI(history: AgentMessage[]): Promise<RouterOutput> {
+  const client = getOpenAIClient();
+  const messages = convertAnthropicToOpenAI(toAnthropicMessages(history));
+  const tools = convertAnthropicToolsToOpenAI([ROUTE_TOOL]);
+
+  const response = await client.chat.completions.create({
+    model: MODEL_ROUTER,
+    max_tokens: 256,
+    messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
+    tools,
+    tool_choice: { type: "function", function: { name: "route_intent" } },
+  });
+
+  const toolCall = response.choices[0]?.message?.tool_calls?.[0];
+  if (!toolCall || toolCall.type !== "function") {
+    return { intent: "clarify", reason: "router produced no tool call" };
+  }
+
+  const parsed = JSON.parse(toolCall.function.arguments) as {
+    intent?: string;
+    reason?: string;
+  };
+  const intent = VALID_INTENTS.includes(parsed.intent as RouterIntent)
+    ? (parsed.intent as RouterIntent)
+    : "clarify";
+  const reason =
+    typeof parsed.reason === "string" && parsed.reason.length > 0
+      ? parsed.reason
+      : "no reason provided";
+  return { intent, reason };
 }
