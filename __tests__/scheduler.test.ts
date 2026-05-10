@@ -181,4 +181,49 @@ describe("Scheduler", () => {
       scheduler.stop();
     });
   });
+
+  describe("scheduleOnce", () => {
+    it("should run once and be removed", async () => {
+      const fn = vi.fn();
+      const id = scheduler.scheduleOnce("once-cron", "* * * * *", fn);
+      const task = scheduler.getTask(id)!;
+      task.nextRun = Date.now() - 1;
+      await scheduler.tick();
+      expect(fn).toHaveBeenCalledTimes(1);
+      expect(scheduler.getTask(id)).toBeUndefined();
+    });
+  });
+
+  describe("runCount tracking", () => {
+    it("should increment runCount on each execution", async () => {
+      const id = scheduler.schedule("counter", "* * * * *", vi.fn());
+      const task = scheduler.getTask(id)!;
+      task.nextRun = Date.now() - 1;
+      await scheduler.tick();
+      task.nextRun = Date.now() - 1;
+      await scheduler.tick();
+      expect(task.runCount).toBe(2);
+    });
+  });
+
+  describe("nextCronTime — additional cases", () => {
+    it("should handle comma-separated minutes", () => {
+      const now = new Date("2024-01-15T10:10:00.000Z").getTime();
+      const next = nextCronTime("15,45 * * * *", now);
+      const d = new Date(next);
+      expect(d.getMinutes()).toBe(15);
+    });
+
+    it("should handle specific hour (local time)", () => {
+      // Use a time where local hour is known: pick a time 2 hours before midnight local
+      const base = new Date();
+      base.setHours(0, 0, 0, 0); // midnight local today
+      const targetHour = 2;
+      base.setHours(targetHour - 1, 50, 0, 0); // 1h50 local — next match at 2:00
+      const next = nextCronTime(`0 ${targetHour} * * *`, base.getTime());
+      const d = new Date(next);
+      expect(d.getHours()).toBe(targetHour);
+      expect(d.getMinutes()).toBe(0);
+    });
+  });
 });
