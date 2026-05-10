@@ -320,4 +320,37 @@ describe("CommandQueue", () => {
     const queue = new CommandQueue();
     expect(queue.size).toBe(0);
   });
+
+  it("should use provided CommandBus", async () => {
+    const bus = new CommandBus();
+    const queue = new CommandQueue(bus);
+    expect(queue.bus_).toBe(bus);
+  });
+});
+
+describe("CommandBus — use() chaining", () => {
+  it("should return this for chaining", () => {
+    const bus = new CommandBus();
+    const result = bus.use(async (_cmd, next) => next());
+    expect(result).toBe(bus);
+  });
+});
+
+describe("CommandBus — getStats additional", () => {
+  it("should increment failed count on thrown error", async () => {
+    const bus = new CommandBus();
+    const cmd = { name: "bad", execute: async () => { throw new Error("fail"); } };
+    await bus.execute(cmd);
+    const stats = bus.getStats();
+    expect(stats.failed).toBe(1);
+  });
+
+  it("should increment undone count after undo", async () => {
+    const bus = new CommandBus();
+    const cmd = { name: "undoable", execute: async () => ({ success: true }), undo: async () => {} };
+    await bus.execute(cmd);
+    await bus.undo();
+    const stats = bus.getStats();
+    expect(stats.undone).toBe(1);
+  });
 });
