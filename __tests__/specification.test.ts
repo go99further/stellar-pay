@@ -221,3 +221,33 @@ describe("SpecificationEvaluator", () => {
     expect(result.violations[0]).toMatch(/below minimum/);
   });
 });
+
+describe("SpecificationEvaluator — additional", () => {
+  it("should return valid=true with empty violations for empty evaluator", () => {
+    const evaluator = new SpecificationEvaluator<Order>();
+    const result = evaluator.evaluate(validOrder);
+    expect(result.valid).toBe(true);
+    expect(result.violations).toHaveLength(0);
+  });
+
+  it("should chain add() calls", () => {
+    const evaluator = new SpecificationEvaluator<Order>();
+    const result = evaluator.add(minAmount).add(maxAmount);
+    expect(result).toBe(evaluator);
+  });
+});
+
+describe("Specification — or() violations", () => {
+  it("should return empty violations when or() is satisfied", () => {
+    const spec = minAmount.or(maxAmount);
+    expect(spec.explain(validOrder)).toHaveLength(0);
+  });
+});
+
+describe("Specification — not() violations", () => {
+  it("should return violation message when not() is not satisfied", () => {
+    const spec = minAmount.not();
+    const violations = spec.explain(validOrder);
+    expect(violations.length).toBeGreaterThan(0);
+  });
+});
