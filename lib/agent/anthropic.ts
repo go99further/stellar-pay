@@ -54,12 +54,12 @@ export function hasAnyKey(): boolean {
 // Model mappings (configurable via env vars, with fallback defaults)
 export function getModelRouter(): string {
   if (process.env.MODEL_ROUTER) return process.env.MODEL_ROUTER;
-  return useDeepSeek() ? "deepseek-v4-flash" : "claude-haiku-4-5-20251001";
+  return useDeepSeek() ? "deepseek-chat" : "claude-haiku-4-5-20251001";
 }
 
 export function getModelAnalytics(): string {
   if (process.env.MODEL_ANALYTICS) return process.env.MODEL_ANALYTICS;
-  return useDeepSeek() ? "deepseek-v4-flash" : "claude-sonnet-4-6";
+  return useDeepSeek() ? "deepseek-chat" : "claude-sonnet-4-6";
 }
 
 // Legacy exports (for backward compatibility)
