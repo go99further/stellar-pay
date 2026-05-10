@@ -197,3 +197,40 @@ describe("OutboxStore", () => {
     });
   });
 });
+
+describe("OutboxStore — additional coverage", () => {
+  it("getPending should return only pending messages", async () => {
+    const store = new OutboxStore({ maxAttempts: 3, retryDelayMs: 0 });
+    store.write("t", { v: 1 });
+    store.write("t", { v: 2 });
+    const publisher = { publish: async () => {} };
+    await store.processNext(publisher); // delivers first
+    expect(store.getPending()).toHaveLength(1);
+  });
+
+  it("getDelivered should return delivered messages", async () => {
+    const store = new OutboxStore({ maxAttempts: 3, retryDelayMs: 0 });
+    store.write("t", { v: 1 });
+    const publisher = { publish: async () => {} };
+    await store.processNext(publisher);
+    expect(store.getDelivered()).toHaveLength(1);
+    expect(store.getDelivered()[0].status).toBe("delivered");
+  });
+
+  it("getDead should return dead messages", async () => {
+    const store = new OutboxStore({ maxAttempts: 1, retryDelayMs: 0 });
+    store.write("t", { v: 1 });
+    const publisher = { publish: async () => { throw new Error("fail"); } };
+    await store.processNext(publisher);
+    expect(store.getDead()).toHaveLength(1);
+    expect(store.getDead()[0].status).toBe("dead");
+  });
+
+  it("write should return the created message", () => {
+    const store = new OutboxStore();
+    const msg = store.write("topic", { data: "hello" });
+    expect(msg.topic).toBe("topic");
+    expect(msg.status).toBe("pending");
+    expect(msg.id).toBeDefined();
+  });
+});
