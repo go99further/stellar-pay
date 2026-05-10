@@ -2,7 +2,7 @@ import { NextRequest } from "next/server";
 import { hasAnyKey } from "@/lib/agent/anthropic";
 import { DEFAULT_PERMISSION_CONTEXT, isOperationAllowed } from "@/lib/agent/permissions";
 import { classifyIntent } from "@/lib/agent/router";
-import { defaultRegistry } from "@/lib/agent/registry";
+import { dispatch } from "@/lib/agent/dispatcher";
 import { config } from "@/lib/agent/config";
 import { trimHistory } from "@/lib/agent/utils";
 import type { AgentMessage, AgentStreamEvent } from "@/lib/agent/types";
@@ -63,17 +63,13 @@ export async function POST(req: NextRequest) {
           return;
         }
 
-        const agent = defaultRegistry.get(routed.intent);
-        if (agent) {
-          send({ type: "agent_start", agent: routed.intent });
-          const t0 = Date.now();
-          for await (const evt of agent.run(history, walletAddress)) {
-            send(evt);
-          }
+        send({ type: "agent_start", agent: routed.intent });
+        const t0 = Date.now();
+        for await (const evt of dispatch(routed.intent, history, walletAddress)) {
+          send(evt);
+        }
+        if (routed.intent !== "clarify") {
           send({ type: "agent_complete", agent: routed.intent, elapsedMs: Date.now() - t0 });
-        } else {
-          send({ type: "text", delta: "Could you rephrase? I can answer questions about the AMM pool, execute swaps, manage liquidity, or analyze risks." });
-          send({ type: "done" });
         }
       } catch (err) {
         send({

@@ -4,7 +4,7 @@ import {
   getAnthropicClient,
   getOpenAIClient,
   hasDeepSeekKey,
-  MODEL_ANALYTICS,
+  getModelAnalytics,
 } from "./anthropic";
 import { tradingTools, runTool } from "./tools";
 import type { AgentMessage, AgentStreamEvent } from "./types";
@@ -14,7 +14,7 @@ import {
   convertAnthropicToolsToOpenAI,
 } from "./openai-adapter";
 
-const MODEL_TRADING = MODEL_ANALYTICS; // claude-sonnet-4-6
+const MODEL_TRADING = () => getModelAnalytics(); // Use function to get runtime value
 
 const SYSTEM_PROMPT = `You are the Trading Agent for a Stellar AMM on testnet. You help users execute swaps and manage liquidity positions.
 
@@ -523,7 +523,7 @@ async function* runTradingAnthropic(
 
   for (let turn = 0; turn < config.tradingMaxTurns; turn++) {
     const stream = client.messages.stream({
-      model: MODEL_TRADING,
+      model: MODEL_TRADING(),
       max_tokens: config.maxTokens,
       system: [
         {
@@ -618,11 +618,15 @@ async function* runTradingOpenAI(
 
   for (let turn = 0; turn < config.tradingMaxTurns; turn++) {
     const stream = await client.chat.completions.create({
-      model: MODEL_TRADING,
+      model: MODEL_TRADING(),
       max_tokens: config.maxTokens,
       messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
       tools,
       stream: true,
+      user: "stellar-pay",
+      // Disable DeepSeek thinking mode for now
+      // @ts-ignore - DeepSeek-specific parameter
+      ...(MODEL_TRADING().includes('deepseek') && { thinking: { type: "disabled" } })
     });
 
     let currentToolCalls: Map<

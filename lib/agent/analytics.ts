@@ -4,7 +4,7 @@ import {
   getAnthropicClient,
   getOpenAIClient,
   hasDeepSeekKey,
-  MODEL_ANALYTICS,
+  getModelAnalytics,
 } from "./anthropic";
 import { analyticsTools, runTool } from "./tools";
 import type { AgentMessage, AgentStreamEvent } from "./types";
@@ -42,7 +42,7 @@ async function* runAnalyticsAnthropic(
 
   for (let turn = 0; turn < config.analyticsMaxTurns; turn++) {
     const stream = client.messages.stream({
-      model: MODEL_ANALYTICS,
+      model: getModelAnalytics(),
       max_tokens: config.maxTokens,
       system: [
         {
@@ -125,11 +125,15 @@ async function* runAnalyticsOpenAI(
 
   for (let turn = 0; turn < config.analyticsMaxTurns; turn++) {
     const stream = await client.chat.completions.create({
-      model: MODEL_ANALYTICS,
+      model: getModelAnalytics(),
       max_tokens: config.maxTokens,
       messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
       tools,
       stream: true,
+      user: "stellar-pay",
+      // Disable DeepSeek thinking mode for now (causes issues with multi-turn)
+      // @ts-ignore - DeepSeek-specific parameter
+      ...(getModelAnalytics().includes('deepseek') && { thinking: { type: "disabled" } })
     });
 
     let currentToolCalls: Map<

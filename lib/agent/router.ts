@@ -3,7 +3,7 @@ import {
   getAnthropicClient,
   getOpenAIClient,
   hasDeepSeekKey,
-  MODEL_ROUTER,
+  getModelRouter,
   PROVIDER,
 } from "./anthropic";
 import type { AgentMessage, RouterOutput, RouterIntent } from "./types";
@@ -22,9 +22,9 @@ const ROUTE_TOOL: Anthropic.Tool = {
     properties: {
       intent: {
         type: "string",
-        enum: ["analytics", "trading", "security", "clarify"],
+        enum: ["analytics", "trading", "security", "clarify", "analytics_security"],
         description:
-          "analytics = read-only questions about pool, metrics, or events. trading = intent to swap / add / remove liquidity. security = wallet safety, contract audit, risk questions. clarify = ambiguous or off-topic.",
+          "analytics = read-only questions about pool, metrics, or events. trading = intent to swap / add / remove liquidity. security = wallet safety, contract audit, risk questions. analytics_security = questions that need BOTH pool data AND risk assessment simultaneously. clarify = ambiguous or off-topic.",
       },
       reason: {
         type: "string",
@@ -35,16 +35,18 @@ const ROUTE_TOOL: Anthropic.Tool = {
   },
 };
 
-const SYSTEM_PROMPT = `You are the router for a Stellar AMM assistant. Classify the user's latest message into one of four intents and always call the route_intent tool exactly once. Pick "clarify" when the message is ambiguous, empty, or unrelated to the AMM.
+const SYSTEM_PROMPT = `You are the router for a Stellar AMM assistant. Classify the user's latest message into one of five intents and always call the route_intent tool exactly once. Pick "clarify" when the message is ambiguous, empty, or unrelated to the AMM.
 
 Examples:
 - "What's the current TVL in the pool?" -> analytics
 - "Show me the last 10 swaps" -> analytics
 - "Swap 100 TKNA for TKNB" -> trading
 - "Is the AMM contract safe to use?" -> security
+- "Check pool stats and evaluate risk" -> analytics_security
+- "What's the liquidity and is it safe?" -> analytics_security
 - "hi" -> clarify`;
 
-const VALID_INTENTS: RouterIntent[] = ["analytics", "trading", "security", "clarify"];
+const VALID_INTENTS: RouterIntent[] = ["analytics", "trading", "security", "clarify", "analytics_security"];
 
 function toAnthropicMessages(history: AgentMessage[]): Anthropic.MessageParam[] {
   return history.map((m) => ({ role: m.role, content: m.content }));
@@ -67,7 +69,7 @@ export async function classifyIntent(history: AgentMessage[]): Promise<RouterOut
 async function classifyIntentAnthropic(history: AgentMessage[]): Promise<RouterOutput> {
   const client = getAnthropicClient();
   const response = await client.messages.create({
-    model: MODEL_ROUTER,
+    model: getModelRouter(),
     max_tokens: 256,
     system: SYSTEM_PROMPT,
     tools: [ROUTE_TOOL],
@@ -99,7 +101,7 @@ async function classifyIntentOpenAI(history: AgentMessage[]): Promise<RouterOutp
   const tools = convertAnthropicToolsToOpenAI([ROUTE_TOOL]);
 
   const response = await client.chat.completions.create({
-    model: MODEL_ROUTER,
+    model: getModelRouter(),
     max_tokens: 256,
     messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
     tools,
