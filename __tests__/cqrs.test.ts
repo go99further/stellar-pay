@@ -138,3 +138,36 @@ describe("Ok / Err helpers", () => {
     if (!r.ok) expect(r.error.message).toBe("oops");
   });
 });
+
+describe("CommandBus — duplicate registration", () => {
+  it("should overwrite handler on re-registration", async () => {
+    const bus = new CommandBus();
+    bus.register("Cmd", async () => Ok("first"));
+    bus.register("Cmd", async () => Ok("second"));
+    const result = await bus.dispatch<string>({ type: "Cmd", payload: {} });
+    expect(result.ok && result.value).toBe("second");
+  });
+});
+
+describe("QueryBus — duplicate registration", () => {
+  it("should overwrite handler on re-registration", async () => {
+    const bus = new QueryBus();
+    bus.register("Q", () => "first");
+    bus.register("Q", () => "second");
+    const result = await bus.query<string>({ type: "Q", payload: {} });
+    expect(result).toBe("second");
+  });
+});
+
+describe("Ok / Err — edge cases", () => {
+  it("Ok with undefined value", () => {
+    const r = Ok(undefined);
+    expect(r.ok).toBe(true);
+  });
+
+  it("Err with string message", () => {
+    const r = Err(new Error("bad input"));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toBeInstanceOf(Error);
+  });
+});
