@@ -107,6 +107,22 @@ describe("router — classifyIntent", () => {
       expect(result.reason).toContain("no tool call");
     });
 
+    it("should return analytics_security intent", async () => {
+      const mockCreate = vi.fn().mockResolvedValue(makeAnthropicResponse("analytics_security", "needs both"));
+      vi.mocked(getAnthropicClient).mockReturnValue({ messages: { create: mockCreate } } as never);
+
+      const result = await classifyIntent(makeHistory("Check pool stats and evaluate risk"));
+      expect(result.intent).toBe("analytics_security");
+    });
+
+    it("should return analytics_then_trading intent", async () => {
+      const mockCreate = vi.fn().mockResolvedValue(makeAnthropicResponse("analytics_then_trading", "check then trade"));
+      vi.mocked(getAnthropicClient).mockReturnValue({ messages: { create: mockCreate } } as never);
+
+      const result = await classifyIntent(makeHistory("Check the pool stats and then swap 100 TKNA"));
+      expect(result.intent).toBe("analytics_then_trading");
+    });
+
     it("should fall back to clarify for invalid intent value", async () => {
       const mockCreate = vi.fn().mockResolvedValue(makeAnthropicResponse("invalid_intent", "bad"));
       vi.mocked(getAnthropicClient).mockReturnValue({ messages: { create: mockCreate } } as never);
