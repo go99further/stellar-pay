@@ -133,3 +133,39 @@ describe("HistoryProcessor", () => {
     });
   });
 });
+
+describe("HistoryProcessor — additional coverage", () => {
+  it("clear should remove all processed messages", () => {
+    const processor = new HistoryProcessor();
+    processor.processHistory([
+      { role: "user", content: "Swap 10 TKNA for TKNB", timestamp: Date.now() },
+    ]);
+    processor.clear();
+    const stats = processor.getStatistics();
+    expect(stats.totalMessages).toBe(0);
+  });
+
+  it("historyProcessor should be a shared instance", async () => {
+    const { historyProcessor } = await import("../lib/agent/history/history-processor");
+    expect(historyProcessor).toBeInstanceOf(HistoryProcessor);
+  });
+
+  it("getKnowledgeGraph should return entities and facts", () => {
+    const processor = new HistoryProcessor();
+    processor.processHistory([
+      { role: "user", content: "Swap 100 TKNA for TKNB", timestamp: Date.now() },
+    ]);
+    const graph = processor.getKnowledgeGraph();
+    expect(graph.entities).toBeDefined();
+    expect(graph.facts).toBeDefined();
+  });
+
+  it("queryFacts should return facts for a subject", () => {
+    const processor = new HistoryProcessor();
+    processor.processHistory([
+      { role: "user", content: "Swap 100 TKNA for TKNB", timestamp: Date.now() },
+    ]);
+    const facts = processor.queryFacts("TKNA");
+    expect(Array.isArray(facts)).toBe(true);
+  });
+});
