@@ -231,4 +231,80 @@ describe("FeatureFlags", () => {
       expect(ff.getAllFlags()).toHaveLength(2);
     });
   });
+
+  describe("isEnabled", () => {
+    it("should return true for truthy flag value", () => {
+      ff.define({ name: "feat", defaultValue: true });
+      expect(ff.isEnabled("feat")).toBe(true);
+    });
+
+    it("should return false for falsy flag value", () => {
+      ff.define({ name: "feat", defaultValue: false });
+      expect(ff.isEnabled("feat")).toBe(false);
+    });
+
+    it("should return false for undefined flag", () => {
+      expect(ff.isEnabled("nonexistent")).toBe(false);
+    });
+  });
+
+  describe("evaluate — rule type: boolean", () => {
+    it("should return rule value when type is boolean and condition is true", () => {
+      ff.define({
+        name: "bool-rule",
+        defaultValue: false,
+        rules: [{ type: "boolean", value: true }],
+      });
+      expect(ff.evaluate("bool-rule")).toBe(true);
+    });
+  });
+
+  describe("evaluate — string and number defaults", () => {
+    it("should return string default", () => {
+      ff.define({ name: "theme", defaultValue: "dark" });
+      expect(ff.evaluate("theme")).toBe("dark");
+    });
+
+    it("should return number default", () => {
+      ff.define({ name: "limit", defaultValue: 100 });
+      expect(ff.evaluate("limit")).toBe(100);
+    });
+  });
+
+  describe("audit log — reason tracking", () => {
+    it("should record rule reason when rule matches", () => {
+      ff.define({
+        name: "rule-flag",
+        defaultValue: false,
+        rules: [{ type: "boolean", value: true }],
+      });
+      ff.evaluate("rule-flag");
+      const log = ff.getAuditLog("rule-flag");
+      expect(log[0].reason).toBe("rule");
+    });
+
+    it("should record default reason for undefined flag", () => {
+      ff.evaluate("undefined-flag");
+      const log = ff.getAuditLog("undefined-flag");
+      expect(log[0].reason).toBe("default");
+    });
+  });
+
+  describe("clearOverride", () => {
+    it("should clear global override and revert to default", () => {
+      ff.define({ name: "feat", defaultValue: false });
+      ff.setOverride("feat", true);
+      expect(ff.evaluate("feat")).toBe(true);
+      ff.clearOverride("feat");
+      expect(ff.evaluate("feat")).toBe(false);
+    });
+
+    it("should clear user-level override", () => {
+      ff.define({ name: "feat", defaultValue: false });
+      ff.setOverride("feat", true, "alice");
+      expect(ff.evaluate("feat", { userId: "alice" })).toBe(true);
+      ff.clearOverride("feat", "alice");
+      expect(ff.evaluate("feat", { userId: "alice" })).toBe(false);
+    });
+  });
 });
