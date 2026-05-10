@@ -242,4 +242,78 @@ describe("GitStyleStateManager", () => {
       expect(stateManager).toBeInstanceOf(GitStyleStateManager);
     });
   });
+
+  describe("getSnapshot", () => {
+    it("should return snapshot by id", () => {
+      const id = mgr.commit({ balance: 1000, tokens: [] }, "init");
+      const snap = mgr.getSnapshot(id);
+      expect(snap).not.toBeNull();
+      expect(snap!.id).toBe(id);
+    });
+
+    it("should return null for unknown id", () => {
+      expect(mgr.getSnapshot("nonexistent")).toBeNull();
+    });
+  });
+
+  describe("verifyIntegrity — tampered state", () => {
+    it("should return false when snapshot state is mutated externally", () => {
+      const id = mgr.commit({ balance: 1000, tokens: [] }, "init");
+      const snap = mgr.getSnapshot(id)!;
+      // Directly mutate the stored state to simulate tampering
+      (snap.state as { balance: number }).balance = 9999;
+      expect(mgr.verifyIntegrity(id)).toBe(false);
+    });
+  });
+
+  describe("merge — edge cases", () => {
+    it("should return null when merging unknown branch", () => {
+      mgr.commit({ balance: 1000, tokens: [] }, "init");
+      expect(mgr.merge("nonexistent", "merge")).toBeNull();
+    });
+
+    it("should return null when source branch has no head", () => {
+      // createBranch inherits current head — need a branch with no commits at all
+      // The only way to get head="" is to create a branch before any commits
+      const freshMgr = new GitStyleStateManager<TestState>();
+      freshMgr.createBranch("empty-branch"); // head="" since no commits yet
+      freshMgr.commit({ balance: 1000, tokens: [] }, "init"); // commit on main
+      // empty-branch still has head="" (empty string is falsy)
+      expect(freshMgr.merge("empty-branch", "merge empty")).toBeNull();
+    });
+  });
+
+  describe("findByTag — multiple tags", () => {
+    it("should return all snapshots with a given tag", () => {
+      const id1 = mgr.commit({ balance: 1000, tokens: [] }, "a");
+      const id2 = mgr.commit({ balance: 900, tokens: [] }, "b");
+      mgr.tag(id1, "release");
+      mgr.tag(id2, "release");
+      const found = mgr.findByTag("release");
+      expect(found).toHaveLength(2);
+    });
+
+    it("should return empty array when no snapshots have the tag", () => {
+      mgr.commit({ balance: 1000, tokens: [] }, "init");
+      expect(mgr.findByTag("nonexistent-tag")).toHaveLength(0);
+    });
+  });
+
+  describe("diff — nested objects", () => {
+    it("should detect nested field modifications", () => {
+      const id1 = mgr.commit({ balance: 1000, tokens: ["TKNA"] } as unknown as { balance: number; tokens: string[]; nested?: { x: number } }, "a");
+      const id2 = mgr.commit({ balance: 1000, tokens: ["TKNA"], nested: { x: 42 } } as unknown as { balance: number; tokens: string[]; nested?: { x: number } }, "b");
+      const d = mgr.diff(id1, id2)!;
+      expect(d.summary.additions).toBeGreaterThan(0);
+    });
+  });
+
+  describe("getHistory — limit", () => {
+    it("should return all commits when limit exceeds count", () => {
+      mgr.commit({ balance: 1000, tokens: [] }, "a");
+      mgr.commit({ balance: 900, tokens: [] }, "b");
+      const history = mgr.getHistory(100);
+      expect(history).toHaveLength(2);
+    });
+  });
 });
