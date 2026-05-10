@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { Bulkhead, BulkheadRegistry } from "../lib/agent/bulkhead";
+import { Bulkhead, BulkheadRegistry, type BulkheadStats } from "../lib/agent/bulkhead";
 
 describe("Bulkhead", () => {
   describe("basic execution", () => {
@@ -99,7 +99,7 @@ describe("Bulkhead", () => {
   describe("getStats", () => {
     it("should report active count during execution", async () => {
       const bh = new Bulkhead({ maxConcurrent: 3, maxQueue: 10 });
-      let statsSnapshot: ReturnType<typeof bh.getStats> | null = null;
+      let statsSnapshot: BulkheadStats | null = null;
 
       const task = bh.execute(async () => {
         statsSnapshot = bh.getStats();
@@ -107,7 +107,7 @@ describe("Bulkhead", () => {
       });
 
       await task;
-      expect(statsSnapshot?.active).toBe(1);
+      expect(statsSnapshot!.active).toBe(1);
     });
 
     it("should report queued count", async () => {

@@ -28,7 +28,7 @@ describe("ReactiveStore", () => {
   let store: ReactiveStore<CounterState>;
 
   beforeEach(() => {
-    store = createStore<CounterState>({ count: 0, lastAction: "" }, counterReducer);
+    store = createStore<CounterState, CounterAction>({ count: 0, lastAction: "" }, counterReducer);
   });
 
   describe("getState / dispatch", () => {

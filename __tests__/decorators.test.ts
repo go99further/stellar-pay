@@ -97,7 +97,7 @@ describe("withMemo", () => {
   it("should support custom key function", async () => {
     let calls = 0;
     const fn = async (obj: { id: number }) => { calls++; return obj.id; };
-    const memoized = withMemo(fn, (obj) => String(obj.id));
+    const memoized = withMemo(fn, (obj: any) => String(obj.id));
     await memoized({ id: 1 });
     await memoized({ id: 1 }); // same key
     expect(calls).toBe(1);
@@ -155,13 +155,13 @@ describe("withTimeout", () => {
 describe("withValidation", () => {
   it("should pass when validation returns null", async () => {
     const fn = async (x: number) => x * 2;
-    const validated = withValidation(fn, (x) => (x > 0 ? null : "must be positive"));
+    const validated = withValidation(fn, (x: any) => (x > 0 ? null : "must be positive"));
     expect(await validated(5)).toBe(10);
   });
 
   it("should throw when validation fails", async () => {
     const fn = async (x: number) => x * 2;
-    const validated = withValidation(fn, (x) => (x > 0 ? null : "must be positive"));
+    const validated = withValidation(fn, (x: any) => (x > 0 ? null : "must be positive"));
     await expect(validated(-1)).rejects.toThrow(/must be positive/);
   });
 

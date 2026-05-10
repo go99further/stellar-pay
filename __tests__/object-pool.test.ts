@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { ObjectPool } from "../lib/agent/object-pool";
+import { ObjectPool, type PoolOptions } from "../lib/agent/object-pool";
 
 let counter = 0;
-function makePool(opts: Partial<Parameters<typeof ObjectPool>[0]> = {}) {
+function makePool(opts?: Partial<PoolOptions<{ id: number }>>) {
   return new ObjectPool<{ id: number }>({
     factory: () => ({ id: ++counter }),
     ...opts,

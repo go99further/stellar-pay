@@ -208,10 +208,10 @@ export class ReactiveStore<TState> {
 /**
  * Create a store with typed actions
  */
-export function createStore<TState>(
+export function createStore<TState, TAction extends Action = Action>(
   initialState: TState,
-  reducer: Reducer<TState>,
+  reducer: Reducer<TState, TAction>,
   config?: Partial<StoreConfig<TState>>
 ): ReactiveStore<TState> {
-  return new ReactiveStore(initialState, reducer, config);
+  return new ReactiveStore(initialState, reducer as Reducer<TState>, config);
 }

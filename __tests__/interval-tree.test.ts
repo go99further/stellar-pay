@@ -102,26 +102,26 @@ describe("IntervalTree", () => {
 
   describe("overlaps", () => {
     it("should return true for overlapping intervals", () => {
-      const a: Interval = { start: 1, end: 5 };
-      const b: Interval = { start: 3, end: 8 };
+      const a: Interval<string> = { start: 1, end: 5 };
+      const b: Interval<string> = { start: 3, end: 8 };
       expect(tree.overlaps(a, b)).toBe(true);
     });
 
     it("should return false for non-overlapping intervals", () => {
-      const a: Interval = { start: 1, end: 3 };
-      const b: Interval = { start: 5, end: 8 };
+      const a: Interval<string> = { start: 1, end: 3 };
+      const b: Interval<string> = { start: 5, end: 8 };
       expect(tree.overlaps(a, b)).toBe(false);
     });
 
     it("should return true for touching intervals", () => {
-      const a: Interval = { start: 1, end: 5 };
-      const b: Interval = { start: 5, end: 8 };
+      const a: Interval<string> = { start: 1, end: 5 };
+      const b: Interval<string> = { start: 5, end: 8 };
       expect(tree.overlaps(a, b)).toBe(true);
     });
 
     it("should return true when one contains the other", () => {
-      const a: Interval = { start: 1, end: 10 };
-      const b: Interval = { start: 3, end: 7 };
+      const a: Interval<string> = { start: 1, end: 10 };
+      const b: Interval<string> = { start: 3, end: 7 };
       expect(tree.overlaps(a, b)).toBe(true);
     });
   });

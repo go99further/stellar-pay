@@ -65,7 +65,7 @@ export class ErrorRecoveryLoop {
     };
 
     if (this.config.useCircuitBreaker) {
-      this.circuitBreaker = new CircuitBreaker(5, 60000, 2);
+      this.circuitBreaker = new CircuitBreaker({ failureThreshold: 5, resetTimeout: 60000, successThreshold: 2 });
     }
   }
 

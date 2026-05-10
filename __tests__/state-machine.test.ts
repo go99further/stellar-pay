@@ -144,8 +144,8 @@ describe("StateMachine", () => {
         initial: "red",
         transitions: [{ from: "red", event: "timer", to: "green" }],
         states: {
-          red: { onExit: () => order.push("exit-red") },
-          green: { onEnter: () => order.push("enter-green") },
+          red: { onExit: () => { order.push("exit-red"); } },
+          green: { onEnter: () => { order.push("enter-green"); } },
         },
       });
       await sm.send("timer");

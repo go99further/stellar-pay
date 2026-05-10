@@ -17,7 +17,7 @@ describe("TaskScheduler", () => {
       const id = scheduler.schedule({
         name: "simple",
         handler: async () => "result",
-        priority: "normal",
+        priority: "normal" as const,
       });
 
       const record = await scheduler.runNow(id);
@@ -119,14 +119,14 @@ describe("TaskScheduler", () => {
       const depId = scheduler.schedule({
         name: "dep",
         handler: async () => { order.push("dep"); },
-        priority: "normal",
+        priority: "normal" as const,
       });
 
       const mainId = scheduler.schedule({
         name: "main",
         handler: async () => { order.push("main"); },
         dependencies: [depId],
-        priority: "normal",
+        priority: "normal" as const,
       });
 
       scheduler.start();
@@ -145,20 +145,20 @@ describe("TaskScheduler", () => {
         scheduler.schedule({
           name: `blocker${i}`,
           handler: () => new Promise((r) => setTimeout(r, 200)),
-          priority: "normal",
+          priority: "normal" as const,
         })
       );
 
       const lowId = scheduler.schedule({
         name: "low",
         handler: async () => { order.push("low"); },
-        priority: "low",
+        priority: "low" as const,
       });
 
       const critId = scheduler.schedule({
         name: "crit",
         handler: async () => { order.push("critical"); },
-        priority: "critical",
+        priority: "critical" as const,
       });
 
       scheduler.start();

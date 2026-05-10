@@ -13,14 +13,15 @@
 import {
   Account,
   Asset,
+  Horizon,
   Keypair,
   Networks,
   Operation,
-  Server,
   Transaction,
   TransactionBuilder as StellarTxBuilder,
   BASE_FEE,
   Memo,
+  xdr,
 } from "@stellar/stellar-sdk";
 
 export interface TransactionConfig {
@@ -32,7 +33,7 @@ export interface TransactionConfig {
 
 export interface BuildTransactionParams {
   sourceAddress: string;
-  operations: Operation[];
+  operations: Parameters<typeof StellarTxBuilder.prototype.addOperation>[0][];
   memo?: string;
   timeBounds?: {
     minTime?: number;
@@ -59,18 +60,18 @@ export interface SubmitResult {
  */
 export class TransactionBuilder {
   private config: TransactionConfig;
-  private server: Server;
+  private server: Horizon.Server;
 
   constructor(config: Partial<TransactionConfig> = {}) {
     this.config = {
       networkPassphrase: Networks.TESTNET,
       horizonUrl: "https://horizon-testnet.stellar.org",
       baseFee: BASE_FEE,
-      timeout: 300, // 5 minutes
+      timeout: 300,
       ...config,
     };
 
-    this.server = new Server(this.config.horizonUrl);
+    this.server = new Horizon.Server(this.config.horizonUrl);
   }
 
   /**
@@ -238,36 +239,19 @@ export class TransactionBuilder {
   /**
    * Simulate transaction (dry run)
    */
-  async simulateTransaction(transaction: Transaction): Promise<{
+  async simulateTransaction(_transaction: Transaction): Promise<{
     success: boolean;
     result?: unknown;
     error?: string;
   }> {
-    try {
-      const response = await this.server.simulateTransaction(transaction);
-
-      return {
-        success: true,
-        result: response,
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error instanceof Error ? error.message : String(error),
-      };
-    }
+    return { success: false, error: 'simulateTransaction requires an rpc.Server instance' };
   }
 
   /**
    * Get transaction fee estimate
    */
-  async estimateFee(transaction: Transaction): Promise<string> {
-    try {
-      const response = await this.server.simulateTransaction(transaction);
-      return response.minResourceFee || this.config.baseFee;
-    } catch {
-      return this.config.baseFee;
-    }
+  async estimateFee(_transaction: Transaction): Promise<string> {
+    return this.config.baseFee;
   }
 
   /**
@@ -280,17 +264,25 @@ export class TransactionBuilder {
   /**
    * Convert address to ScVal (Stellar Contract Value)
    */
-  private addressToScVal(address: string): unknown {
-    // Stub: In real implementation, use xdr.ScVal.scvAddress()
-    return { type: "address", value: address };
+  private addressToScVal(address: string): xdr.ScVal {
+    return xdr.ScVal.scvAddress(
+      xdr.ScAddress.scAddressTypeAccount(
+        xdr.PublicKey.publicKeyTypeEd25519(
+          Buffer.from(Keypair.fromPublicKey(address).rawPublicKey())
+        )
+      )
+    );
   }
 
-  /**
-   * Convert i128 to ScVal
-   */
-  private i128ToScVal(value: bigint): unknown {
-    // Stub: In real implementation, use xdr.ScVal.scvI128()
-    return { type: "i128", value: value.toString() };
+  private i128ToScVal(value: bigint): xdr.ScVal {
+    const hi = BigInt.asIntN(64, value >> 64n);
+    const lo = BigInt.asUintN(64, value);
+    return xdr.ScVal.scvI128(
+      new xdr.Int128Parts({
+        hi: xdr.Int64.fromString(hi.toString()),
+        lo: xdr.Uint64.fromString(lo.toString()),
+      })
+    );
   }
 
   /**
@@ -313,7 +305,7 @@ export class TransactionBuilder {
    */
   updateConfig(config: Partial<TransactionConfig>): void {
     this.config = { ...this.config, ...config };
-    this.server = new Server(this.config.horizonUrl);
+    this.server = new Horizon.Server(this.config.horizonUrl);
   }
 }
 

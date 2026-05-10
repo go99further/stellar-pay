@@ -75,17 +75,17 @@ describe("Saga", () => {
         .step({
           name: "reserve",
           execute: (c) => { c.reserved = true; },
-          compensate: () => order.push("unreserve"),
+          compensate: () => { order.push("unreserve"); },
         })
         .step({
           name: "charge",
           execute: (c) => { c.charged = true; },
-          compensate: () => order.push("refund"),
+          compensate: () => { order.push("refund"); },
         })
         .step({
           name: "notify",
           execute: () => { throw new Error("notify failed"); },
-          compensate: () => order.push("unnotify"),
+          compensate: () => { order.push("unnotify"); },
         })
         .execute(ctx);
 
@@ -188,7 +188,7 @@ describe("Saga", () => {
       const order: string[] = [];
       const ctx = {};
       const result = await new Saga()
-        .step({ name: "s1", execute: () => {}, compensate: () => order.push("comp-s1") })
+        .step({ name: "s1", execute: () => {}, compensate: () => { order.push("comp-s1"); } })
         .step({ name: "s2", execute: () => {}, compensate: () => { throw new Error("comp-fail"); } })
         .step({ name: "s3", execute: () => { throw new Error("fail"); } })
         .execute(ctx);

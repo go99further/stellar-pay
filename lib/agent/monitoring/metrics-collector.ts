@@ -424,7 +424,7 @@ export function timed(metricName?: string) {
     descriptor: PropertyDescriptor
   ) {
     const originalMethod = descriptor.value;
-    const name = metricName || `${target.constructor.name}.${propertyKey}`;
+    const name = metricName || `${(target as { constructor: { name: string } }).constructor.name}.${propertyKey}`;
 
     descriptor.value = async function (...args: unknown[]) {
       return metrics.timerAsync(name, () => originalMethod.apply(this, args));

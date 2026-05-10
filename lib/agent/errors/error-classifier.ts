@@ -325,7 +325,7 @@ export class ErrorClassifier {
     };
 
     // Extract additional properties
-    const errorObj = error as Record<string, unknown>;
+    const errorObj = error as unknown as Record<string, unknown>;
     for (const key of Object.keys(errorObj)) {
       if (key !== "name" && key !== "message" && key !== "stack") {
         metadata[key] = errorObj[key];

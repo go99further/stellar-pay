@@ -40,7 +40,7 @@ describe("Result Type", () => {
   describe("mapOk", () => {
     it("should map Ok value", () => {
       const result = Ok(10);
-      const mapped = mapOk(result, (x) => x * 2);
+      const mapped = mapOk(result, (x: number) => x * 2);
       expect(mapped.ok).toBe(true);
       if (mapped.ok) {
         expect(mapped.value).toBe(20);
@@ -50,7 +50,7 @@ describe("Result Type", () => {
     it("should not map Err value", () => {
       const error = AgentErrors.validation("field", "message");
       const result: Result<number> = Err(error);
-      const mapped = mapOk(result, (x) => x * 2);
+      const mapped = mapOk(result, (x: number) => x * 2);
       expect(mapped.ok).toBe(false);
     });
   });
@@ -76,7 +76,7 @@ describe("Result Type", () => {
   describe("andThen", () => {
     it("should chain Ok results", () => {
       const result = Ok(10);
-      const chained = andThen(result, (x) => Ok(x * 2));
+      const chained = andThen(result, (x: number) => Ok(x * 2));
       expect(chained.ok).toBe(true);
       if (chained.ok) {
         expect(chained.value).toBe(20);
@@ -86,7 +86,7 @@ describe("Result Type", () => {
     it("should short-circuit on Err", () => {
       const error = AgentErrors.validation("field", "message");
       const result: Result<number> = Err(error);
-      const chained = andThen(result, (x) => Ok(x * 2));
+      const chained = andThen(result, (x: number) => Ok(x * 2));
       expect(chained.ok).toBe(false);
     });
   });

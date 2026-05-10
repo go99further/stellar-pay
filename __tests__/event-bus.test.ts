@@ -43,7 +43,7 @@ describe("EventBus", () => {
 
     it("should pass typed event payload", async () => {
       const received: Array<{ id: string; name: string }> = [];
-      bus.on("user.created", (e) => received.push(e));
+      bus.on("user.created", (e) => { received.push(e); });
       await bus.emit("user.created", { id: "1", name: "Alice" });
       expect(received[0]).toEqual({ id: "1", name: "Alice" });
     });
@@ -118,7 +118,7 @@ describe("EventBus", () => {
         order.push("middleware");
         next();
       });
-      bus.on("ping", () => order.push("handler"));
+      bus.on("ping", () => { order.push("handler"); });
       await bus.emit("ping", { ts: 1 });
       expect(order).toEqual(["middleware", "handler"]);
     });
@@ -127,7 +127,7 @@ describe("EventBus", () => {
       const order: string[] = [];
       bus.use((_e, _t, next) => { order.push("mw1"); next(); });
       bus.use((_e, _t, next) => { order.push("mw2"); next(); });
-      bus.on("ping", () => order.push("handler"));
+      bus.on("ping", () => { order.push("handler"); });
       await bus.emit("ping", { ts: 1 });
       expect(order).toEqual(["mw1", "mw2", "handler"]);
     });
@@ -214,7 +214,7 @@ describe("EventBus", () => {
   describe("emitSync", () => {
     it("should call handlers synchronously", () => {
       const results: number[] = [];
-      bus.on("ping", (e) => results.push(e.ts));
+      bus.on("ping", (e) => { results.push(e.ts); });
       bus.emitSync("ping", { ts: 99 });
       expect(results).toEqual([99]);
     });

@@ -103,7 +103,7 @@ export class OperationQueue {
       metadata: options.metadata || {},
     };
 
-    this.operations.set(operationId, operation);
+    this.operations.set(operationId, operation as unknown as Operation);
 
     // Start processing if not already running
     if (!this.isProcessing) {

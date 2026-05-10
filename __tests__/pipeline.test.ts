@@ -61,7 +61,7 @@ describe("Pipeline", () => {
     it("should call side effect without changing value", async () => {
       const seen: number[] = [];
       const result = await new Pipeline<number>()
-        .tap((n) => seen.push(n))
+        .tap((n) => { seen.push(n); })
         .pipe((n) => n * 2)
         .run(5);
       expect(result).toBe(10);

@@ -47,11 +47,11 @@ export class EventBus<EventMap extends Record<string, unknown> = Record<string, 
   }
 
   on<K extends keyof EventMap & string>(topic: K, handler: EventHandler<EventMap[K]>): Unsubscribe {
-    return this.subscribe(topic, handler, false);
+    return this.subscribe(topic, handler as EventHandler<unknown>, false);
   }
 
   once<K extends keyof EventMap & string>(topic: K, handler: EventHandler<EventMap[K]>): Unsubscribe {
-    return this.subscribe(topic, handler, true);
+    return this.subscribe(topic, handler as EventHandler<unknown>, true);
   }
 
   onPattern(pattern: string, handler: EventHandler<unknown>): Unsubscribe {

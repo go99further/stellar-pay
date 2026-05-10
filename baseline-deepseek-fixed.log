@@ -1,0 +1,12 @@
+Using API: DeepSeek
+
+🔬 Starting baseline performance measurement...
+
+📊 Scenario 1: Single Agent (Analytics)
+  Run 1/20: 26764ms  Run 2/20: 27376ms  Run 3/20: 26002ms  Run 4/20: 21157ms  Run 5/20: 26055ms  Run 6/20: 16698ms  Run 7/20: 27129ms  Run 8/20: 17144ms  Run 9/20: 27820ms  Run 10/20: 21711ms  Run 11/20: 27167ms  Run 12/20: 26970ms  Run 13/20: 27518ms  Run 14/20: 26515ms  Run 15/20: 21174ms  Run 16/20: 21577ms  Run 17/20: 27721ms  Run 18/20: 26910ms  Run 19/20: 21750ms  Run 20/20: 20591ms
+
+📊 Scenario 2: Single Agent (Trading)
+  Run 1/20: 36620ms  Run 2/20: 37730ms  Run 3/20: 29958ms  Run 4/20: 24024ms  Run 5/20: 35297ms  Run 6/20: 37614ms  Run 7/20: 29803ms  Run 8/20: 36712ms  Run 9/20: 29376ms  Run 10/20: 29693ms  Run 11/20: 28649ms  Run 12/20: 37736ms  Run 13/20: 28974ms  Run 14/20: 29361ms  Run 15/20: 30150ms  Run 16/20: 36402ms  Run 17/20: 30382ms  Run 18/20: 29762ms  Run 19/20: 22450ms  Run 20/20: 29612ms
+
+📊 Scenario 3: Two Agents Serial (Analytics + Security)
+  Run 1/20: 34383ms  Run 2/20: 39796ms  Run 3/20: 57506ms  Run 4/20: 41019ms  Run 5/20: 50015ms  Run 6/20: 43912ms  Run 7/20: 45739ms  Run 8/20: 49504ms  Run 9/20: 40701ms  Run 10/20: 41478ms  Run 11/20: 35917ms  Run 12/20: 33277ms  Run 13/20: 53040ms  Run 14/20: 56385ms  Run 15/20: 42529ms  Run 16/20: 55751ms  Run 17/20: 40054ms  Run 18/20: 49541ms

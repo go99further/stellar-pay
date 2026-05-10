@@ -10,7 +10,7 @@
  * Pattern: Wrap → Intercept → Execute → Post-process
  */
 
-export type AnyFn = (...args: unknown[]) => unknown;
+export type AnyFn = (...args: any[]) => any;
 
 // --- timing decorator ---
 export function withTiming<T extends AnyFn>(

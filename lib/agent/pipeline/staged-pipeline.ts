@@ -244,13 +244,14 @@ export function createSwapPipeline(
     { type: "swap" }
   );
 
-  // Stage 1: Validation
+  // Stage 1: Validation — stores original input in context for downstream stages
   pipeline.addStage<SwapInput, ValidationResult>({
     name: "validation",
     validate: async (input) => {
       return input.amountIn > 0n && input.minAmountOut > 0n;
     },
-    execute: async (input) => {
+    execute: async (input, context) => {
+      context.metadata.swapInput = input;
       // Call SwapValidator
       const errors: string[] = [];
 
@@ -269,12 +270,13 @@ export function createSwapPipeline(
     },
   });
 
-  // Stage 2: Simulation
-  pipeline.addStage<SwapInput, SimulationResult>({
+  // Stage 2: Simulation — receives ValidationResult from stage 1, reads original input from context
+  pipeline.addStage<ValidationResult, SimulationResult>({
     name: "simulation",
-    execute: async (input) => {
-      // Call contract simulate_swap
-      const expectedOutput = input.amountIn * 99n / 100n; // Stub: 1% fee
+    execute: async (_input, context) => {
+      // Call contract simulate_swap — original SwapInput is in context.metadata.swapInput
+      const swapInput = context.metadata.swapInput as SwapInput;
+      const expectedOutput = (swapInput.amountIn * 99n) / 100n; // Stub: 1% fee
       const priceImpact = 1.0; // Stub
 
       return {

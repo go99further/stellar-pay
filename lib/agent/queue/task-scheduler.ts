@@ -94,16 +94,30 @@ export class TaskScheduler {
   /**
    * Schedule a task
    */
-  schedule<T>(definition: Omit<TaskDefinition<T>, "id"> & { id?: string }): string {
+  schedule<T>(definition: Omit<TaskDefinition<T>, "id" | "maxRetries" | "retryDelay" | "timeout" | "tags" | "priority"> & {
+    id?: string;
+    maxRetries?: number;
+    retryDelay?: number;
+    timeout?: number;
+    tags?: string[];
+    priority?: TaskPriority;
+    runAt?: number;
+    cronExpression?: string;
+    dependencies?: string[];
+  }): string {
     const id = definition.id ?? `task_${Date.now()}_${Math.random().toString(36).slice(2, 9)}`;
     const fullDef: TaskDefinition<T> = {
-      maxRetries: 3,
-      retryDelay: 1000,
-      timeout: 30000,
-      priority: "normal",
-      tags: [],
-      ...definition,
+      name: definition.name,
+      handler: definition.handler,
       id,
+      maxRetries: definition.maxRetries ?? 3,
+      retryDelay: definition.retryDelay ?? 1000,
+      timeout: definition.timeout ?? 30000,
+      priority: definition.priority ?? "normal",
+      tags: definition.tags ?? [],
+      runAt: definition.runAt,
+      cronExpression: definition.cronExpression,
+      dependencies: definition.dependencies,
     };
 
     this.tasks.set(id, {
@@ -121,7 +135,7 @@ export class TaskScheduler {
    * Schedule a one-shot delayed task
    */
   delay<T>(name: string, handler: () => Promise<T>, delayMs: number, priority: TaskPriority = "normal"): string {
-    return this.schedule({ name, handler, runAt: Date.now() + delayMs, priority });
+    return this.schedule<T>({ name, handler, runAt: Date.now() + delayMs, priority, maxRetries: 0, retryDelay: 0, timeout: 0, tags: [] });
   }
 
   /**
@@ -175,7 +189,7 @@ export class TaskScheduler {
     for (const record of this.tasks.values()) {
       counts.total++;
       if (record.status in counts) {
-        (counts as Record<string, number>)[record.status]++;
+      (counts as unknown as Record<string, number>)[record.status]++;
       }
     }
     return counts;

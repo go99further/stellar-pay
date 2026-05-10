@@ -10,8 +10,11 @@
  * Pattern: Request → Cache Check → Execute → Cache → Return
  */
 
-import { Server, ServerApi } from "@stellar/stellar-sdk";
+import { Horizon } from "@stellar/stellar-sdk";
 import { CircuitBreaker } from "../agent/circuit-breaker";
+
+const Server = Horizon.Server;
+type Server = InstanceType<typeof Horizon.Server>;
 
 export interface ClientConfig {
   horizonUrl: string;
@@ -69,7 +72,7 @@ export class StellarClient {
     });
 
     if (this.config.useCircuitBreaker) {
-      this.circuitBreaker = new CircuitBreaker(5, 60000, 2);
+      this.circuitBreaker = new CircuitBreaker({ failureThreshold: 5, resetTimeout: 60000, successThreshold: 2 });
     }
 
     // Start cache cleanup timer
@@ -79,7 +82,7 @@ export class StellarClient {
   /**
    * Load account with caching
    */
-  async loadAccount(address: string): Promise<ServerApi.AccountRecord> {
+  async loadAccount(address: string): Promise<Horizon.AccountResponse> {
     const cacheKey = `account:${address}`;
 
     return this.withCache(
@@ -92,7 +95,7 @@ export class StellarClient {
   /**
    * Get account balances
    */
-  async getBalances(address: string): Promise<ServerApi.BalanceLine[]> {
+  async getBalances(address: string): Promise<Horizon.HorizonApi.BalanceLine[]> {
     const account = await this.loadAccount(address);
     return account.balances;
   }
@@ -115,7 +118,7 @@ export class StellarClient {
   /**
    * Get transaction by hash
    */
-  async getTransaction(hash: string): Promise<ServerApi.TransactionRecord> {
+  async getTransaction(hash: string): Promise<Horizon.ServerApi.TransactionRecord> {
     const cacheKey = `tx:${hash}`;
 
     return this.withCache(
@@ -131,7 +134,7 @@ export class StellarClient {
   async getRecentTransactions(
     address: string,
     limit: number = 10
-  ): Promise<ServerApi.TransactionRecord[]> {
+  ): Promise<Horizon.ServerApi.TransactionRecord[]> {
     const cacheKey = `txs:${address}:${limit}`;
 
     return this.withCache(
@@ -149,20 +152,20 @@ export class StellarClient {
   /**
    * Get ledger info
    */
-  async getLedger(sequence: number): Promise<ServerApi.LedgerRecord> {
+  async getLedger(sequence: number): Promise<Horizon.ServerApi.LedgerRecord> {
     const cacheKey = `ledger:${sequence}`;
 
     return this.withCache(
       cacheKey,
-      () => this.withRetry(() => this.server.ledgers().ledger(sequence).call()),
-      this.config.cacheTTL * 10 // Cache ledgers longer
+      () => this.withRetry(() => this.server.ledgers().ledger(sequence).call() as unknown as Promise<Horizon.ServerApi.LedgerRecord>),
+      this.config.cacheTTL * 10
     );
   }
 
   /**
    * Get latest ledger
    */
-  async getLatestLedger(): Promise<ServerApi.LedgerRecord> {
+  async getLatestLedger(): Promise<Horizon.ServerApi.LedgerRecord> {
     // Don't cache latest ledger
     return this.withRetry(() =>
       this.server.ledgers().order("desc").limit(1).call().then((r) => r.records[0])
@@ -172,18 +175,16 @@ export class StellarClient {
   /**
    * Submit transaction
    */
-  async submitTransaction(xdr: string): Promise<ServerApi.SubmitTransactionResponse> {
-    // Never cache transaction submissions
-    return this.withRetry(() => this.server.submitTransaction(xdr as any));
+  async submitTransaction(xdr: string): Promise<Horizon.HorizonApi.SubmitTransactionResponse> {
+    return this.withRetry(() => this.server.submitTransaction(xdr as unknown as Parameters<Server["submitTransaction"]>[0]));
   }
 
   /**
    * Batch load accounts
    */
-  async batchLoadAccounts(addresses: string[]): Promise<Map<string, ServerApi.AccountRecord>> {
+  async batchLoadAccounts(addresses: string[]): Promise<Map<string, Horizon.AccountResponse>> {
     if (!this.config.batchEnabled) {
-      // Load sequentially if batching disabled
-      const results = new Map<string, ServerApi.AccountRecord>();
+      const results = new Map<string, Horizon.AccountResponse>();
       for (const address of addresses) {
         try {
           const account = await this.loadAccount(address);
@@ -199,7 +200,7 @@ export class StellarClient {
     const promises = addresses.map((address) => this.loadAccount(address));
     const accounts = await Promise.allSettled(promises);
 
-    const results = new Map<string, ServerApi.AccountRecord>();
+    const results = new Map<string, Horizon.AccountResponse>();
     addresses.forEach((address, index) => {
       const result = accounts[index];
       if (result.status === "fulfilled") {

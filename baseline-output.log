@@ -1,0 +1,29 @@
+Using API: Anthropic
+
+🔬 Starting baseline performance measurement...
+
+📊 Scenario 1: Single Agent (Analytics)
+PermissionDeniedError: 403 Your request was blocked.
+    at APIError.generate (/Users/laoshiwozhendetaixiangjinbule/github/stellar-pay/node_modules/@anthropic-ai/sdk/src/error.ts:71:14)
+    at Anthropic.makeStatusError (/Users/laoshiwozhendetaixiangjinbule/github/stellar-pay/node_modules/@anthropic-ai/sdk/src/core.ts:454:21)
+    at Anthropic.makeRequest (/Users/laoshiwozhendetaixiangjinbule/github/stellar-pay/node_modules/@anthropic-ai/sdk/src/core.ts:518:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5) {
+  status: 403,
+  headers: {
+    'alt-svc': 'h3=":443"; ma=86400',
+    'cache-control': 'private, max-age=0, no-store, no-cache, must-revalidate, post-check=0, pre-check=0',
+    'cf-ray': '9f97ee26adac8446-TPE',
+    connection: 'keep-alive',
+    'content-length': '25',
+    'content-type': 'text/plain',
+    date: 'Sun, 10 May 2026 09:31:19 GMT',
+    expires: 'Thu, 01 Jan 1970 00:00:01 GMT',
+    nel: '{"report_to":"cf-nel","success_fraction":0.0,"max_age":604800}',
+    'referrer-policy': 'same-origin',
+    'report-to': '{"group":"cf-nel","max_age":604800,"endpoints":[{"url":"https://a.nel.cloudflare.com/report/v4?s=GMoGbBo8TzZhOtkbZi5VrMMpNICXW%2BX4Y2syVNzRSWqDThKss7E1gdWiFr%2Fa4CI7g3Bixfj2Nvj02NZ22snA4IsbeU8aTONMDnyXKk7LnuZcyiSs84wHvFTIwyAq"}]}',
+    server: 'cloudflare',
+    'x-frame-options': 'SAMEORIGIN'
+  },
+  request_id: undefined,
+  error: undefined
+}

@@ -1,0 +1,45 @@
+Using API: DeepSeek
+
+🔬 Starting baseline performance measurement...
+
+📊 Scenario 1: Single Agent (Analytics)
+  Run 1/20: 32744ms  Run 2/20: 26548ms  Run 3/20: 18772ms  Run 4/20: 27446ms  Run 5/20: 21025ms  Run 6/20: 27138ms  Run 7/20: 27068ms  Run 8/20: 27955ms  Run 9/20: 26425ms  Run 10/20: 27785ms  Run 11/20: 27406ms  Run 12/20: 26886ms  Run 13/20: 26869ms  Run 14/20: 26642ms  Run 15/20: 27185ms  Run 16/20: 32544ms  Run 17/20: 26732ms  Run 18/20: 31904ms  Run 19/20: 29608ms  Run 20/20: 26257ms
+
+📊 Scenario 2: Single Agent (Trading)
+BadRequestError: 400 The `reasoning_content` in the thinking mode must be passed back to the API.
+    at APIError.generate (/Users/laoshiwozhendetaixiangjinbule/github/stellar-pay/node_modules/openai/src/core/error.ts:73:14)
+    at OpenAI.makeStatusError (/Users/laoshiwozhendetaixiangjinbule/github/stellar-pay/node_modules/openai/src/client.ts:591:28)
+    at OpenAI.makeRequest (/Users/laoshiwozhendetaixiangjinbule/github/stellar-pay/node_modules/openai/src/client.ts:872:24)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async runTradingOpenAI (/Users/laoshiwozhendetaixiangjinbule/github/stellar-pay/lib/agent/trading.ts:620:20)
+    at async runTrading (/Users/laoshiwozhendetaixiangjinbule/github/stellar-pay/lib/agent/trading.ts:508:5)
+    at async measureScenario (/Users/laoshiwozhendetaixiangjinbule/github/stellar-pay/scripts/measure-baseline.ts:63:20)
+    at async main (/Users/laoshiwozhendetaixiangjinbule/github/stellar-pay/scripts/measure-baseline.ts:152:20) {
+  status: 400,
+  headers: Headers {
+    'content-type': 'application/octet-stream',
+    'content-length': '175',
+    connection: 'keep-alive',
+    date: 'Sun, 10 May 2026 09:53:13 GMT',
+    server: 'elb',
+    vary: 'origin, access-control-request-method, access-control-request-headers',
+    'access-control-allow-credentials': 'true',
+    'x-ds-trace-id': '1499664c83027a8dd0e829009988b0b9',
+    'strict-transport-security': 'max-age=31536000; includeSubDomains; preload',
+    'x-content-type-options': 'nosniff',
+    'x-cache': 'Error from cloudfront',
+    via: '1.1 c95d8aeab95a18b7ee86e48d10337394.cloudfront.net (CloudFront)',
+    'x-amz-cf-pop': 'TPE54-P1',
+    'x-amz-cf-id': '-_kwNaH_iinv5KvhhcYzIeyfs3tfPuTOLQ3OQ0DpnUfR0JRWsxwCyg=='
+  },
+  requestID: null,
+  error: {
+    message: 'The `reasoning_content` in the thinking mode must be passed back to the API.',
+    type: 'invalid_request_error',
+    param: null,
+    code: 'invalid_request_error'
+  },
+  code: 'invalid_request_error',
+  param: null,
+  type: 'invalid_request_error'
+}
