@@ -103,3 +103,50 @@ describe("OperationQueue", () => {
     });
   });
 });
+
+describe("OperationQueue — additional coverage", () => {
+  it("getOperationsByStatus should filter by status", async () => {
+    const queue = new OperationQueue({ maxConcurrent: 2 });
+    const id1 = queue.enqueue("t", async () => "r1");
+    const id2 = queue.enqueue("t", async () => "r2");
+    await Promise.all([queue.waitFor(id1), queue.waitFor(id2)]);
+    const completed = queue.getOperationsByStatus("completed");
+    expect(completed.length).toBe(2);
+    expect(completed.every((op) => op.status === "completed")).toBe(true);
+  });
+
+  it("getOperationsByType should filter by type", async () => {
+    const queue = new OperationQueue({ maxConcurrent: 2 });
+    const id1 = queue.enqueue("swap", async () => "s1");
+    const id2 = queue.enqueue("price", async () => "p1");
+    await Promise.all([queue.waitFor(id1), queue.waitFor(id2)]);
+    const swaps = queue.getOperationsByType("swap");
+    expect(swaps.every((op) => op.type === "swap")).toBe(true);
+    expect(swaps.length).toBe(1);
+  });
+
+  it("clearCompleted should remove completed operations", async () => {
+    const queue = new OperationQueue({ maxConcurrent: 2 });
+    const id1 = queue.enqueue("t", async () => "r1");
+    await queue.waitFor(id1);
+    const removed = queue.clearCompleted();
+    expect(removed).toBeGreaterThanOrEqual(1);
+    expect(queue.getOperation(id1)).toBeNull();
+  });
+
+  it("clearAll should remove all operations", async () => {
+    const queue = new OperationQueue({ maxConcurrent: 2 });
+    const id1 = queue.enqueue("t", async () => "r1");
+    await queue.waitFor(id1);
+    queue.clearAll();
+    expect(queue.getOperation(id1)).toBeNull();
+    expect(queue.getStats().total).toBe(0);
+  });
+
+  it("updateConfig and getConfig should work", () => {
+    const queue = new OperationQueue({ maxConcurrent: 2 });
+    queue.updateConfig({ maxConcurrent: 5 });
+    const config = queue.getConfig();
+    expect(config.maxConcurrent).toBe(5);
+  });
+});
