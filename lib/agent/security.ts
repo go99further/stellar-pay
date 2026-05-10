@@ -13,6 +13,7 @@ import {
   convertAnthropicToOpenAI,
   convertAnthropicToolsToOpenAI,
 } from "./openai-adapter";
+import { LoopDetector, LoopDetectedError } from "./loop-detector";
 
 const MODEL_SECURITY = () => getModelAnalytics(); // Use function to get runtime value
 
@@ -48,6 +49,7 @@ async function* runSecurityAnthropic(
 ): AsyncGenerator<AgentStreamEvent> {
   const client = getAnthropicClient();
   const messages: Anthropic.MessageParam[] = toAnthropicMessages(history);
+  const loopDetector = new LoopDetector();
 
   for (let turn = 0; turn < config.securityMaxTurns; turn++) {
     const stream = client.messages.stream({
@@ -98,6 +100,16 @@ async function* runSecurityAnthropic(
     const toolResults: Anthropic.ToolResultBlockParam[] = [];
     for (const block of finalMessage.content) {
       if (block.type !== "tool_use") continue;
+      try {
+        loopDetector.record(block.name, block.input);
+      } catch (err) {
+        if (err instanceof LoopDetectedError) {
+          yield { type: "error", message: err.message };
+          yield { type: "done" };
+          return;
+        }
+        throw err;
+      }
       yield { type: "tool_use", name: block.name, input: block.input };
       try {
         const output = await runTool(block.name, block.input);
@@ -131,6 +143,7 @@ async function* runSecurityOpenAI(
   const client = getOpenAIClient();
   const messages = convertAnthropicToOpenAI(toAnthropicMessages(history));
   const tools = convertAnthropicToolsToOpenAI(securityTools);
+  const loopDetector = new LoopDetector();
 
   for (let turn = 0; turn < config.securityMaxTurns; turn++) {
     const stream = await client.chat.completions.create({
@@ -224,6 +237,16 @@ async function* runSecurityOpenAI(
     const toolMessages: OpenAI.Chat.Completions.ChatCompletionToolMessageParam[] = [];
     for (const [, toolCall] of currentToolCalls) {
       const input = JSON.parse(toolCall.arguments);
+      try {
+        loopDetector.record(toolCall.name, input);
+      } catch (err) {
+        if (err instanceof LoopDetectedError) {
+          yield { type: "error", message: err.message };
+          yield { type: "done" };
+          return;
+        }
+        throw err;
+      }
       yield { type: "tool_use", name: toolCall.name, input };
 
       try {

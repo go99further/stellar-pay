@@ -13,6 +13,7 @@ import {
   convertAnthropicToOpenAI,
   convertAnthropicToolsToOpenAI,
 } from "./openai-adapter";
+import { LoopDetector, LoopDetectedError } from "./loop-detector";
 
 const SYSTEM_PROMPT = `You are the Analytics agent for a Stellar AMM on testnet. You answer read-only questions about pool state, swap metrics, and recent events by calling tools. Rules:
 - Always base numeric answers on tool output, never on memory.
@@ -39,6 +40,7 @@ async function* runAnalyticsAnthropic(
 ): AsyncGenerator<AgentStreamEvent> {
   const client = getAnthropicClient();
   const messages: Anthropic.MessageParam[] = toAnthropicMessages(history);
+  const loopDetector = new LoopDetector();
 
   for (let turn = 0; turn < config.analyticsMaxTurns; turn++) {
     const stream = client.messages.stream({
@@ -89,6 +91,16 @@ async function* runAnalyticsAnthropic(
     const toolResults: Anthropic.ToolResultBlockParam[] = [];
     for (const block of finalMessage.content) {
       if (block.type !== "tool_use") continue;
+      try {
+        loopDetector.record(block.name, block.input);
+      } catch (err) {
+        if (err instanceof LoopDetectedError) {
+          yield { type: "error", message: err.message };
+          yield { type: "done" };
+          return;
+        }
+        throw err;
+      }
       yield { type: "tool_use", name: block.name, input: block.input };
       try {
         const output = await runTool(block.name, block.input);
@@ -122,6 +134,7 @@ async function* runAnalyticsOpenAI(
   const client = getOpenAIClient();
   const messages = convertAnthropicToOpenAI(toAnthropicMessages(history));
   const tools = convertAnthropicToolsToOpenAI(analyticsTools);
+  const loopDetector = new LoopDetector();
 
   for (let turn = 0; turn < config.analyticsMaxTurns; turn++) {
     const stream = await client.chat.completions.create({
@@ -215,6 +228,16 @@ async function* runAnalyticsOpenAI(
     const toolMessages: OpenAI.Chat.Completions.ChatCompletionToolMessageParam[] = [];
     for (const [, toolCall] of currentToolCalls) {
       const input = JSON.parse(toolCall.arguments);
+      try {
+        loopDetector.record(toolCall.name, input);
+      } catch (err) {
+        if (err instanceof LoopDetectedError) {
+          yield { type: "error", message: err.message };
+          yield { type: "done" };
+          return;
+        }
+        throw err;
+      }
       yield { type: "tool_use", name: toolCall.name, input };
 
       try {
