@@ -165,3 +165,35 @@ describe("BloomFilter", () => {
     });
   });
 });
+
+describe("BloomFilter — additional coverage", () => {
+  it("fromParams should create a filter with given m and k", () => {
+    const bf = BloomFilter.fromParams(1000, 5);
+    expect(bf.getStats().bitArraySize).toBe(1000);
+    expect(bf.getStats().hashFunctions).toBe(5);
+  });
+
+  it("fromParams filter should work for add/has", () => {
+    const bf = BloomFilter.fromParams(2000, 4);
+    bf.add("hello");
+    expect(bf.has("hello")).toBe(true);
+    expect(bf.has("world")).toBe(false);
+  });
+
+  it("size getter should equal itemsAdded in stats", () => {
+    const bf = new BloomFilter({ expectedItems: 100, falsePositiveRate: 0.01 });
+    bf.add("a");
+    bf.add("b");
+    expect(bf.size).toBe(bf.getStats().itemsAdded);
+  });
+
+  it("deserialize should restore has() correctly", () => {
+    const bf = new BloomFilter({ expectedItems: 100, falsePositiveRate: 0.01 });
+    bf.add("stellar");
+    bf.add("blockchain");
+    const serialized = bf.serialize();
+    const restored = BloomFilter.deserialize(serialized);
+    expect(restored.has("stellar")).toBe(true);
+    expect(restored.has("blockchain")).toBe(true);
+  });
+});
