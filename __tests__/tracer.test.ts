@@ -186,3 +186,54 @@ describe("Tracer", () => {
     });
   });
 });
+
+describe("Tracer — additional coverage", () => {
+  it("getRecentSpans should return most recent spans", async () => {
+    const tracer = new Tracer({ sampleRate: 1.0 });
+    const s1 = tracer.startSpan("op1");
+    const s2 = tracer.startSpan("op2");
+    tracer.endSpan(s1);
+    tracer.endSpan(s2);
+    const recent = tracer.getRecentSpans(1);
+    expect(recent).toHaveLength(1);
+  });
+
+  it("getActiveSpans should return only unended spans", () => {
+    const tracer = new Tracer({ sampleRate: 1.0 });
+    const s1 = tracer.startSpan("active1");
+    const s2 = tracer.startSpan("active2");
+    tracer.endSpan(s1);
+    const active = tracer.getActiveSpans();
+    expect(active.some((s) => s.name === "active2")).toBe(true);
+    expect(active.some((s) => s.name === "active1")).toBe(false);
+    tracer.endSpan(s2);
+  });
+
+  it("getContext should return traceId and spanId", () => {
+    const tracer = new Tracer({ sampleRate: 1.0 });
+    const span = tracer.startSpan("ctx-op");
+    const ctx = tracer.getContext(span);
+    expect(ctx.traceId).toBe(span.traceId);
+    expect(ctx.spanId).toBe(span.spanId);
+    tracer.endSpan(span);
+  });
+
+  it("setAttribute should add key-value to span attributes", () => {
+    const tracer = new Tracer({ sampleRate: 1.0 });
+    const span = tracer.startSpan("attr-op");
+    tracer.setAttribute(span, "env", "test");
+    tracer.setAttribute(span, "version", 2);
+    expect(span.attributes["env"]).toBe("test");
+    expect(span.attributes["version"]).toBe(2);
+    tracer.endSpan(span);
+  });
+
+  it("getStats sampled/dropped should reflect sampleRate", () => {
+    const tracer = new Tracer({ sampleRate: 1.0 });
+    tracer.startSpan("s1");
+    tracer.startSpan("s2");
+    const stats = tracer.getStats();
+    expect(stats.sampled).toBe(2);
+    expect(stats.dropped).toBe(0);
+  });
+});
