@@ -123,6 +123,24 @@ export async function getLpBalance(
 }
 
 /**
+ * Get SEP-41 token balance for any token contract.
+ */
+export async function getTokenBalance(
+  callerPublicKey: string,
+  tokenContractId: string,
+  address: string
+): Promise<bigint> {
+  const retval = await simulateRead(
+    callerPublicKey,
+    tokenContractId,
+    "balance",
+    [StellarSdk.nativeToScVal(address, { type: "address" })]
+  );
+  if (!retval) return 0n;
+  return BigInt(String(StellarSdk.scValToNative(retval)));
+}
+
+/**
  * Get LP token total supply.
  */
 export async function getLpSupply(callerPublicKey: string): Promise<bigint> {

@@ -10,6 +10,10 @@
  */
 
 import type { Contract } from "@stellar/stellar-sdk";
+import { getReserves, getPrice, getTokenAId, getTokenBId, getTokenBalance } from "../../amm-contract";
+import { getSwapOutput } from "../../amm-math";
+
+const DUMMY_READER = "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN";
 
 export interface ValidationResult {
   valid: boolean;
@@ -50,9 +54,11 @@ export interface SwapParams {
  */
 export class SwapValidator {
   private contract: Contract;
+  private callerPublicKey: string;
 
-  constructor(contract: Contract) {
+  constructor(contract: Contract, callerPublicKey?: string) {
     this.contract = contract;
+    this.callerPublicKey = callerPublicKey ?? DUMMY_READER;
   }
 
   /**
@@ -329,29 +335,40 @@ export class SwapValidator {
     }
   }
 
-  // ── Helper methods (stubs, implement with actual contract calls) ──
+  // ── Helper methods — real contract calls ──
 
   private async checkPoolExists(tokenA: string, tokenB: string): Promise<boolean> {
-    // TODO: Call contract to check if pool exists
-    return true; // Stub
+    const tA = getTokenAId();
+    const tB = getTokenBId();
+    // If env vars are not configured, assume pool exists (testnet / CI)
+    if (!tA || !tB) return true;
+    const isKnownPair = (tokenA === tA && tokenB === tB) || (tokenA === tB && tokenB === tA);
+    if (!isKnownPair) return false;
+    const [rA, rB] = await getReserves(this.callerPublicKey);
+    return rA > 0n && rB > 0n;
   }
 
   private async getUserBalance(user: string, token: string): Promise<bigint> {
-    // TODO: Call contract to get user balance
-    return 1000000n; // Stub
+    return getTokenBalance(user, token, user);
   }
 
   private async getPoolReserves(
     tokenIn: string,
     tokenOut: string
   ): Promise<{ reserveIn: bigint; reserveOut: bigint }> {
-    // TODO: Call contract to get pool reserves
-    return { reserveIn: 1000000n, reserveOut: 1000000n }; // Stub
+    const [rA, rB] = await getReserves(this.callerPublicKey);
+    const isAtoB = tokenIn === getTokenAId();
+    return isAtoB
+      ? { reserveIn: rA, reserveOut: rB }
+      : { reserveIn: rB, reserveOut: rA };
   }
 
   private async simulateSwap(params: SwapParams): Promise<bigint> {
-    // TODO: Call contract simulate_swap
-    return params.amountIn * 99n / 100n; // Stub: 1% fee
+    const price = await getPrice(this.callerPublicKey, params.tokenIn, params.amountIn);
+    if (price > 0n) return price;
+    // Fallback to local constant-product math if contract returns 0
+    const { reserveIn, reserveOut } = await this.getPoolReserves(params.tokenIn, params.tokenOut);
+    return getSwapOutput(params.amountIn, reserveIn, reserveOut);
   }
 
   private calculatePriceImpact(amountIn: bigint, amountOut: bigint): number {
