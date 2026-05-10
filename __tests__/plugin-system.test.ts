@@ -204,4 +204,51 @@ describe("PluginSystem", () => {
       expect(logs[0].msg).toBe("plugin started");
     });
   });
+
+  describe("getActive", () => {
+    it("should return only active plugins", async () => {
+      system.register(makePlugin("a1"));
+      system.register(makePlugin("a2"));
+      system.register(makePlugin("a3"));
+      await system.activate("a1");
+      await system.activate("a2");
+      const active = system.getActive();
+      expect(active).toHaveLength(2);
+      expect(active.every((r) => r.status === "active")).toBe(true);
+    });
+
+    it("should return empty when no plugins are active", () => {
+      system.register(makePlugin("x1"));
+      expect(system.getActive()).toHaveLength(0);
+    });
+  });
+
+  describe("getAll", () => {
+    it("should return all registered plugins regardless of status", async () => {
+      system.register(makePlugin("b1"));
+      system.register(makePlugin("b2"));
+      await system.activate("b1");
+      const all = system.getAll();
+      expect(all).toHaveLength(2);
+    });
+  });
+
+  describe("getLogs — all plugins", () => {
+    it("should return logs for all plugins when no id given", async () => {
+      const p1: Plugin = {
+        meta: { id: "lp1", name: "lp1", version: "1.0.0", description: "", tags: [] },
+        activate: (ctx) => { ctx.log("info", "p1 started"); },
+      };
+      const p2: Plugin = {
+        meta: { id: "lp2", name: "lp2", version: "1.0.0", description: "", tags: [] },
+        activate: (ctx) => { ctx.log("warn", "p2 warning"); },
+      };
+      system.register(p1);
+      system.register(p2);
+      await system.activate("lp1");
+      await system.activate("lp2");
+      const allLogs = system.getLogs();
+      expect(allLogs.length).toBeGreaterThanOrEqual(2);
+    });
+  });
 });
