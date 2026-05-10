@@ -201,3 +201,46 @@ describe("ReadWriteLock", () => {
     expect(order).toContain("r2");
   });
 });
+
+describe("Semaphore — additional coverage", () => {
+  it("available should reflect current permits", async () => {
+    const sem = new Semaphore(3);
+    expect(sem.available).toBe(3);
+    await sem.acquire();
+    expect(sem.available).toBe(2);
+    sem.release();
+    expect(sem.available).toBe(3);
+  });
+
+  it("waiting should count queued acquires", async () => {
+    const sem = new Semaphore(1);
+    await sem.acquire();
+    const p1 = sem.acquire();
+    const p2 = sem.acquire();
+    expect(sem.waiting).toBe(2);
+    sem.release();
+    await p1;
+    sem.release();
+    await p2;
+  });
+
+  it("withLock should return function result", async () => {
+    const sem = new Semaphore(1);
+    const result = await sem.withLock(async () => 42);
+    expect(result).toBe(42);
+  });
+});
+
+describe("Mutex — additional coverage", () => {
+  it("locked should be false initially", () => {
+    const mutex = new Mutex();
+    expect(mutex.locked).toBe(false);
+  });
+
+  it("locked should be true after acquire", async () => {
+    const mutex = new Mutex();
+    await mutex.acquire();
+    expect(mutex.locked).toBe(true);
+    mutex.release();
+  });
+});
