@@ -230,3 +230,27 @@ describe("Projection", () => {
     expect(proj.getState().scores).toEqual({});
   });
 });
+
+describe("EventStore — getAllEvents", () => {
+  it("should return all events across all aggregates", () => {
+    const store = new EventStore();
+    store.append("agg-1", "A", {});
+    store.append("agg-2", "B", {});
+    store.append("agg-1", "C", {});
+    const all = store.getAllEvents();
+    expect(all).toHaveLength(3);
+  });
+
+  it("should return empty array when no events", () => {
+    const store = new EventStore();
+    expect(store.getAllEvents()).toHaveLength(0);
+  });
+
+  it("should return a copy (mutation does not affect store)", () => {
+    const store = new EventStore();
+    store.append("agg-1", "A", {});
+    const all = store.getAllEvents();
+    all.pop();
+    expect(store.getAllEvents()).toHaveLength(1);
+  });
+});
