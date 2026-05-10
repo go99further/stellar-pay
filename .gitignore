@@ -44,3 +44,4 @@ next-env.d.ts
 **/target/
 
 .vercel
+BACKTEST_REPORT.md
