@@ -53,6 +53,8 @@ export class StellarClient {
   private batchQueue: BatchRequest[] = [];
   private batchTimer?: NodeJS.Timeout;
   private pendingRequests: Map<string, Promise<unknown>> = new Map();
+  private cacheHits = 0;
+  private cacheMisses = 0;
 
   constructor(config: Partial<ClientConfig> = {}) {
     this.config = {
@@ -226,8 +228,10 @@ export class StellarClient {
     // Check cache
     const cached = this.cache.get(key) as CacheEntry<T> | undefined;
     if (cached && Date.now() - cached.timestamp < cached.ttl) {
+      this.cacheHits++;
       return cached.data;
     }
+    this.cacheMisses++;
 
     // Check if request is already pending (deduplication)
     const pending = this.pendingRequests.get(key);
@@ -327,7 +331,9 @@ export class StellarClient {
 
     return {
       size: this.cache.size,
-      hitRate: 0, // TODO: Track hits/misses
+      hitRate: this.cacheHits + this.cacheMisses > 0
+        ? this.cacheHits / (this.cacheHits + this.cacheMisses)
+        : 0,
       entries,
     };
   }
