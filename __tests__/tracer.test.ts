@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { Tracer } from "../lib/agent/monitoring/tracer";
+import { Tracer, tracer } from "../lib/agent/monitoring/tracer";
 
 describe("Tracer", () => {
   let tracer: Tracer;
@@ -235,5 +235,24 @@ describe("Tracer — additional coverage", () => {
     const stats = tracer.getStats();
     expect(stats.sampled).toBe(2);
     expect(stats.dropped).toBe(0);
+  });
+});
+
+describe("tracer — shared instance", () => {
+  it("should be a Tracer instance", () => {
+    expect(tracer).toBeInstanceOf(Tracer);
+  });
+
+  it("should be able to start and end a span", () => {
+    const span = tracer.startSpan("shared-test");
+    expect(span.name).toBe("shared-test");
+    tracer.endSpan(span);
+    expect(span.endTime).toBeGreaterThan(0);
+  });
+
+  it("getStats should return stats object", () => {
+    const stats = tracer.getStats();
+    expect(stats).toHaveProperty("started");
+    expect(stats).toHaveProperty("completed");
   });
 });

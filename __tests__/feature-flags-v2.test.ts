@@ -289,3 +289,53 @@ describe("FeatureFlagManager", () => {
     });
   });
 });
+
+import { featureFlags } from "../lib/agent/config/feature-flags";
+
+describe("featureFlags — shared instance", () => {
+  it("should be a FeatureFlagManager instance", () => {
+    expect(featureFlags).toBeInstanceOf(FeatureFlagManager);
+  });
+
+  it("should have enable_simulation_cache defined", () => {
+    const flag = featureFlags.getFlag("enable_simulation_cache");
+    expect(flag).not.toBeNull();
+    expect(flag!.enabled).toBe(true);
+  });
+
+  it("should have enable_batch_requests defined", () => {
+    const flag = featureFlags.getFlag("enable_batch_requests");
+    expect(flag).not.toBeNull();
+    expect(flag!.defaultValue).toBe(true);
+  });
+
+  it("should have enable_reflection_loop with rollout", () => {
+    const flag = featureFlags.getFlag("enable_reflection_loop");
+    expect(flag).not.toBeNull();
+    expect(flag!.rollout).toBeDefined();
+    expect(flag!.rollout!.percentage).toBe(50);
+  });
+
+  it("should have new_swap_ui with variants", () => {
+    const flag = featureFlags.getFlag("new_swap_ui");
+    expect(flag).not.toBeNull();
+    expect(flag!.variants).toBeDefined();
+    expect(flag!.variants!.length).toBe(2);
+  });
+
+  it("should have max_slippage_tolerance with numeric default", () => {
+    const flag = featureFlags.getFlag("max_slippage_tolerance");
+    expect(flag).not.toBeNull();
+    expect(flag!.defaultValue).toBe(0.5);
+  });
+
+  it("getAllFlags should include all predefined flags", () => {
+    const all = featureFlags.getAllFlags();
+    const keys = all.map((f) => f.key);
+    expect(keys).toContain("enable_simulation_cache");
+    expect(keys).toContain("enable_batch_requests");
+    expect(keys).toContain("enable_reflection_loop");
+    expect(keys).toContain("new_swap_ui");
+    expect(keys).toContain("max_slippage_tolerance");
+  });
+});

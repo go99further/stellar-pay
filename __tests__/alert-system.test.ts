@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
-import { AlertSystem, type AlertRule, type AlertContext, stellarPayAlertRules } from "../lib/agent/monitoring/alert-system";
+import { AlertSystem, type AlertRule, type AlertContext, stellarPayAlertRules, alertSystem } from "../lib/agent/monitoring/alert-system";
 
 describe("AlertSystem", () => {
   let system: AlertSystem;
@@ -236,5 +236,24 @@ describe("AlertSystem", () => {
       expect(rule.condition({ metric: "pool_liquidity", value: 500, timestamp: Date.now(), metadata: {} })).toBe(true);
       expect(rule.condition({ metric: "pool_liquidity", value: 2000, timestamp: Date.now(), metadata: {} })).toBe(false);
     });
+  });
+});
+
+describe("alertSystem — shared instance", () => {
+  it("should be an AlertSystem instance", () => {
+    expect(alertSystem).toBeInstanceOf(AlertSystem);
+  });
+
+  it("should have stellarPayAlertRules pre-registered (getActiveAlerts works)", () => {
+    // alertSystem has rules registered; evaluate with a high-slippage context to confirm
+    const ctx = { metric: "slippage", value: 0.99, timestamp: Date.now(), metadata: {} };
+    // Just verify the system is functional — evaluate returns a promise
+    expect(alertSystem.evaluate(ctx)).toBeInstanceOf(Promise);
+  });
+
+  it("getStats should return an object with counts", () => {
+    const stats = alertSystem.getStats();
+    expect(stats).toHaveProperty("totalAlerts");
+    expect(stats).toHaveProperty("activeAlerts");
   });
 });

@@ -7,7 +7,7 @@
  * DO NOT import this file in production code - it's for reference only.
  */
 
-import { CircuitBreaker, createProductionCircuitBreaker } from "./circuit-breaker";
+import { createProductionCircuitBreaker } from "./circuit-breaker";
 import {
   withRequestContext,
   log,

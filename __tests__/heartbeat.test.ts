@@ -1,5 +1,5 @@
 import { describe, it, expect, afterEach } from "vitest";
-import { HeartbeatMonitor, HeartbeatManager } from "../lib/agent/monitoring/heartbeat";
+import { HeartbeatMonitor, HeartbeatManager, heartbeatManager } from "../lib/agent/monitoring/heartbeat";
 
 describe("HeartbeatMonitor", () => {
   afterEach(() => {
@@ -183,5 +183,17 @@ describe("HeartbeatManager", () => {
     await Promise.resolve();
     manager.stopAll();
     expect(manager.isHealthy()).toBe(false);
+  });
+});
+
+describe("heartbeatManager — shared instance", () => {
+  it("should be a HeartbeatManager instance", () => {
+    expect(heartbeatManager).toBeInstanceOf(HeartbeatManager);
+  });
+
+  it("getStatistics should return an object with totalConnections", () => {
+    const stats = heartbeatManager.getStatistics();
+    expect(stats).toHaveProperty("totalConnections");
+    expect(typeof stats.totalConnections).toBe("number");
   });
 });
