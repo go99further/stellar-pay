@@ -92,4 +92,55 @@ describe("MultiTierRateLimiter", () => {
     expect(stats.fast).toBeDefined();
     expect(stats.slow).toBeDefined();
   });
+
+  it("should execute function on a tier", async () => {
+    let ran = false;
+    await multiLimiter.execute("fast", async () => { ran = true; return "ok"; });
+    expect(ran).toBe(true);
+  });
+
+  it("should throw for unknown tier in execute", async () => {
+    await expect(multiLimiter.execute("unknown", async () => "x")).rejects.toThrow();
+  });
+
+  it("should resetAll tiers", () => {
+    multiLimiter.tryConsume("fast", 50);
+    multiLimiter.tryConsume("slow", 5);
+    multiLimiter.resetAll();
+    const stats = multiLimiter.getAllStats();
+    expect(stats.fast.totalRequests).toBe(0);
+    expect(stats.slow.totalRequests).toBe(0);
+  });
+});
+
+describe("RateLimiter — additional coverage", () => {
+  it("should reset stats and tokens", () => {
+    const limiter = new RateLimiter({ maxTokens: 10, refillRate: 10, refillInterval: 100 });
+    limiter.tryConsume(5);
+    limiter.reset();
+    const stats = limiter.getStats();
+    expect(stats.totalRequests).toBe(0);
+    expect(stats.currentTokens).toBe(10);
+  });
+
+  it("should return currentTokens and maxTokens in getStats", () => {
+    const limiter = new RateLimiter({ maxTokens: 20, refillRate: 10, refillInterval: 100 });
+    limiter.tryConsume(7);
+    const stats = limiter.getStats();
+    expect(stats.maxTokens).toBe(20);
+    expect(stats.currentTokens).toBe(13);
+  });
+
+  it("should updateConfig and apply new maxTokens", () => {
+    const limiter = new RateLimiter({ maxTokens: 10, refillRate: 10, refillInterval: 100 });
+    limiter.updateConfig({ maxTokens: 50 });
+    const stats = limiter.getStats();
+    expect(stats.maxTokens).toBe(50);
+  });
+
+  it("should include resetAt in tryConsume result", () => {
+    const limiter = new RateLimiter({ maxTokens: 10, refillRate: 10, refillInterval: 100 });
+    const result = limiter.tryConsume(1);
+    expect(result.resetAt).toBeGreaterThanOrEqual(Date.now());
+  });
 });
