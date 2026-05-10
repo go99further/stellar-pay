@@ -47,3 +47,40 @@ describe("Error Classification", () => {
     expect(getErrorDisplay(new Error("unknown")).type).toBe("unknown");
   });
 });
+
+import { SlippageError, InsufficientLiquidityError } from "../lib/errors";
+
+describe("SlippageError", () => {
+  it("should have correct name and message", () => {
+    const err = new SlippageError("5%", "3%");
+    expect(err.name).toBe("SlippageError");
+    expect(err.message).toContain("5%");
+    expect(err.message).toContain("3%");
+  });
+
+  it("should work without arguments", () => {
+    const err = new SlippageError();
+    expect(err.name).toBe("SlippageError");
+    expect(err).toBeInstanceOf(Error);
+  });
+});
+
+describe("InsufficientLiquidityError", () => {
+  it("should have correct name", () => {
+    const err = new InsufficientLiquidityError();
+    expect(err.name).toBe("InsufficientLiquidityError");
+    expect(err).toBeInstanceOf(Error);
+  });
+});
+
+describe("getErrorDisplay — additional cases", () => {
+  it("should return slippage type for SlippageError", () => {
+    const display = getErrorDisplay(new SlippageError("5%", "3%"));
+    expect(display.type).toBe("slippage");
+  });
+
+  it("should return liquidity type for InsufficientLiquidityError", () => {
+    const display = getErrorDisplay(new InsufficientLiquidityError());
+    expect(display.type).toBe("liquidity");
+  });
+});
