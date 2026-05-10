@@ -156,3 +156,61 @@ describe("MetricsCollector", () => {
     });
   });
 });
+
+describe("MetricsCollector — additional coverage", () => {
+  it("timerAsync should record async function duration", async () => {
+    const collector = new MetricsCollector();
+    const result = await collector.timerAsync("async_op", async () => {
+      await new Promise((r) => setTimeout(r, 5));
+      return "done";
+    });
+    expect(result).toBe("done");
+    const summary = collector.getSummary("async_op");
+    expect(summary).toBeDefined();
+    expect(summary!.type).toBe("timer");
+    expect(summary!.count).toBe(1);
+  });
+
+  it("timerAsync should record even when fn throws", async () => {
+    const collector = new MetricsCollector();
+    await expect(
+      collector.timerAsync("failing_op", async () => { throw new Error("fail"); })
+    ).rejects.toThrow("fail");
+    // timerAsync records with error:true tag, so query by name
+    const results = collector.query({ name: "failing_op" });
+    expect(results).toHaveLength(1);
+    expect(results[0].type).toBe("timer");
+  });
+
+  it("getMetricNames should return sorted unique names", () => {
+    const collector = new MetricsCollector();
+    collector.counter("z_metric", 1);
+    collector.gauge("a_metric", 2);
+    collector.histogram("m_metric", 3);
+    const names = collector.getMetricNames();
+    expect(names).toContain("z_metric");
+    expect(names).toContain("a_metric");
+    expect(names).toContain("m_metric");
+    expect(names).toEqual([...names].sort());
+  });
+
+  it("getStatistics should return totalMetrics and uniqueMetricNames", () => {
+    const collector = new MetricsCollector();
+    collector.counter("req", 1);
+    collector.counter("req", 2);
+    collector.gauge("mem", 512);
+    const stats = collector.getStatistics();
+    expect(stats.totalMetrics).toBe(3);
+    expect(stats.uniqueMetricNames).toBe(2);
+    expect(stats.newestMetric).toBeGreaterThan(0);
+  });
+
+  it("export should return valid JSON with summaries", () => {
+    const collector = new MetricsCollector();
+    collector.counter("events", 5);
+    const parsed = JSON.parse(collector.export());
+    expect(parsed.summaries).toBeDefined();
+    expect(parsed.timestamp).toBeGreaterThan(0);
+    expect(Array.isArray(parsed.metrics)).toBe(true);
+  });
+});
