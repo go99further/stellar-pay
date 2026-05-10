@@ -123,4 +123,87 @@ describe("ConnectionPool", () => {
       await tinyPool.release(conn.id);
     });
   });
+
+  describe("eviction — maxUseCount", () => {
+    it("should evict connection that exceeds maxUseCount", async () => {
+      const evictPool = new ConnectionPool(factory, destroyer, {
+        minSize: 0,
+        maxSize: 2,
+        maxUseCount: 2,
+      });
+
+      const conn = await evictPool.acquire();
+      conn.useCount = 2; // simulate max use
+      await evictPool.release(conn.id);
+
+      const stats = evictPool.getStats();
+      expect(stats.totalEvicted).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe("eviction — unhealthy connection", () => {
+    it("should evict unhealthy connection on release", async () => {
+      const evictPool = new ConnectionPool(factory, destroyer, {
+        minSize: 0,
+        maxSize: 2,
+      });
+
+      const conn = await evictPool.acquire();
+      conn.healthy = false;
+      await evictPool.release(conn.id);
+
+      const stats = evictPool.getStats();
+      expect(stats.totalEvicted).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe("getStats — idle / active counts", () => {
+    it("should report active connections while acquired", async () => {
+      const conn = await pool.acquire();
+      const stats = pool.getStats();
+      expect(stats.active).toBeGreaterThanOrEqual(1);
+      await pool.release(conn.id);
+    });
+
+    it("should report idle connections after release", async () => {
+      const conn = await pool.acquire();
+      await pool.release(conn.id);
+      const stats = pool.getStats();
+      expect(stats.idle).toBeGreaterThanOrEqual(1);
+    });
+
+    it("should report waiting count when pool exhausted", async () => {
+      const tinyPool = new ConnectionPool(factory, destroyer, {
+        minSize: 0,
+        maxSize: 1,
+        acquireTimeout: 5000,
+      });
+
+      const conn = await tinyPool.acquire();
+      // Start a second acquire that will wait
+      const waitPromise = tinyPool.acquire();
+      // Give the event loop a tick to enqueue the waiter
+      await new Promise((r) => setTimeout(r, 0));
+      const stats = tinyPool.getStats();
+      expect(stats.waiting).toBeGreaterThanOrEqual(1);
+
+      // Clean up
+      await tinyPool.release(conn.id);
+      await waitPromise.then((c) => tinyPool.release(c.id));
+    });
+  });
+
+  describe("acquire timeout", () => {
+    it("should reject with timeout error when pool exhausted and timeout expires", async () => {
+      const timeoutPool = new ConnectionPool(factory, destroyer, {
+        minSize: 0,
+        maxSize: 1,
+        acquireTimeout: 50,
+      });
+
+      const conn = await timeoutPool.acquire();
+      await expect(timeoutPool.acquire()).rejects.toThrow(/timeout/i);
+      await timeoutPool.release(conn.id);
+    });
+  });
 });
