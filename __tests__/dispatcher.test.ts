@@ -229,3 +229,50 @@ describe("dispatch", () => {
     });
   });
 });
+
+describe("dispatch — additional coverage", () => {
+  const history = makeHistory("test");
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    vi.mocked(checkSLOs).mockReturnValue([]);
+  });
+
+  it("should emit done event at end of analytics stream", async () => {
+    vi.mocked(runAnalytics).mockReturnValue(makeGen([
+      { type: "text_delta", delta: "hello" },
+      { type: "done" },
+    ]));
+    const events = await collect(dispatch("analytics", history));
+    expect(events.some((e) => e.type === "done")).toBe(true);
+  });
+
+  it("should pass history to analytics agent", async () => {
+    vi.mocked(runAnalytics).mockReturnValue(makeGen([{ type: "done" }]));
+    const customHistory = makeHistory("custom query");
+    await collect(dispatch("analytics", customHistory));
+    expect(vi.mocked(runAnalytics)).toHaveBeenCalledWith(customHistory);
+  });
+
+  it("should pass history to trading agent", async () => {
+    vi.mocked(runTrading).mockReturnValue(makeGen([{ type: "done" }]));
+    const customHistory = makeHistory("trade something");
+    await collect(dispatch("trading", customHistory));
+    expect(vi.mocked(runTrading)).toHaveBeenCalledWith(customHistory, undefined);
+  });
+
+  it("should pass history to security agent", async () => {
+    vi.mocked(runSecurity).mockReturnValue(makeGen([{ type: "done" }]));
+    const customHistory = makeHistory("check security");
+    await collect(dispatch("security", customHistory));
+    expect(vi.mocked(runSecurity)).toHaveBeenCalledWith(customHistory);
+  });
+
+  it("clarify should not call any agent", async () => {
+    const events = await collect(dispatch("clarify", history));
+    expect(vi.mocked(runAnalytics)).not.toHaveBeenCalled();
+    expect(vi.mocked(runTrading)).not.toHaveBeenCalled();
+    expect(vi.mocked(runSecurity)).not.toHaveBeenCalled();
+    expect(events.some((e) => e.type === "done")).toBe(true);
+  });
+});
