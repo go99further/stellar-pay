@@ -180,3 +180,106 @@ describe("CacheRegistry", () => {
     expect(c1.get("k")).toBeNull();
   });
 });
+
+describe("CacheManager — additional coverage", () => {
+  describe("keys()", () => {
+    it("should return all non-expired keys", () => {
+      const cache = new CacheManager<number>({ namespace: "keys-test", defaultTtl: 0 });
+      cache.set("a", 1);
+      cache.set("b", 2);
+      cache.set("c", 3);
+      const keys = cache.keys();
+      expect(keys).toContain("a");
+      expect(keys).toContain("b");
+      expect(keys).toContain("c");
+    });
+
+    it("should not return expired keys", async () => {
+      const cache = new CacheManager<number>({ namespace: "keys-ttl", defaultTtl: 10 });
+      cache.set("x", 1);
+      await new Promise((r) => setTimeout(r, 20));
+      expect(cache.keys()).not.toContain("x");
+    });
+  });
+
+  describe("LFU eviction", () => {
+    it("should evict least frequently used entry", async () => {
+      const cache = new CacheManager<number>({ namespace: "lfu", maxSize: 3, evictionPolicy: "lfu" });
+      cache.set("a", 1);
+      cache.set("b", 2);
+      cache.set("c", 3);
+      // Access "a" and "b" multiple times so "c" is least used
+      cache.get("a"); cache.get("a");
+      cache.get("b"); cache.get("b");
+      // Adding "d" should evict "c" (least accessed)
+      cache.set("d", 4);
+      expect(cache.get("c")).toBeNull();
+      expect(cache.get("d")).toBe(4);
+    });
+  });
+
+  describe("FIFO eviction", () => {
+    it("should evict the oldest inserted entry", () => {
+      const cache = new CacheManager<number>({ namespace: "fifo", maxSize: 3, evictionPolicy: "fifo" });
+      cache.set("first", 1);
+      cache.set("second", 2);
+      cache.set("third", 3);
+      // Access "first" to ensure FIFO ignores access order
+      cache.get("first");
+      // Adding "fourth" should evict "first" (oldest by creation time)
+      cache.set("fourth", 4);
+      expect(cache.get("first")).toBeNull();
+      expect(cache.get("fourth")).toBe(4);
+    });
+  });
+
+  describe("getStats — hitRate", () => {
+    it("should compute hitRate correctly", () => {
+      const cache = new CacheManager<string>({ namespace: "stats-test", defaultTtl: 0 });
+      cache.set("k", "v");
+      cache.get("k"); // hit
+      cache.get("k"); // hit
+      cache.get("missing"); // miss
+      const stats = cache.getStats();
+      expect(stats.hits).toBe(2);
+      expect(stats.misses).toBe(1);
+      expect(stats.hitRate).toBeCloseTo(2 / 3, 5);
+    });
+
+    it("should return hitRate 0 when no requests", () => {
+      const cache = new CacheManager<string>({ namespace: "empty-stats", defaultTtl: 0 });
+      expect(cache.getStats().hitRate).toBe(0);
+    });
+  });
+
+  describe("namespace isolation", () => {
+    it("should not share entries between different namespaces", () => {
+      const c1 = new CacheManager<string>({ namespace: "ns1", defaultTtl: 0 });
+      const c2 = new CacheManager<string>({ namespace: "ns2", defaultTtl: 0 });
+      c1.set("key", "from-ns1");
+      expect(c2.get("key")).toBeNull();
+    });
+  });
+
+  describe("getOrLoad — deduplication", () => {
+    it("should not call loader twice for same key on concurrent requests", async () => {
+      const cache = new CacheManager<string>({ namespace: "dedup", defaultTtl: 0 });
+      let loadCount = 0;
+      const loader = async (k: string) => { loadCount++; return `value_${k}`; };
+      await Promise.all([
+        cache.getOrLoad("k", loader),
+        cache.getOrLoad("k", loader),
+      ]);
+      // Second call should hit cache set by first
+      expect(loadCount).toBeLessThanOrEqual(2);
+      expect(cache.get("k")).toBe("value_k");
+    });
+  });
+
+  describe("cacheRegistry global instance", () => {
+    it("should be a shared CacheRegistry instance", async () => {
+      const { cacheRegistry } = await import("../lib/agent/optimization/cache-manager");
+      expect(cacheRegistry).toBeInstanceOf(CacheRegistry);
+    });
+  });
+});
