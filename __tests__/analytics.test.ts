@@ -21,7 +21,7 @@ vi.mock("../lib/agent/tools", () => ({
   runTool: vi.fn(),
 }));
 
-import { runAnalytics } from "../lib/agent/analytics";
+import { runAnalytics, collectAnalyticsSummary } from "../lib/agent/analytics";
 import { getAnthropicClient, getOpenAIClient, hasDeepSeekKey } from "../lib/agent/anthropic";
 import { runTool } from "../lib/agent/tools";
 import type { AgentMessage } from "../lib/agent/types";
@@ -278,5 +278,76 @@ describe("analytics agent", () => {
       const errEvent = events.find((e) => e.type === "tool_result" && (e as { isError?: boolean }).isError);
       expect(errEvent).toBeDefined();
     });
+  });
+});
+
+describe("collectAnalyticsSummary", () => {
+  beforeEach(() => {
+    vi.mocked(hasDeepSeekKey).mockReturnValue(false);
+  });
+
+  it("collects all text deltas into a single trimmed string", async () => {
+    const stream = makeStreamWithFinal(
+      [
+        { type: "content_block_delta", delta: { type: "text_delta", text: "TVL is " } },
+        { type: "content_block_delta", delta: { type: "text_delta", text: "1000 TKNA" } },
+      ],
+      { content: [{ type: "text", text: "TVL is 1000 TKNA" }], stop_reason: "end_turn", usage: { input_tokens: 10, output_tokens: 5 } }
+    );
+    vi.mocked(getAnthropicClient).mockReturnValue({ messages: { stream: () => stream } } as never);
+
+    const summary = await collectAnalyticsSummary(makeHistory("What is TVL?"));
+    expect(summary).toBe("TVL is 1000 TKNA");
+  });
+
+  it("returns empty string when no text events are emitted", async () => {
+    const stream = makeStreamWithFinal(
+      [],
+      { content: [], stop_reason: "end_turn", usage: { input_tokens: 5, output_tokens: 0 } }
+    );
+    vi.mocked(getAnthropicClient).mockReturnValue({ messages: { stream: () => stream } } as never);
+
+    const summary = await collectAnalyticsSummary(makeHistory("test"));
+    expect(summary).toBe("");
+  });
+
+  it("trims leading and trailing whitespace from collected text", async () => {
+    const stream = makeStreamWithFinal(
+      [
+        { type: "content_block_delta", delta: { type: "text_delta", text: "  pool stats  " } },
+      ],
+      { content: [{ type: "text", text: "  pool stats  " }], stop_reason: "end_turn", usage: { input_tokens: 5, output_tokens: 3 } }
+    );
+    vi.mocked(getAnthropicClient).mockReturnValue({ messages: { stream: () => stream } } as never);
+
+    const summary = await collectAnalyticsSummary(makeHistory("test"));
+    expect(summary).toBe("pool stats");
+  });
+
+  it("ignores non-text events (tool_use, tool_result, done, usage)", async () => {
+    const stream = makeStreamWithFinal(
+      [
+        { type: "content_block_delta", delta: { type: "text_delta", text: "Price: 2.0" } },
+      ],
+      {
+        content: [
+          { type: "tool_use", id: "tu_1", name: "get_pool_stats", input: {} },
+        ],
+        stop_reason: "tool_use",
+        usage: { input_tokens: 10, output_tokens: 5 },
+      }
+    );
+    // Second turn: end_turn with no text
+    const stream2 = makeStreamWithFinal(
+      [],
+      { content: [{ type: "text", text: "Price: 2.0" }], stop_reason: "end_turn", usage: { input_tokens: 15, output_tokens: 3 } }
+    );
+    vi.mocked(runTool).mockResolvedValue({ price: "2.0" });
+    vi.mocked(getAnthropicClient).mockReturnValue({
+      messages: { stream: vi.fn().mockReturnValueOnce(stream).mockReturnValueOnce(stream2) },
+    } as never);
+
+    const summary = await collectAnalyticsSummary(makeHistory("What is the price?"));
+    expect(summary).toBe("Price: 2.0");
   });
 });
