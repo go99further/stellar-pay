@@ -227,3 +227,39 @@ describe("ReactiveStore", () => {
     });
   });
 });
+
+describe("ReactiveStore — additional coverage", () => {
+  it("createStore should return a ReactiveStore instance", () => {
+    const store = createStore({ count: 0 }, (state, action) => {
+      if (action.type === "INC") return { count: state.count + 1 };
+      return state;
+    });
+    store.dispatch({ type: "INC" });
+    expect(store.getState().count).toBe(1);
+  });
+
+  it("use() should return this for chaining", () => {
+    const store = createStore({ v: 0 }, (s) => s);
+    const result = store.use((_s, action, next) => next(action));
+    expect(result).toBe(store);
+  });
+
+  it("getStats should track subscriptions after unsubscribe", () => {
+    const store = createStore({ v: 0 }, (s) => s);
+    const unsub1 = store.subscribe(() => {});
+    const unsub2 = store.subscribe(() => {});
+    expect(store.getStats().subscriptions).toBe(2);
+    unsub1();
+    expect(store.getStats().subscriptions).toBe(1);
+    unsub2();
+    expect(store.getStats().subscriptions).toBe(0);
+  });
+
+  it("select should return same reference when state unchanged", () => {
+    const store = createStore({ a: 1, b: 2 }, (s) => s);
+    const selector = (s: { a: number; b: number }) => s.a;
+    const r1 = store.select(selector);
+    const r2 = store.select(selector);
+    expect(r1).toBe(r2);
+  });
+});
