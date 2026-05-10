@@ -160,3 +160,34 @@ describe("ActorRegistry", () => {
     expect(registry.remove("missing")).toBe(false);
   });
 });
+
+describe("Actor — on() chaining", () => {
+  it("should return this for chaining", () => {
+    const actor = new Actor<{ count: number }>({ initialState: { count: 0 } });
+    const result = actor.on("inc", (s) => ({ count: s.count + 1 }));
+    expect(result).toBe(actor);
+  });
+});
+
+describe("Actor — multiple handlers", () => {
+  it("should handle multiple message types independently", async () => {
+    const actor = new Actor<{ a: number; b: number }>({ initialState: { a: 0, b: 0 } })
+      .on("setA", (s, m) => ({ ...s, a: (m.payload as { v: number }).v }))
+      .on("setB", (s, m) => ({ ...s, b: (m.payload as { v: number }).v }));
+
+    await actor.ask({ type: "setA", payload: { v: 10 } });
+    await actor.ask({ type: "setB", payload: { v: 20 } });
+    expect(actor.getState()).toEqual({ a: 10, b: 20 });
+  });
+});
+
+describe("ActorRegistry — ask", () => {
+  it("should ask a named actor and get state back", async () => {
+    const registry = new ActorRegistry();
+    const actor = makeCounter();
+    registry.register("c", actor);
+    actor.send({ type: "increment", payload: { by: 5 } });
+    await new Promise((r) => setTimeout(r, 0));
+    expect(registry.get("c")!.getState().count).toBe(5);
+  });
+});
