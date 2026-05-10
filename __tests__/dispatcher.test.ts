@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("../lib/agent/analytics", () => ({
   runAnalytics: vi.fn(),
+  collectAnalyticsSummary: vi.fn(),
 }));
 
 vi.mock("../lib/agent/trading", () => ({
@@ -12,10 +13,17 @@ vi.mock("../lib/agent/security", () => ({
   runSecurity: vi.fn(),
 }));
 
+vi.mock("../lib/agent/slos", () => ({
+  checkSLOs: vi.fn(() => []),
+  alertOnViolations: vi.fn(),
+  recordLatency: vi.fn(),
+}));
+
 import { dispatch } from "../lib/agent/dispatcher";
-import { runAnalytics } from "../lib/agent/analytics";
+import { runAnalytics, collectAnalyticsSummary } from "../lib/agent/analytics";
 import { runTrading } from "../lib/agent/trading";
 import { runSecurity } from "../lib/agent/security";
+import { checkSLOs, alertOnViolations, recordLatency } from "../lib/agent/slos";
 import type { AgentMessage, AgentStreamEvent } from "../lib/agent/types";
 
 function makeHistory(content: string): AgentMessage[] {
@@ -37,6 +45,7 @@ describe("dispatch", () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
+    vi.mocked(checkSLOs).mockReturnValue([]);
   });
 
   it("routes analytics intent to runAnalytics", async () => {
@@ -101,12 +110,10 @@ describe("dispatch", () => {
 
     const result = await collect(dispatch("analytics_security", history));
 
-    // Both agents must have been called
     expect(runAnalytics).toHaveBeenCalledWith(history);
     expect(runSecurity).toHaveBeenCalledWith(history);
     expect(runTrading).not.toHaveBeenCalled();
 
-    // All events from both generators must appear in the merged output
     const textDeltas = result.filter(e => e.type === "text").map(e => (e as { type: "text"; delta: string }).delta);
     expect(textDeltas).toContain("TVL: 1000");
     expect(textDeltas).toContain("risk: low");
@@ -115,7 +122,6 @@ describe("dispatch", () => {
 
   it("analytics_security parallel: events from faster agent arrive before slower agent finishes", async () => {
     let resolveAnalytics!: () => void;
-    let resolveSecurity!: () => void;
 
     async function* slowAnalytics(): AsyncGenerator<AgentStreamEvent> {
       yield { type: "text", delta: "analytics-1" };
@@ -139,5 +145,87 @@ describe("dispatch", () => {
     expect(deltas).toContain("analytics-1");
     expect(deltas).toContain("analytics-2");
     expect(deltas).toContain("security-1");
+  });
+
+  describe("analytics_then_trading (sequential)", () => {
+    it("runs analytics first, then passes summary as context to trading", async () => {
+      const summary = "Pool TVL: 2000 TKNA / 4000 TKNB. Price: 2.0.";
+      vi.mocked(collectAnalyticsSummary).mockResolvedValue(summary);
+
+      const tradingEvents: AgentStreamEvent[] = [
+        { type: "text", delta: "swap ready" },
+        { type: "done" },
+      ];
+      vi.mocked(runTrading).mockReturnValue(makeGen(tradingEvents));
+
+      const result = await collect(dispatch("analytics_then_trading", history, "GADDR"));
+
+      expect(collectAnalyticsSummary).toHaveBeenCalledWith(history);
+
+      // Trading must receive enriched history with analytics context injected
+      const tradingCall = vi.mocked(runTrading).mock.calls[0];
+      const enrichedHistory = tradingCall[0] as AgentMessage[];
+      expect(enrichedHistory.length).toBe(history.length + 1);
+      const injected = enrichedHistory[enrichedHistory.length - 1];
+      expect(injected.role).toBe("assistant");
+      expect(injected.content).toContain(summary);
+
+      expect(tradingCall[1]).toBe("GADDR");
+
+      // Output includes agent_start/complete bookmarks + trading events
+      const types = result.map(e => e.type);
+      expect(types).toContain("agent_start");
+      expect(types).toContain("agent_complete");
+      expect(types).toContain("text");
+      expect(types).toContain("done");
+    });
+
+    it("emits agent_start for analytics before trading events", async () => {
+      vi.mocked(collectAnalyticsSummary).mockResolvedValue("summary");
+      vi.mocked(runTrading).mockReturnValue(makeGen([{ type: "done" }]));
+
+      const result = await collect(dispatch("analytics_then_trading", history));
+      const agentStarts = result
+        .filter(e => e.type === "agent_start")
+        .map(e => (e as { type: "agent_start"; agent: string }).agent);
+
+      expect(agentStarts).toContain("analytics");
+      expect(agentStarts).toContain("trading");
+    });
+  });
+
+  describe("SLO integration", () => {
+    it("records latency after analytics completes", async () => {
+      vi.mocked(runAnalytics).mockReturnValue(makeGen([{ type: "done" }]));
+      await collect(dispatch("analytics", history));
+      expect(recordLatency).toHaveBeenCalledWith("analytics", expect.any(Number));
+    });
+
+    it("records latency after trading completes", async () => {
+      vi.mocked(runTrading).mockReturnValue(makeGen([{ type: "done" }]));
+      await collect(dispatch("trading", history));
+      expect(recordLatency).toHaveBeenCalledWith("trading", expect.any(Number));
+    });
+
+    it("calls alertOnViolations when SLO violations exist", async () => {
+      const violation = {
+        target: { name: "router_latency_p95", target: 500, current: 9999, met: false, severity: "critical" as const },
+        timestamp: new Date().toISOString(),
+        message: "router_latency_p95 exceeded",
+      };
+      vi.mocked(checkSLOs).mockReturnValue([violation]);
+      vi.mocked(runAnalytics).mockReturnValue(makeGen([{ type: "done" }]));
+
+      await collect(dispatch("analytics", history));
+      expect(alertOnViolations).toHaveBeenCalledWith([violation]);
+    });
+
+    it("does not call alertOnViolations when no violations", async () => {
+      vi.mocked(checkSLOs).mockReturnValue([]);
+      vi.mocked(runAnalytics).mockReturnValue(makeGen([{ type: "done" }]));
+
+      await collect(dispatch("analytics", history));
+      expect(alertOnViolations).not.toHaveBeenCalled();
+    });
   });
 });

@@ -265,3 +265,15 @@ async function* runAnalyticsOpenAI(
 
   yield { type: "done" };
 }
+
+/**
+ * Run analytics and collect all text output as a single summary string.
+ * Used by the sequential analytics_then_trading intent to pass context to trading.
+ */
+export async function collectAnalyticsSummary(history: AgentMessage[]): Promise<string> {
+  const chunks: string[] = [];
+  for await (const event of runAnalytics(history)) {
+    if (event.type === "text") chunks.push(event.delta);
+  }
+  return chunks.join("").trim();
+}

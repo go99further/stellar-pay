@@ -5,7 +5,7 @@ export interface AgentMessage {
   content: string;
 }
 
-export type RouterIntent = "analytics" | "trading" | "security" | "clarify" | "analytics_security";
+export type RouterIntent = "analytics" | "trading" | "security" | "clarify" | "analytics_security" | "analytics_then_trading";
 export type ExecutionMode = "single" | "parallel";
 
 export interface RouterOutput {

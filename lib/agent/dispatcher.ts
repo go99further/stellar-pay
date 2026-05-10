@@ -1,6 +1,7 @@
-import { runAnalytics } from "./analytics";
+import { runAnalytics, collectAnalyticsSummary } from "./analytics";
 import { runTrading } from "./trading";
 import { runSecurity } from "./security";
+import { checkSLOs, alertOnViolations, recordLatency } from "./slos";
 import type { AgentMessage, AgentStreamEvent, RouterIntent } from "./types";
 
 /**
@@ -55,25 +56,28 @@ async function* mergeAsyncGenerators(
  * Intent Graph Dispatcher — routes an intent to one or more agents.
  *
  * Modes:
- *   single           — one agent handles the request
- *   parallel         — analytics + security run concurrently (analytics_security intent)
+ *   single                — one agent handles the request
+ *   parallel              — analytics + security run concurrently (analytics_security)
+ *   sequential            — analytics runs first, its summary is injected into trading (analytics_then_trading)
  */
 export async function* dispatch(
   intent: RouterIntent,
   history: AgentMessage[],
   walletAddress?: string
 ): AsyncGenerator<AgentStreamEvent> {
+  const start = Date.now();
+
   switch (intent) {
     case "analytics":
-      yield* runAnalytics(history);
+      yield* withSLO("analytics", runAnalytics(history), start);
       break;
 
     case "trading":
-      yield* runTrading(history, walletAddress);
+      yield* withSLO("trading", runTrading(history, walletAddress), start);
       break;
 
     case "security":
-      yield* runSecurity(history);
+      yield* withSLO("security", runSecurity(history), start);
       break;
 
     case "analytics_security":
@@ -83,9 +87,45 @@ export async function* dispatch(
       ]);
       break;
 
+    case "analytics_then_trading": {
+      // Phase 1: run analytics and stream its output
+      yield { type: "agent_start", agent: "analytics" };
+      const analyticsSummary = await collectAnalyticsSummary(history);
+      yield { type: "agent_complete", agent: "analytics", elapsedMs: Date.now() - start };
+
+      // Phase 2: inject analytics summary as context for trading
+      const enrichedHistory: AgentMessage[] = [
+        ...history,
+        {
+          role: "assistant",
+          content: `[Analytics context]\n${analyticsSummary}`,
+        },
+      ];
+      yield { type: "agent_start", agent: "trading" };
+      yield* runTrading(enrichedHistory, walletAddress);
+      break;
+    }
+
     case "clarify":
       yield { type: "text", delta: "请重述您的问题 — 我可以分析 AMM 池状态、执行交换、管理流动性或评估风险。" };
       yield { type: "done" };
       break;
+  }
+}
+
+/**
+ * Wrap an agent generator: record latency and fire SLO alerts on completion.
+ */
+async function* withSLO(
+  agent: "analytics" | "trading" | "security" | "router",
+  gen: AsyncGenerator<AgentStreamEvent>,
+  startMs: number
+): AsyncGenerator<AgentStreamEvent> {
+  try {
+    yield* gen;
+  } finally {
+    recordLatency(agent, Date.now() - startMs);
+    const violations = checkSLOs();
+    if (violations.length > 0) alertOnViolations(violations);
   }
 }

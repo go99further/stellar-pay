@@ -22,9 +22,9 @@ const ROUTE_TOOL: Anthropic.Tool = {
     properties: {
       intent: {
         type: "string",
-        enum: ["analytics", "trading", "security", "clarify", "analytics_security"],
+        enum: ["analytics", "trading", "security", "clarify", "analytics_security", "analytics_then_trading"],
         description:
-          "analytics = read-only questions about pool, metrics, or events. trading = intent to swap / add / remove liquidity. security = wallet safety, contract audit, risk questions. analytics_security = questions that need BOTH pool data AND risk assessment simultaneously. clarify = ambiguous or off-topic.",
+          "analytics = read-only questions about pool, metrics, or events. trading = intent to swap / add / remove liquidity. security = wallet safety, contract audit, risk questions. analytics_security = questions that need BOTH pool data AND risk assessment simultaneously. analytics_then_trading = user wants to check pool stats THEN immediately trade based on those stats. clarify = ambiguous or off-topic.",
       },
       reason: {
         type: "string",
@@ -35,7 +35,7 @@ const ROUTE_TOOL: Anthropic.Tool = {
   },
 };
 
-const SYSTEM_PROMPT = `You are the router for a Stellar AMM assistant. Classify the user's latest message into one of five intents and always call the route_intent tool exactly once. Pick "clarify" when the message is ambiguous, empty, or unrelated to the AMM.
+const SYSTEM_PROMPT = `You are the router for a Stellar AMM assistant. Classify the user's latest message into one of six intents and always call the route_intent tool exactly once. Pick "clarify" when the message is ambiguous, empty, or unrelated to the AMM.
 
 Examples:
 - "What's the current TVL in the pool?" -> analytics
@@ -44,9 +44,11 @@ Examples:
 - "Is the AMM contract safe to use?" -> security
 - "Check pool stats and evaluate risk" -> analytics_security
 - "What's the liquidity and is it safe?" -> analytics_security
+- "Check the pool stats and then swap 100 TKNA" -> analytics_then_trading
+- "What's the current price? I want to swap based on that" -> analytics_then_trading
 - "hi" -> clarify`;
 
-const VALID_INTENTS: RouterIntent[] = ["analytics", "trading", "security", "clarify", "analytics_security"];
+const VALID_INTENTS: RouterIntent[] = ["analytics", "trading", "security", "clarify", "analytics_security", "analytics_then_trading"];
 
 function toAnthropicMessages(history: AgentMessage[]): Anthropic.MessageParam[] {
   return history.map((m) => ({ role: m.role, content: m.content }));
