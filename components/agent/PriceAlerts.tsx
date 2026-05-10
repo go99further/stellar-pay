@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { formatPrice } from "@/lib/agent/price-alerts";
+import { backtestAlertsV2, generateBacktestReportV2, type BacktestResultV2 } from "@/lib/agent/alert-backtest-v2";
 
 interface PriceAlertsProps {
   walletAddress: string | null;
@@ -30,6 +31,8 @@ export function PriceAlerts({ walletAddress, enabled = true }: PriceAlertsProps)
   const [condition, setCondition] = useState<"above" | "below">("above");
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [backtestResult, setBacktestResult] = useState<BacktestResultV2 | null>(null);
+  const [showBacktest, setShowBacktest] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,6 +54,18 @@ export function PriceAlerts({ walletAddress, enabled = true }: PriceAlertsProps)
     } else {
       setFormError(result.error || "Failed to create alert");
     }
+  };
+
+  const handleBacktest = () => {
+    const allAlerts = [...activeAlerts, ...triggeredAlerts];
+    if (allAlerts.length === 0) {
+      setFormError("No alerts to backtest. Create at least one alert first.");
+      return;
+    }
+
+    const result = backtestAlertsV2(allAlerts);
+    setBacktestResult(result);
+    setShowBacktest(true);
   };
 
   if (!walletAddress) {
@@ -87,6 +102,14 @@ export function PriceAlerts({ walletAddress, enabled = true }: PriceAlertsProps)
           >
             {isLoading ? "..." : "Refresh"}
           </button>
+          <button
+            onClick={handleBacktest}
+            disabled={activeAlerts.length === 0 && triggeredAlerts.length === 0}
+            className="rounded border border-indigo-300 px-2 py-1 text-xs text-indigo-600 transition-colors hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:text-indigo-400 dark:hover:bg-indigo-950"
+            title="Backtest alerts with historical data"
+          >
+            📊 Backtest
+          </button>
           {activeAlerts.length > 0 && (
             <button
               onClick={clearAllAlerts}
@@ -103,6 +126,238 @@ export function PriceAlerts({ walletAddress, enabled = true }: PriceAlertsProps)
       {error && (
         <div className="rounded border border-red-400 bg-red-50 p-2 text-sm text-red-700 dark:border-red-700 dark:bg-red-950 dark:text-red-300">
           {error}
+        </div>
+      )}
+
+      {/* Backtest Results V2 */}
+      {showBacktest && backtestResult && (
+        <div className="rounded border border-indigo-400 bg-indigo-50 p-4 dark:border-indigo-700 dark:bg-indigo-950">
+          <div className="flex items-start justify-between">
+            <h3 className="text-sm font-semibold text-indigo-800 dark:text-indigo-300">
+              📊 Backtest Results V2 (防过拟合版本)
+            </h3>
+            <button
+              onClick={() => setShowBacktest(false)}
+              className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+            >
+              Close
+            </button>
+          </div>
+
+          <div className="mt-3 space-y-3 text-xs">
+            {/* Data Windows */}
+            <div className="rounded border border-indigo-300 bg-white p-3 dark:border-indigo-800 dark:bg-indigo-900">
+              <div className="font-medium text-indigo-900 dark:text-indigo-200">Data Windows</div>
+              <div className="mt-2 space-y-1 text-indigo-700 dark:text-indigo-300">
+                <div className="flex justify-between">
+                  <span>Training Set:</span>
+                  <span className="font-mono">{backtestResult.windows.train.points.length} points</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Validation Set:</span>
+                  <span className="font-mono">{backtestResult.windows.validation.points.length} points (used)</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Test Set:</span>
+                  <span className="font-mono">{backtestResult.windows.test.points.length} points (reserved)</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Alert Statistics */}
+            <div className="rounded border border-indigo-300 bg-white p-3 dark:border-indigo-800 dark:bg-indigo-900">
+              <div className="font-medium text-indigo-900 dark:text-indigo-200">Alert Statistics</div>
+              <div className="mt-2 space-y-1 text-indigo-700 dark:text-indigo-300">
+                <div className="flex justify-between">
+                  <span>Total Alerts:</span>
+                  <span className="font-mono">{backtestResult.totalAlerts}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Triggered:</span>
+                  <span className="font-mono">{backtestResult.triggeredAlerts}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Accurate:</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400">
+                    {backtestResult.accurateAlerts} (
+                    {backtestResult.triggeredAlerts > 0
+                      ? ((backtestResult.accurateAlerts / backtestResult.triggeredAlerts) * 100).toFixed(1)
+                      : "0"}
+                    %)
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>False Alerts:</span>
+                  <span className="font-mono text-red-600 dark:text-red-400">
+                    {backtestResult.falseAlerts}
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Avg Delay:</span>
+                  <span className="font-mono">{(backtestResult.avgDelayMs / 1000).toFixed(1)}s</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Stability Analysis */}
+            <div className={`rounded border p-3 ${
+              backtestResult.stability.thresholdSensitivity < 0.3
+                ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950"
+                : backtestResult.stability.thresholdSensitivity < 0.6
+                ? "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950"
+                : "border-red-300 bg-red-50 dark:border-red-800 dark:bg-red-950"
+            }`}>
+              <div className={`font-medium ${
+                backtestResult.stability.thresholdSensitivity < 0.3
+                  ? "text-emerald-900 dark:text-emerald-200"
+                  : backtestResult.stability.thresholdSensitivity < 0.6
+                  ? "text-amber-900 dark:text-amber-200"
+                  : "text-red-900 dark:text-red-200"
+              }`}>
+                Stability Analysis
+              </div>
+              <div className={`mt-2 space-y-1 ${
+                backtestResult.stability.thresholdSensitivity < 0.3
+                  ? "text-emerald-700 dark:text-emerald-300"
+                  : backtestResult.stability.thresholdSensitivity < 0.6
+                  ? "text-amber-700 dark:text-amber-300"
+                  : "text-red-700 dark:text-red-300"
+              }`}>
+                <div className="flex justify-between">
+                  <span>Threshold Sensitivity:</span>
+                  <span className="font-mono">{(backtestResult.stability.thresholdSensitivity * 100).toFixed(0)}%</span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Performance Variance:</span>
+                  <span className="font-mono">{(backtestResult.stability.performanceVariance * 100).toFixed(1)}%</span>
+                </div>
+                <div className="mt-2 text-xs">
+                  {backtestResult.stability.recommendation}
+                </div>
+              </div>
+            </div>
+
+            {/* Stress Test */}
+            <div className="rounded border border-indigo-300 bg-white p-3 dark:border-indigo-800 dark:bg-indigo-900">
+              <div className="font-medium text-indigo-900 dark:text-indigo-200">Stress Test</div>
+              <div className="mt-2 space-y-1 text-indigo-700 dark:text-indigo-300">
+                <div className="flex justify-between">
+                  <span>Normal Market Accuracy:</span>
+                  <span className="font-mono text-emerald-600 dark:text-emerald-400">
+                    {backtestResult.stressTest.normalAccuracy.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Volatile Market Accuracy:</span>
+                  <span className={`font-mono ${
+                    backtestResult.stressTest.volatileAccuracy >= backtestResult.stressTest.normalAccuracy * 0.8
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-amber-600 dark:text-amber-400"
+                  }`}>
+                    {backtestResult.stressTest.volatileAccuracy.toFixed(1)}%
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>Performance Degradation:</span>
+                  <span className={`font-mono ${
+                    backtestResult.stressTest.degradation < 10
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : backtestResult.stressTest.degradation < 20
+                      ? "text-amber-600 dark:text-amber-400"
+                      : "text-red-600 dark:text-red-400"
+                  }`}>
+                    {backtestResult.stressTest.degradation.toFixed(1)}%
+                  </span>
+                </div>
+              </div>
+              {backtestResult.stressTest.degradation > 20 && (
+                <div className="mt-2 text-xs text-amber-700 dark:text-amber-300">
+                  ⚠️ High performance drop in volatile markets
+                </div>
+              )}
+            </div>
+
+            {/* Profit Simulation */}
+            <div className="rounded border border-indigo-300 bg-white p-3 dark:border-indigo-800 dark:bg-indigo-900">
+              <div className="flex items-center justify-between">
+                <div className="font-medium text-indigo-900 dark:text-indigo-200">Profit Simulation</div>
+                <span className={`rounded px-2 py-0.5 text-xs font-medium ${
+                  backtestResult.profitSimulation.confidence === "high"
+                    ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300"
+                    : backtestResult.profitSimulation.confidence === "medium"
+                    ? "bg-amber-100 text-amber-700 dark:bg-amber-900 dark:text-amber-300"
+                    : "bg-neutral-100 text-neutral-700 dark:bg-neutral-800 dark:text-neutral-300"
+                }`}>
+                  {backtestResult.profitSimulation.confidence.toUpperCase()} confidence
+                </span>
+              </div>
+              <div className="mt-2 space-y-1 text-indigo-700 dark:text-indigo-300">
+                <div className="flex justify-between">
+                  <span>Without Alerts (Buy & Hold):</span>
+                  <span className={`font-mono ${backtestResult.profitSimulation.withoutAlert >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                    {backtestResult.profitSimulation.withoutAlert > 0 ? "+" : ""}
+                    {backtestResult.profitSimulation.withoutAlert}%
+                  </span>
+                </div>
+                <div className="flex justify-between">
+                  <span>With Alerts (Signal Trading):</span>
+                  <span className={`font-mono ${backtestResult.profitSimulation.withAlert >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                    {backtestResult.profitSimulation.withAlert > 0 ? "+" : ""}
+                    {backtestResult.profitSimulation.withAlert}%
+                  </span>
+                </div>
+                <div className="flex justify-between border-t border-indigo-200 pt-1 font-medium dark:border-indigo-700">
+                  <span>Improvement:</span>
+                  <span className={`font-mono ${backtestResult.profitSimulation.improvement >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}`}>
+                    {backtestResult.profitSimulation.improvement > 0 ? "+" : ""}
+                    {backtestResult.profitSimulation.improvement}%
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* Forward-Looking Bias Check */}
+            <div className={`rounded border p-2 ${
+              backtestResult.biasCheck.hasFutureLeak
+                ? "border-red-400 bg-red-50 dark:border-red-700 dark:bg-red-950"
+                : "border-emerald-400 bg-emerald-50 dark:border-emerald-700 dark:bg-emerald-950"
+            }`}>
+              <div className={`text-xs ${
+                backtestResult.biasCheck.hasFutureLeak
+                  ? "text-red-800 dark:text-red-300"
+                  : "text-emerald-800 dark:text-emerald-300"
+              }`}>
+                {backtestResult.biasCheck.message}
+              </div>
+            </div>
+
+            {/* Warnings */}
+            {backtestResult.triggeredAlerts === 0 && (
+              <div className="rounded border border-amber-400 bg-amber-50 p-2 text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                ⚠️ No alerts triggered in validation set. Consider adjusting alert thresholds.
+              </div>
+            )}
+            {backtestResult.accurateAlerts === 0 && backtestResult.triggeredAlerts > 0 && (
+              <div className="rounded border border-red-400 bg-red-50 p-2 text-red-800 dark:border-red-700 dark:bg-red-950 dark:text-red-300">
+                ⚠️ All triggered alerts were false positives. Consider revising alert conditions.
+              </div>
+            )}
+            {backtestResult.profitSimulation.confidence === "low" && (
+              <div className="rounded border border-amber-400 bg-amber-50 p-2 text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300">
+                ⚠️ Insufficient data for reliable backtest. Results have low confidence.
+              </div>
+            )}
+
+            {/* Text Report */}
+            <details className="rounded border border-indigo-300 bg-white p-2 dark:border-indigo-800 dark:bg-indigo-900">
+              <summary className="cursor-pointer text-indigo-700 dark:text-indigo-300">
+                View Full Report
+              </summary>
+              <pre className="mt-2 whitespace-pre-wrap text-xs text-indigo-600 dark:text-indigo-400">
+                {generateBacktestReportV2(backtestResult)}
+              </pre>
+            </details>
+          </div>
         </div>
       )}
 
