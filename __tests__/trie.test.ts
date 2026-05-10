@@ -220,3 +220,47 @@ describe("Trie", () => {
     });
   });
 });
+
+describe("Trie — additional coverage", () => {
+  it("should insert same word multiple times and increment count", () => {
+    const trie = new Trie();
+    trie.insert("hello");
+    trie.insert("hello");
+    trie.insert("hello");
+    expect(trie.getCount("hello")).toBe(3);
+  });
+
+  it("should store and retrieve value on re-insert", () => {
+    const trie = new Trie();
+    trie.insert("key", "first");
+    trie.insert("key", "second");
+    expect(trie.getValue("key")).toBe("second");
+  });
+
+  it("suggest should return words sorted by insertion order", () => {
+    const trie = new Trie();
+    ["apple", "application", "apply", "apt"].forEach((w) => trie.insert(w));
+    const results = trie.suggest("app");
+    expect(results).toContain("apple");
+    expect(results).toContain("application");
+    expect(results).toContain("apply");
+  });
+
+  it("wordsWithPrefix should return empty for unknown prefix", () => {
+    const trie = new Trie();
+    trie.insert("hello");
+    expect(trie.wordsWithPrefix("xyz")).toHaveLength(0);
+  });
+
+  it("delete should return false for word that was never inserted", () => {
+    const trie = new Trie();
+    expect(trie.delete("ghost")).toBe(false);
+  });
+
+  it("matchWildcard with * at start", () => {
+    const trie = new Trie();
+    ["cat", "bat", "hat"].forEach((w) => trie.insert(w));
+    const results = trie.matchWildcard("*at").sort();
+    expect(results).toEqual(["bat", "cat", "hat"]);
+  });
+});
