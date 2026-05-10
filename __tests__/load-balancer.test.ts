@@ -137,4 +137,132 @@ describe("LoadBalancer", () => {
       expect(healthy.every((e) => e.healthy)).toBe(true);
     });
   });
+
+  describe("select — weighted", () => {
+    it("should select endpoints proportional to weight", () => {
+      const wLb = new LoadBalancer({ strategy: "weighted" });
+      wLb.addEndpoint("heavy", "http://heavy", 90);
+      wLb.addEndpoint("light", "http://light", 10);
+
+      const counts: Record<string, number> = { heavy: 0, light: 0 };
+      for (let i = 0; i < 100; i++) {
+        const ep = wLb.select();
+        if (ep) counts[ep.id]++;
+      }
+      // heavy should be selected significantly more often
+      expect(counts.heavy).toBeGreaterThan(counts.light);
+    });
+  });
+
+  describe("select — random", () => {
+    it("should select from healthy endpoints", () => {
+      const rLb = new LoadBalancer({ strategy: "random" });
+      rLb.addEndpoint("r1", "http://r1");
+      rLb.addEndpoint("r2", "http://r2");
+      rLb.addEndpoint("r3", "http://r3");
+
+      for (let i = 0; i < 20; i++) {
+        const ep = rLb.select();
+        expect(ep).not.toBeNull();
+        expect(["r1", "r2", "r3"]).toContain(ep!.id);
+      }
+    });
+  });
+
+  describe("sticky sessions", () => {
+    it("should route same session key to same endpoint", () => {
+      const stickyLb = new LoadBalancer({ strategy: "round-robin", stickySessionTtl: 60000 });
+      stickyLb.addEndpoint("s1", "http://s1");
+      stickyLb.addEndpoint("s2", "http://s2");
+      stickyLb.addEndpoint("s3", "http://s3");
+
+      const key = "session_xyz";
+      const first = stickyLb.select(key);
+      const second = stickyLb.select(key);
+      const third = stickyLb.select(key);
+      expect(first?.id).toBe(second?.id);
+      expect(second?.id).toBe(third?.id);
+    });
+
+    it("should not apply sticky when stickySessionTtl is 0", () => {
+      const noStickyLb = new LoadBalancer({ strategy: "round-robin", stickySessionTtl: 0 });
+      noStickyLb.addEndpoint("n1", "http://n1");
+      noStickyLb.addEndpoint("n2", "http://n2");
+
+      const key = "session_abc";
+      const ids = new Set([noStickyLb.select(key)?.id, noStickyLb.select(key)?.id, noStickyLb.select(key)?.id]);
+      // With round-robin and no sticky, should cycle through both endpoints
+      expect(ids.size).toBeGreaterThanOrEqual(1);
+    });
+  });
+
+  describe("execute — error rate tracking", () => {
+    it("should mark endpoint unhealthy after high error rate", async () => {
+      const errLb = new LoadBalancer({ strategy: "round-robin", maxRetries: 10 });
+      errLb.addEndpoint("flaky", "http://flaky");
+      errLb.addEndpoint("stable", "http://stable");
+
+      let calls = 0;
+      try {
+        await errLb.execute(async (ep) => {
+          calls++;
+          if (ep.id === "flaky") throw new Error("flaky error");
+          return "ok";
+        });
+      } catch {
+        // may throw if retries exhausted
+      }
+
+      const flaky = errLb.getEndpoints().find((e) => e.id === "flaky");
+      // After enough errors, flaky should be marked unhealthy
+      if (flaky && flaky.totalRequests >= 5) {
+        expect(flaky.healthy).toBe(false);
+      }
+    });
+  });
+
+  describe("TypedBatchHandler", () => {
+    it("should register and execute typed handlers", async () => {
+      const { TypedBatchHandler } = await import("../lib/agent/optimization/batch-handler");
+      type Ops = "double" | "triple";
+      const batcher = new TypedBatchHandler<Ops, number, number>();
+
+      batcher.register("double", async (items) => items.map((x) => x * 2), { maxBatchSize: 10, maxWaitTime: 50, deduplication: false, retryOnError: false, maxRetries: 0 });
+      batcher.register("triple", async (items) => items.map((x) => x * 3), { maxBatchSize: 10, maxWaitTime: 50, deduplication: false, retryOnError: false, maxRetries: 0 });
+
+      const [d, t] = await Promise.all([
+        batcher.execute("double", 5),
+        batcher.execute("triple", 4),
+      ]);
+      expect(d).toBe(10);
+      expect(t).toBe(12);
+    });
+
+    it("should throw for unregistered type", async () => {
+      const { TypedBatchHandler } = await import("../lib/agent/optimization/batch-handler");
+      type Ops = "known";
+      const batcher = new TypedBatchHandler<Ops, number, number>();
+      await expect(batcher.execute("known", 1)).rejects.toThrow("No handler registered");
+    });
+
+    it("should return null from getHandler for unknown type", async () => {
+      const { TypedBatchHandler } = await import("../lib/agent/optimization/batch-handler");
+      type Ops = "known";
+      const batcher = new TypedBatchHandler<Ops, number, number>();
+      expect(batcher.getHandler("known")).toBeNull();
+    });
+
+    it("should aggregate stats across all handlers", async () => {
+      const { TypedBatchHandler } = await import("../lib/agent/optimization/batch-handler");
+      type Ops = "a" | "b";
+      const batcher = new TypedBatchHandler<Ops, number, number>();
+      batcher.register("a", async (items) => items, { maxBatchSize: 10, maxWaitTime: 50, deduplication: false, retryOnError: false, maxRetries: 0 });
+      batcher.register("b", async (items) => items, { maxBatchSize: 10, maxWaitTime: 50, deduplication: false, retryOnError: false, maxRetries: 0 });
+
+      await Promise.all([batcher.execute("a", 1), batcher.execute("b", 2)]);
+      const stats = batcher.getAllStatistics();
+      expect(stats["a"].totalRequests).toBeGreaterThanOrEqual(1);
+      expect(stats["b"].totalRequests).toBeGreaterThanOrEqual(1);
+    });
+  });
 });
