@@ -215,3 +215,48 @@ describe("AuditLogger", () => {
     });
   });
 });
+
+describe("AuditLogger — additional coverage", () => {
+  it("verifyIntegrity should return true for unmodified log", () => {
+    const logger = new AuditLogger();
+    logger.log("swap_initiated", "u", "r", "success");
+    logger.log("swap_completed", "u", "r", "success");
+    expect(logger.verifyIntegrity()).toBe(true);
+  });
+
+  it("query with startTime and endTime should filter correctly", () => {
+    const logger = new AuditLogger();
+    const before = Date.now();
+    logger.log("swap_initiated", "u", "r", "success");
+    const after = Date.now();
+    logger.log("swap_completed", "u", "r", "success");
+
+    const results = logger.query({ startTime: before, endTime: after });
+    expect(results.length).toBeGreaterThanOrEqual(1);
+  });
+
+  it("generateReport should include integrityValid=true for fresh log", () => {
+    const logger = new AuditLogger();
+    logger.log("swap_initiated", "u", "r", "success");
+    const report = logger.generateReport();
+    expect(report.integrityValid).toBe(true);
+  });
+
+  it("generateReport byActor should count correctly", () => {
+    const logger = new AuditLogger();
+    logger.log("swap_initiated", "alice", "r", "success");
+    logger.log("swap_initiated", "alice", "r", "success");
+    logger.log("swap_initiated", "bob", "r", "success");
+    const report = logger.generateReport();
+    expect(report.summary.byActor["alice"]).toBe(2);
+    expect(report.summary.byActor["bob"]).toBe(1);
+  });
+
+  it("export should include entries and exportedAt fields", () => {
+    const logger = new AuditLogger();
+    logger.log("swap_initiated", "u", "r", "success");
+    const parsed = JSON.parse(logger.export());
+    expect(parsed.entries).toBeDefined();
+    expect(parsed.exportedAt).toBeDefined();
+  });
+});
