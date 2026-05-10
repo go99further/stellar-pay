@@ -181,3 +181,25 @@ describe("StellarClient", () => {
   });
 });
 
+
+describe("StellarClient — additional coverage", () => {
+  it("clearCache should reset cache stats", () => {
+    const client = new StellarClient({ cacheEnabled: true, useCircuitBreaker: false });
+    client.clearCache();
+    const stats = client.getCacheStats();
+    expect(stats.size).toBe(0);
+  });
+
+  it("getServer should return a Server instance", () => {
+    const client = new StellarClient({ useCircuitBreaker: false });
+    const server = client.getServer();
+    expect(server).toBeDefined();
+  });
+
+  it("createMainnetClient should return a StellarClient", async () => {
+    const { createMainnetClient } = await import("../lib/web3/stellar-client");
+    const client = createMainnetClient();
+    expect(client).toBeInstanceOf(StellarClient);
+    expect(client.getStatus().horizonUrl).toContain("stellar.org");
+  });
+});
