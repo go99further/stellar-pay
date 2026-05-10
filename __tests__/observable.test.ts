@@ -360,3 +360,43 @@ describe("ReplaySubject", () => {
     expect(results).toEqual([10, 20]);
   });
 });
+
+describe("Observable — pipe operator", () => {
+  it("should apply a custom operator via pipe()", () => {
+    const double = (obs: Observable<number>) => obs.map((x) => x * 2);
+    const results: number[] = [];
+    of(1, 2, 3).pipe(double).subscribe({ next: (v) => results.push(v) });
+    expect(results).toEqual([2, 4, 6]);
+  });
+});
+
+describe("Observable — error handling", () => {
+  it("should call error observer on error", () => {
+    const errors: unknown[] = [];
+    new Observable<number>((obs) => {
+      obs.next(1);
+      obs.error(new Error("boom"));
+    }).subscribe({ error: (e) => errors.push(e) });
+    expect(errors).toHaveLength(1);
+  });
+});
+
+describe("Subject — error closes subject", () => {
+  it("should mark subject as closed after error", () => {
+    const s = new Subject<number>();
+    s.error(new Error("fail"));
+    expect(s.closed).toBe(true);
+  });
+});
+
+describe("BehaviorSubject — complete", () => {
+  it("should stop emitting after complete", () => {
+    const bs = new BehaviorSubject(0);
+    const results: number[] = [];
+    bs.subscribe({ next: (v) => results.push(v) });
+    bs.next(1);
+    bs.complete();
+    bs.next(2);
+    expect(results).toEqual([0, 1]);
+  });
+});
