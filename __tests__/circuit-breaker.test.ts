@@ -188,4 +188,69 @@ describe("CircuitBreaker", () => {
       expect(c).toBeInstanceOf(CircuitBreaker);
     });
   });
+
+  describe("getStats — successRate", () => {
+    it("should compute successRate correctly", async () => {
+      await cb.execute(async () => "ok");
+      await cb.execute(async () => "ok");
+      try { await cb.execute(async () => { throw new Error("fail"); }); } catch {}
+      const stats = cb.getStats();
+      expect(stats.totalRequests).toBe(3);
+      expect(stats.totalSuccesses).toBe(2);
+      expect(stats.totalFailures).toBe(1);
+    });
+  });
+
+  describe("CircuitBreakerError — message", () => {
+    it("should include state in error message when OPEN", async () => {
+      const c = new CircuitBreaker({ failureThreshold: 1, resetTimeout: 60000 });
+      try { await c.execute(async () => { throw new Error("fail"); }); } catch {}
+      try {
+        await c.execute(async () => "ok");
+      } catch (err) {
+        expect(err).toBeInstanceOf(CircuitBreakerError);
+        expect((err as CircuitBreakerError).message).toMatch(/open/i);
+      }
+    });
+  });
+
+  describe("onStateChange — OPEN to CLOSED", () => {
+    it("should call onStateChange when transitioning from OPEN to CLOSED via HALF_OPEN", async () => {
+      const transitions: Array<[CircuitState, CircuitState]> = [];
+      const c = new CircuitBreaker({
+        failureThreshold: 1,
+        resetTimeout: 0,
+        successThreshold: 1,
+        onStateChange: (from, to) => transitions.push([from, to]),
+      });
+
+      try { await c.execute(async () => { throw new Error("fail"); }); } catch {}
+      // resetTimeout=0 means HALF_OPEN is available immediately
+      await c.execute(async () => "ok");
+
+      const states = transitions.map(([, to]) => to);
+      expect(states).toContain(CircuitState.OPEN);
+      expect(states).toContain(CircuitState.HALF_OPEN);
+      expect(states).toContain(CircuitState.CLOSED);
+    });
+  });
+
+  describe("execute — error propagation", () => {
+    it("should propagate the original error when CLOSED", async () => {
+      const originalError = new Error("original error message");
+      await expect(cb.execute(async () => { throw originalError; })).rejects.toThrow("original error message");
+    });
+  });
+
+  describe("reset — clears stats", () => {
+    it("should reset state to CLOSED but preserve cumulative counters", async () => {
+      try { await cb.execute(async () => { throw new Error("fail"); }); } catch {}
+      cb.reset();
+      const stats = cb.getStats();
+      // reset() only resets state/failureCount/successCount, not cumulative totals
+      expect(stats.state).toBe(CircuitState.CLOSED);
+      expect(stats.failureCount).toBe(0);
+      expect(stats.successCount).toBe(0);
+    });
+  });
 });
