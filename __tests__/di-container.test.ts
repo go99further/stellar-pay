@@ -151,4 +151,29 @@ describe("Container (DI)", () => {
       expect(stats.resolutions).toBe(3);
     });
   });
+
+  describe("endScope", () => {
+    it("should clear scoped cache after endScope", () => {
+      container.scoped("req", () => ({ id: Math.random() }));
+      const scope = container.createScope();
+      const a = scope.resolve<{ id: number }>("req");
+      scope.endScope();
+      const b = scope.resolve<{ id: number }>("req");
+      expect(a).not.toBe(b);
+    });
+  });
+
+  describe("value registration — additional", () => {
+    it("should resolve the exact value registered", () => {
+      const obj = { x: 42 };
+      container.value("cfg", obj);
+      expect(container.resolve("cfg")).toBe(obj);
+    });
+
+    it("should always return the same value on repeated resolves", () => {
+      container.value("num", 99);
+      expect(container.resolve("num")).toBe(99);
+      expect(container.resolve("num")).toBe(99);
+    });
+  });
 });
