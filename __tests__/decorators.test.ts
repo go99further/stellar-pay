@@ -240,3 +240,53 @@ describe("compose", () => {
     expect(timings).toContain("inner");
   });
 });
+
+describe("withMemo — additional coverage", () => {
+  it("cache map should be accessible and contain cached entries", async () => {
+    const fn = async (x: number) => x * 3;
+    const memoized = withMemo(fn);
+    await memoized(5);
+    await memoized(10);
+    expect(memoized.cache.size).toBe(2);
+  });
+
+  it("clear should empty the cache", async () => {
+    const fn = async (x: number) => x;
+    const memoized = withMemo(fn);
+    await memoized(1);
+    await memoized(2);
+    memoized.clear();
+    expect(memoized.cache.size).toBe(0);
+  });
+});
+
+describe("withRetry — additional coverage", () => {
+  it("should pass args to the function", async () => {
+    const fn = vi.fn().mockResolvedValue("ok");
+    const retried = withRetry(fn, 2);
+    await retried("arg1", "arg2");
+    expect(fn).toHaveBeenCalledWith("arg1", "arg2");
+  });
+});
+
+describe("withTimeout — additional coverage", () => {
+  it("should pass args to the function", async () => {
+    const fn = async (x: number) => x * 2;
+    const timed = withTimeout(fn, 1000);
+    expect(await timed(5)).toBe(10);
+  });
+});
+
+describe("withValidation — additional coverage", () => {
+  it("should pass args to the function when valid", async () => {
+    const fn = async (x: number) => x + 1;
+    const validated = withValidation(fn, (x) => (x > 0 ? null : "must be positive"));
+    expect(await validated(5)).toBe(6);
+  });
+
+  it("should throw with validation message when invalid", async () => {
+    const fn = async (x: number) => x;
+    const validated = withValidation(fn, (x) => (x > 0 ? null : "must be positive"));
+    await expect(validated(-1)).rejects.toThrow("must be positive");
+  });
+});
