@@ -276,3 +276,51 @@ describe("QueryBuilder", () => {
     });
   });
 });
+
+describe("QueryBuilder — additional coverage", () => {
+  it("should support > operator", () => {
+    const { sql, params } = query("orders").where("amount", ">", 50).build();
+    expect(sql).toContain("amount > ?");
+    expect(params).toContain(50);
+  });
+
+  it("should support >= operator", () => {
+    const { sql } = query("orders").where("amount", ">=", 100).build();
+    expect(sql).toContain("amount >= ?");
+  });
+
+  it("should support <= operator", () => {
+    const { sql } = query("orders").where("amount", "<=", 200).build();
+    expect(sql).toContain("amount <= ?");
+  });
+
+  it("should support < operator", () => {
+    const { sql } = query("orders").where("amount", "<", 10).build();
+    expect(sql).toContain("amount < ?");
+  });
+
+  it("clone should be independent from original", () => {
+    const base = query("users").limit(5);
+    const clone = base.clone();
+    clone.where("active", "=", true);
+    const { sql: baseSql } = base.build();
+    const { sql: cloneSql } = clone.build();
+    expect(baseSql).not.toContain("WHERE");
+    expect(cloneSql).toContain("WHERE");
+  });
+
+  it("buildAggregate should build AVG query", () => {
+    const { sql } = query("orders").buildAggregate("AVG", "amount");
+    expect(sql).toContain("AVG(amount)");
+  });
+
+  it("buildAggregate should build MIN query", () => {
+    const { sql } = query("orders").buildAggregate("MIN", "price");
+    expect(sql).toContain("MIN(price)");
+  });
+
+  it("buildAggregate should build MAX query", () => {
+    const { sql } = query("orders").buildAggregate("MAX", "price");
+    expect(sql).toContain("MAX(price)");
+  });
+});
