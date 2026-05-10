@@ -173,3 +173,30 @@ describe("WindowAggregator", () => {
     expect(windows[0].count).toBe(3);
   });
 });
+
+describe("DataPipeline — additional coverage", () => {
+  it("should return stats with correct processed count", async () => {
+    const pipeline = new DataPipeline<{ data: number }, { data: number }>()
+      .transform(async (r) => r);
+    const stats = await pipeline.process([{ data: 1 }, { data: 2 }, { data: 3 }]);
+    expect(stats.processed).toBe(3);
+  });
+
+  it("should chain transform and filter together", async () => {
+    const results: number[] = [];
+    const pipeline = new DataPipeline<{ v: number }, { v: number }>()
+      .transform(async (r) => ({ ...r, data: { v: r.data.v * 2 } }))
+      .filter((r) => r.data.v > 4)
+      .sink(async (batch) => { results.push(...batch.map((r) => r.data.v)); });
+    await pipeline.process([{ v: 1 }, { v: 2 }, { v: 3 }]);
+    expect(results).toEqual([6]);
+  });
+
+  it("getStats should reflect cumulative stats across multiple process calls", async () => {
+    const pipeline = new DataPipeline<{ n: number }, { n: number }>()
+      .transform(async (r) => r);
+    await pipeline.process([{ n: 1 }]);
+    await pipeline.process([{ n: 2 }, { n: 3 }]);
+    expect(pipeline.getStats().processed).toBe(3);
+  });
+});
