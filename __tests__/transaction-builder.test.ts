@@ -195,3 +195,18 @@ describe("TransactionBuilder", () => {
   });
 });
 
+
+describe("TransactionBuilder — additional coverage", () => {
+  it("transactionBuilder should be a shared instance", async () => {
+    const { transactionBuilder } = await import("../lib/web3/transaction-builder");
+    expect(transactionBuilder).toBeInstanceOf(TransactionBuilder);
+  });
+
+  it("createMainnetBuilder should return a TransactionBuilder for mainnet", async () => {
+    const { createMainnetBuilder } = await import("../lib/web3/transaction-builder");
+    const mb = createMainnetBuilder();
+    expect(mb).toBeInstanceOf(TransactionBuilder);
+    expect(mb.getNetworkInfo().isTestnet).toBe(false);
+    expect(mb.getNetworkInfo().networkPassphrase).toContain("Public Global Stellar");
+  });
+});
