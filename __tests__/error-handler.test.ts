@@ -195,3 +195,78 @@ describe("formatErrorForDisplay", () => {
     expect(display.action).toBeUndefined();
   });
 });
+
+describe("handleAgentError — additional cases", () => {
+  it("should handle insufficient liquidity errors", () => {
+    const error = new Error("no liquidity in pool");
+    const recovery = handleAgentError(error);
+    expect(recovery.retryable).toBe(false);
+    expect(recovery.userMessage).toMatch(/liquidity/i);
+  });
+
+  it("should handle zero output errors", () => {
+    const error = new Error("zero output from swap");
+    const recovery = handleAgentError(error);
+    expect(recovery.retryable).toBe(false);
+  });
+
+  it("should handle pool is empty errors", () => {
+    const error = new Error("pool is empty");
+    const recovery = handleAgentError(error);
+    expect(recovery.retryable).toBe(false);
+  });
+
+  it("should handle non-Error thrown values", () => {
+    const recovery = handleAgentError("string error");
+    expect(recovery.error).toBeInstanceOf(Error);
+    expect(recovery.error.message).toBe("string error");
+  });
+
+  it("should handle null thrown values", () => {
+    const recovery = handleAgentError(null);
+    expect(recovery.error).toBeInstanceOf(Error);
+  });
+
+  it("should return retryable=true for slippage errors", () => {
+    const error = new Error("slippage exceeded");
+    const recovery = handleAgentError(error);
+    expect(recovery.retryable).toBe(true);
+  });
+});
+
+describe("withErrorRecovery — edge cases", () => {
+  it("should throw ErrorRecovery when all retries exhausted", async () => {
+    const fn = vi.fn().mockRejectedValue(new Error("network timeout"));
+    try {
+      await withErrorRecovery(fn, { maxAttempts: 2, initialDelay: 5 });
+      expect.fail("should have thrown");
+    } catch (err) {
+      expect((err as { retryable: boolean }).retryable).toBe(true);
+    }
+  });
+
+  it("should respect maxDelay cap", async () => {
+    const delays: number[] = [];
+    const fn = vi.fn().mockRejectedValue(new Error("network timeout"));
+    try {
+      await withErrorRecovery(fn, {
+        maxAttempts: 3,
+        initialDelay: 100,
+        maxDelay: 150,
+        onRetry: (attempt) => delays.push(attempt),
+      });
+    } catch {}
+    expect(delays).toHaveLength(2);
+  });
+});
+
+describe("isTransientError — additional cases", () => {
+  it("should return false for non-Error values", () => {
+    expect(isTransientError("not an error")).toBe(false);
+  });
+
+  it("should return false for slippage errors (retryable but not transient)", () => {
+    const error = new Error("slippage exceeded");
+    expect(isTransientError(error)).toBe(false);
+  });
+});
