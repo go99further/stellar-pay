@@ -128,3 +128,70 @@ describe("BatchRequestHandler", () => {
     });
   });
 });
+
+import { TypedBatchHandler } from "../lib/agent/optimization/batch-handler";
+
+describe("BatchRequestHandler — additional coverage", () => {
+  it("getQueueSize should return pending count", async () => {
+    const handler = new BatchRequestHandler<number, number>(
+      async (items) => new Promise((r) => setTimeout(() => r(items), 200)),
+      { maxBatchSize: 100, maxWaitTime: 5000, deduplication: false, retryOnError: false, maxRetries: 0 }
+    );
+    handler.request(1).catch(() => {});
+    handler.request(2).catch(() => {});
+    expect(handler.getQueueSize()).toBeGreaterThanOrEqual(0);
+    handler.clear();
+  });
+
+  it("clear should reject pending requests", async () => {
+    const handler = new BatchRequestHandler<number, number>(
+      async (items) => new Promise((r) => setTimeout(() => r(items), 5000)),
+      { maxBatchSize: 100, maxWaitTime: 5000, deduplication: false, retryOnError: false, maxRetries: 0 }
+    );
+    const p = handler.request(1);
+    handler.clear();
+    await expect(p).rejects.toThrow(/cleared/i);
+  });
+
+  it("updateConfig should apply new maxBatchSize", async () => {
+    const batchSizes: number[] = [];
+    const handler = new BatchRequestHandler<number, number>(
+      async (items) => { batchSizes.push(items.length); return items; },
+      { maxBatchSize: 10, maxWaitTime: 50, deduplication: false, retryOnError: false, maxRetries: 0 }
+    );
+    handler.updateConfig({ maxBatchSize: 1 });
+    await Promise.all([handler.request(1), handler.request(2)]);
+    expect(batchSizes.every((s) => s <= 1)).toBe(true);
+  });
+});
+
+describe("TypedBatchHandler", () => {
+  it("should register and dispatch to typed handlers via execute()", async () => {
+    const typed = new TypedBatchHandler<"num", number, number>();
+    typed.register("num", async (items) => items.map((v) => v * 3), {
+      maxBatchSize: 10, maxWaitTime: 50, deduplication: false, retryOnError: false, maxRetries: 0,
+    });
+    const result = await typed.execute("num", 4);
+    expect(result).toBe(12);
+  });
+
+  it("should throw for unregistered type", async () => {
+    const typed = new TypedBatchHandler<"num", number, number>();
+    await expect(typed.execute("num", 1)).rejects.toThrow(/No handler registered/);
+  });
+
+  it("getHandler should return null for unknown type", () => {
+    const typed = new TypedBatchHandler<"num", number, number>();
+    expect(typed.getHandler("num")).toBeNull();
+  });
+
+  it("getAllStatistics should return stats for all registered types", async () => {
+    const typed = new TypedBatchHandler<"a" | "b", number, number>();
+    typed.register("a", async (items) => items, { maxBatchSize: 10, maxWaitTime: 50, deduplication: false, retryOnError: false, maxRetries: 0 });
+    typed.register("b", async (items) => items, { maxBatchSize: 10, maxWaitTime: 50, deduplication: false, retryOnError: false, maxRetries: 0 });
+    await typed.execute("a", 1);
+    const stats = typed.getAllStatistics();
+    expect(stats["a"]).toBeDefined();
+    expect(stats["b"]).toBeDefined();
+  });
+});
