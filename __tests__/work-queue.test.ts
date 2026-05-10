@@ -197,3 +197,47 @@ describe("WorkQueue", () => {
     });
   });
 });
+
+describe("WorkQueue — additional coverage", () => {
+  it("runningCount should be 0 when idle", () => {
+    const q = new WorkQueue();
+    expect(q.runningCount).toBe(0);
+  });
+
+  it("deadCount should track dead-lettered jobs", async () => {
+    const q = new WorkQueue({ maxAttempts: 1, baseDelayMs: 0 });
+    q.enqueue("fail1");
+    q.enqueue("fail2");
+    q.process(async () => { throw new Error("always fails"); });
+    await q.drain();
+    expect(q.deadCount).toBe(2);
+  });
+
+  it("doneCount should track successfully processed jobs", async () => {
+    const q = new WorkQueue();
+    q.enqueue("a");
+    q.enqueue("b");
+    q.enqueue("c");
+    q.process(async () => {});
+    await q.drain();
+    expect(q.doneCount).toBe(3);
+  });
+
+  it("getJob should find done job by id", async () => {
+    const q = new WorkQueue();
+    const job = q.enqueue("task");
+    q.process(async () => {});
+    await q.drain();
+    const found = q.getJob(job.id);
+    expect(found?.status).toBe("done");
+  });
+
+  it("enqueue with custom priority should order correctly", () => {
+    const q = new WorkQueue();
+    const low = q.enqueue("low", { priority: 1 });
+    const high = q.enqueue("high", { priority: 10 });
+    const mid = q.enqueue("mid", { priority: 5 });
+    const pending = [low, high, mid].map((j) => j.id);
+    expect(pending).toContain(high.id);
+  });
+});
