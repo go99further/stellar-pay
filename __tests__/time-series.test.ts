@@ -276,3 +276,49 @@ describe("TimeSeriesRegistry", () => {
     expect(stats.memory).toBe(1);
   });
 });
+
+describe("TimeSeries — additional coverage", () => {
+  const T = 1700000000000;
+
+  it("write with tags should be queryable by tags", () => {
+    const ts = new TimeSeries();
+    ts.write(10, T, { host: "server1" });
+    ts.write(20, T + 1000, { host: "server2" });
+    const results = ts.query({ tags: { host: "server1" } });
+    expect(results).toHaveLength(1);
+    expect(results[0].value).toBe(10);
+  });
+
+  it("stats should compute correct avg", () => {
+    const ts = new TimeSeries();
+    ts.write(10, T);
+    ts.write(20, T + 1000);
+    ts.write(30, T + 2000);
+    const s = ts.stats();
+    expect(s?.avg).toBe(20);
+    expect(s?.min).toBe(10);
+    expect(s?.max).toBe(30);
+    expect(s?.sum).toBe(60);
+    expect(s?.count).toBe(3);
+  });
+
+  it("latest(n) should return n most recent points", () => {
+    const ts = new TimeSeries();
+    ts.write(1, T);
+    ts.write(2, T + 1000);
+    ts.write(3, T + 2000);
+    const latest = ts.latest(2);
+    expect(latest).toHaveLength(2);
+    // latest() returns last n in chronological order (oldest first)
+    expect(latest[0].value).toBe(2);
+    expect(latest[1].value).toBe(3);
+  });
+
+  it("count with range filter", () => {
+    const ts = new TimeSeries();
+    ts.write(1, T);
+    ts.write(2, T + 1000);
+    ts.write(3, T + 2000);
+    expect(ts.count({ from: T + 500, to: T + 1500 })).toBe(1);
+  });
+});
