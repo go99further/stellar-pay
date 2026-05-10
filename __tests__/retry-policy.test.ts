@@ -221,4 +221,47 @@ describe("RetryPolicy", () => {
     expect(fn).toHaveBeenCalledTimes(1);
     expect(result.success).toBe(false);
   });
+
+  it("should support withTimeout via builder", async () => {
+    const policy = createRetryPolicy<string>({
+      maxAttempts: 1,
+      timeout: 20,
+    });
+
+    const fn = vi.fn().mockImplementation(() => new Promise((r) => setTimeout(r, 100)));
+    const result = await policy.execute(fn);
+    expect(result.success).toBe(false);
+    expect((result.lastError as Error).message).toMatch(/timed out/i);
+  });
+
+  it("should support withOnRetry via builder", async () => {
+    const retries: number[] = [];
+    const policy = createRetryPolicy<string>()
+      .withMaxAttempts(3)
+      .withDelay(5)
+      .withOnRetry((_, attempt) => retries.push(attempt));
+
+    const fn = vi.fn().mockRejectedValue(new Error("fail"));
+    await policy.execute(fn);
+    expect(retries).toEqual([1, 2]);
+  });
+
+  it("should return success=true and value on eventual success", async () => {
+    const policy = createRetryPolicy<number>()
+      .withMaxAttempts(3)
+      .withDelay(5)
+      .withStrategy("fixed");
+
+    let calls = 0;
+    const fn = vi.fn().mockImplementation(async () => {
+      calls++;
+      if (calls < 3) throw new Error("not yet");
+      return 42;
+    });
+
+    const result = await policy.execute(fn);
+    expect(result.success).toBe(true);
+    expect(result.value).toBe(42);
+    expect(result.attempts).toBe(3);
+  });
 });
