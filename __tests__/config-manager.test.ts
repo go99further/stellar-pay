@@ -178,4 +178,64 @@ describe("ConfigManager", () => {
       expect(cfg.get("db.missing")).toBeUndefined();
     });
   });
+
+  describe("loadEnv", () => {
+    it("should load environment variables with prefix", () => {
+      process.env["APP_HOST"] = "env-host";
+      process.env["APP_PORT"] = "9000";
+      const c = new ConfigManager();
+      c.loadEnv("APP_");
+      expect(c.get("host")).toBe("env-host");
+      delete process.env["APP_HOST"];
+      delete process.env["APP_PORT"];
+    });
+
+    it("should load all env vars when no prefix given", () => {
+      process.env["TEST_UNIQUE_KEY_XYZ"] = "test-value";
+      const c = new ConfigManager();
+      c.loadEnv();
+      expect(c.get("test_unique_key_xyz")).toBe("test-value");
+      delete process.env["TEST_UNIQUE_KEY_XYZ"];
+    });
+  });
+
+  describe("getOrDefault / fallback", () => {
+    it("should return fallback when key missing and no schema default", () => {
+      expect(cfg.get("missing", "fallback-value")).toBe("fallback-value");
+    });
+
+    it("should prefer schema default over fallback", () => {
+      const c = new ConfigManager({ schema: { timeout: { type: "number", default: 5000 } } });
+      expect(c.get("timeout", 999)).toBe(5000);
+    });
+  });
+
+  describe("onChange — fires on load()", () => {
+    it("should notify listener when value changes via load()", () => {
+      const listener = vi.fn();
+      cfg.load({ host: "old-host" });
+      cfg.onChange("host", listener);
+      cfg.load({ host: "new-host" });
+      expect(listener).toHaveBeenCalledWith("new-host", "old-host");
+    });
+  });
+
+  describe("validate — boolean type", () => {
+    it("should fail for wrong boolean type", () => {
+      const c = new ConfigManager({ schema: { debug: { type: "boolean" } } });
+      c.load({ debug: "yes" });
+      const result = c.validate();
+      expect(result.valid).toBe(false);
+      expect(result.errors.some((e) => e.includes("debug"))).toBe(true);
+    });
+  });
+
+  describe("priority ordering", () => {
+    it("should apply higher priority layers last (wins)", () => {
+      cfg.load({ key: "low" }, 0);
+      cfg.load({ key: "high" }, 100);
+      cfg.load({ key: "mid" }, 50);
+      expect(cfg.get("key")).toBe("high");
+    });
+  });
 });
