@@ -208,3 +208,42 @@ describe("PriorityQueue", () => {
     });
   });
 });
+
+describe("PriorityQueue — additional coverage", () => {
+  it("maxQueue should dequeue in descending order", () => {
+    const pq = maxQueue<number>();
+    [3, 1, 4, 1, 5, 9, 2, 6].forEach((n) => pq.enqueue(n));
+    expect(pq.dequeue()).toBe(9);
+    expect(pq.dequeue()).toBe(6);
+  });
+
+  it("minQueue should dequeue in ascending order", () => {
+    const pq = minQueue<number>();
+    [5, 3, 8, 1].forEach((n) => pq.enqueue(n));
+    expect(pq.dequeue()).toBe(1);
+    expect(pq.dequeue()).toBe(3);
+  });
+
+  it("has() with predicate should find item", () => {
+    const pq = minQueue<number>();
+    pq.enqueue(10);
+    pq.enqueue(20);
+    expect(pq.has((n) => n === 20)).toBe(true);
+    expect(pq.has((n) => n === 99)).toBe(false);
+  });
+
+  it("remove() should maintain heap property", () => {
+    const pq = minQueue<number>();
+    [5, 3, 8, 1, 4].forEach((n) => pq.enqueue(n));
+    pq.remove((n) => n === 3);
+    const result: number[] = [];
+    while (!pq.isEmpty) result.push(pq.dequeue()!);
+    expect(result).toEqual([1, 4, 5, 8]);
+  });
+
+  it("PriorityQueue constructor with initial items", () => {
+    const pq = new PriorityQueue<number>((a, b) => a - b, [5, 2, 8, 1]);
+    expect(pq.dequeue()).toBe(1);
+    expect(pq.dequeue()).toBe(2);
+  });
+});
