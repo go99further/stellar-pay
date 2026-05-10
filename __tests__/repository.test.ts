@@ -266,3 +266,36 @@ describe("UnitOfWork", () => {
     expect(await repo.exists("existing")).toBe(false);
   });
 });
+
+describe("InMemoryRepository — clear()", () => {
+  it("should remove all entities", async () => {
+    const repo = new InMemoryRepository<User>();
+    await repo.save(makeUser("1", "Alice"));
+    await repo.save(makeUser("2", "Bob"));
+    repo.clear();
+    expect(await repo.count()).toBe(0);
+  });
+});
+
+describe("UnitOfWork — add() chaining", () => {
+  it("should return this for chaining", async () => {
+    const repo = new InMemoryRepository<User>();
+    const uow = new UnitOfWork(repo);
+    const result = uow.add(makeUser("1", "Alice"));
+    expect(result).toBe(uow);
+  });
+
+  it("should return this for update() chaining", async () => {
+    const repo = new InMemoryRepository<User>();
+    const uow = new UnitOfWork(repo);
+    const result = uow.update(makeUser("1", "Alice"));
+    expect(result).toBe(uow);
+  });
+
+  it("should return this for remove() chaining", async () => {
+    const repo = new InMemoryRepository<User>();
+    const uow = new UnitOfWork(repo);
+    const result = uow.remove("1");
+    expect(result).toBe(uow);
+  });
+});
