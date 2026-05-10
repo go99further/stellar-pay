@@ -1,364 +1,322 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { StateMachine, createSwapStateMachine } from "../lib/agent/types/state-machine";
+import { describe, it, expect, beforeEach, vi } from "vitest";
+import { StateMachine } from "../lib/agent/state-machine";
+
+type TrafficState = "red" | "yellow" | "green";
+type TrafficEvent = "timer" | "emergency" | "reset";
+
+type OrderState = "pending" | "confirmed" | "shipped" | "delivered" | "cancelled";
+type OrderEvent = "confirm" | "ship" | "deliver" | "cancel";
+
+interface OrderContext {
+  orderId: string;
+  attempts: number;
+}
 
 describe("StateMachine", () => {
-  describe("basic transitions", () => {
-    function createTrafficLight() {
-      return new StateMachine({
-        id: "traffic",
+  describe("basic traffic light", () => {
+    let sm: StateMachine<TrafficState, TrafficEvent>;
+
+    beforeEach(() => {
+      sm = new StateMachine<TrafficState, TrafficEvent>({
         initial: "red",
-        context: { count: 0 },
-        states: {
-          red: {
-            on: { NEXT: { target: "green" } },
-          },
-          green: {
-            on: { NEXT: { target: "yellow" } },
-          },
-          yellow: {
-            on: { NEXT: { target: "red" } },
-          },
-        },
+        transitions: [
+          { from: "red", event: "timer", to: "green" },
+          { from: "green", event: "timer", to: "yellow" },
+          { from: "yellow", event: "timer", to: "red" },
+          { from: ["red", "green", "yellow"], event: "emergency", to: "red" },
+          { from: ["red", "green", "yellow"], event: "reset", to: "red" },
+        ],
       });
-    }
+    });
 
     it("should start in initial state", () => {
-      const m = createTrafficLight();
-      expect(m.matches("red")).toBe(true);
+      expect(sm.state).toBe("red");
     });
 
-    it("should transition on event", () => {
-      const m = createTrafficLight();
-      m.send("NEXT");
-      expect(m.matches("green")).toBe(true);
+    it("should transition on valid event", async () => {
+      await sm.send("timer");
+      expect(sm.state).toBe("green");
     });
 
-    it("should cycle through states", () => {
-      const m = createTrafficLight();
-      m.send("NEXT"); // green
-      m.send("NEXT"); // yellow
-      m.send("NEXT"); // red
-      expect(m.matches("red")).toBe(true);
+    it("should chain transitions", async () => {
+      await sm.send("timer"); // red → green
+      await sm.send("timer"); // green → yellow
+      await sm.send("timer"); // yellow → red
+      expect(sm.state).toBe("red");
     });
 
-    it("should stay in state on unknown event", () => {
-      const m = createTrafficLight();
-      m.send("UNKNOWN");
-      expect(m.matches("red")).toBe(true);
-    });
-  });
-
-  describe("guards", () => {
-    it("should block transition when guard returns false", () => {
-      const m = new StateMachine({
-        id: "guarded",
-        initial: "locked",
-        context: { pin: "" },
-        states: {
-          locked: {
-            on: {
-              UNLOCK: {
-                target: "unlocked",
-                guard: (ctx) => ctx.pin === "1234",
-              },
-            },
-          },
-          unlocked: {},
-        },
-      });
-
-      m.send({ type: "UNLOCK" }); // no pin set
-      expect(m.matches("locked")).toBe(true);
-
-      m.context = { pin: "1234" } as never;
-      // Access context via snapshot
+    it("should return true on successful transition", async () => {
+      expect(await sm.send("timer")).toBe(true);
     });
 
-    it("should allow transition when guard passes", () => {
-      const m = new StateMachine({
-        id: "guarded2",
-        initial: "locked",
-        context: { authorized: false },
-        states: {
-          locked: {
-            on: {
-              UNLOCK: {
-                target: "unlocked",
-                guard: (ctx) => ctx.authorized,
-              },
-            },
-          },
-          unlocked: {},
-        },
-      });
+    it("should return false on invalid event", async () => {
+      expect(await sm.send("deliver" as TrafficEvent)).toBe(false);
+    });
 
-      // Guard fails
-      m.send("UNLOCK");
-      expect(m.matches("locked")).toBe(true);
+    it("should not change state on invalid event", async () => {
+      await sm.send("deliver" as TrafficEvent);
+      expect(sm.state).toBe("red");
+    });
 
-      // Create new machine with authorized=true
-      const m2 = new StateMachine({
-        id: "guarded2",
-        initial: "locked",
-        context: { authorized: true },
-        states: {
-          locked: {
-            on: {
-              UNLOCK: {
-                target: "unlocked",
-                guard: (ctx) => ctx.authorized,
-              },
-            },
-          },
-          unlocked: {},
-        },
-      });
-      m2.send("UNLOCK");
-      expect(m2.matches("unlocked")).toBe(true);
+    it("should handle multi-from transitions", async () => {
+      await sm.send("timer"); // → green
+      await sm.send("emergency"); // green → red
+      expect(sm.state).toBe("red");
+    });
+
+    it("can() should return true for valid event", () => {
+      expect(sm.can("timer")).toBe(true);
+    });
+
+    it("can() should return false for invalid event", () => {
+      expect(sm.can("deliver" as TrafficEvent)).toBe(false);
+    });
+
+    it("matches() should check current state", () => {
+      expect(sm.matches("red")).toBe(true);
+      expect(sm.matches("green")).toBe(false);
     });
   });
 
-  describe("actions and context updates", () => {
-    it("should update context via transition action", () => {
-      const m = new StateMachine({
-        id: "counter",
-        initial: "active",
-        context: { count: 0 },
-        states: {
-          active: {
-            on: {
-              INCREMENT: {
-                target: "active",
-                action: (ctx) => ({ count: ctx.count + 1 }),
-              },
-            },
+  describe("guard conditions", () => {
+    it("should block transition when guard returns false", async () => {
+      const sm = new StateMachine<OrderState, OrderEvent, OrderContext>({
+        initial: "pending",
+        context: { orderId: "o1", attempts: 0 },
+        transitions: [
+          {
+            from: "pending",
+            event: "confirm",
+            to: "confirmed",
+            guard: (ctx) => ctx.attempts < 3,
           },
-        },
+        ],
       });
-
-      m.send("INCREMENT");
-      m.send("INCREMENT");
-      m.send("INCREMENT");
-
-      expect(m.snapshot().context.count).toBe(3);
+      sm.updateContext((ctx) => { ctx.attempts = 5; });
+      expect(await sm.send("confirm")).toBe(false);
+      expect(sm.state).toBe("pending");
     });
 
-    it("should run entry action on state entry", () => {
-      const log: string[] = [];
-      const m = new StateMachine({
-        id: "entry-test",
-        initial: "a",
-        context: {},
-        states: {
-          a: {
-            on: { GO: { target: "b" } },
+    it("should allow transition when guard returns true", async () => {
+      const sm = new StateMachine<OrderState, OrderEvent, OrderContext>({
+        initial: "pending",
+        context: { orderId: "o1", attempts: 0 },
+        transitions: [
+          {
+            from: "pending",
+            event: "confirm",
+            to: "confirmed",
+            guard: (ctx) => ctx.attempts < 3,
           },
-          b: {
-            entry: () => { log.push("entered_b"); },
-          },
-        },
+        ],
       });
-
-      m.send("GO");
-      expect(log).toContain("entered_b");
-    });
-
-    it("should run exit action on state exit", () => {
-      const log: string[] = [];
-      const m = new StateMachine({
-        id: "exit-test",
-        initial: "a",
-        context: {},
-        states: {
-          a: {
-            exit: () => { log.push("exited_a"); },
-            on: { GO: { target: "b" } },
-          },
-          b: {},
-        },
-      });
-
-      m.send("GO");
-      expect(log).toContain("exited_a");
+      expect(await sm.send("confirm")).toBe(true);
+      expect(sm.state).toBe("confirmed");
     });
   });
 
-  describe("final states", () => {
-    it("should mark done=true in final state", () => {
-      const m = new StateMachine({
-        id: "final-test",
-        initial: "running",
-        context: {},
-        states: {
-          running: {
-            on: { FINISH: { target: "done" } },
-          },
-          done: { type: "final" },
-        },
+  describe("entry / exit actions", () => {
+    it("should call onExit when leaving a state", async () => {
+      const onExit = vi.fn();
+      const sm = new StateMachine<TrafficState, TrafficEvent>({
+        initial: "red",
+        transitions: [{ from: "red", event: "timer", to: "green" }],
+        states: { red: { onExit } },
       });
-
-      m.send("FINISH");
-      expect(m.snapshot().done).toBe(true);
+      await sm.send("timer");
+      expect(onExit).toHaveBeenCalledWith(expect.anything(), "green");
     });
 
-    it("should ignore events in final state", () => {
-      const m = new StateMachine({
-        id: "final-ignore",
-        initial: "running",
-        context: {},
+    it("should call onEnter when entering a state", async () => {
+      const onEnter = vi.fn();
+      const sm = new StateMachine<TrafficState, TrafficEvent>({
+        initial: "red",
+        transitions: [{ from: "red", event: "timer", to: "green" }],
+        states: { green: { onEnter } },
+      });
+      await sm.send("timer");
+      expect(onEnter).toHaveBeenCalledWith(expect.anything(), "red");
+    });
+
+    it("should call exit before enter", async () => {
+      const order: string[] = [];
+      const sm = new StateMachine<TrafficState, TrafficEvent>({
+        initial: "red",
+        transitions: [{ from: "red", event: "timer", to: "green" }],
         states: {
-          running: {
-            on: { FINISH: { target: "done" } },
-          },
-          done: { type: "final" },
+          red: { onExit: () => order.push("exit-red") },
+          green: { onEnter: () => order.push("enter-green") },
         },
       });
+      await sm.send("timer");
+      expect(order).toEqual(["exit-red", "enter-green"]);
+    });
+  });
 
-      m.send("FINISH");
-      m.send("FINISH"); // should be ignored
-      expect(m.matches("done")).toBe(true);
+  describe("transition actions", () => {
+    it("should call action on transition", async () => {
+      const action = vi.fn();
+      const sm = new StateMachine<TrafficState, TrafficEvent>({
+        initial: "red",
+        transitions: [{ from: "red", event: "timer", to: "green", action }],
+      });
+      await sm.send("timer");
+      expect(action).toHaveBeenCalledWith(expect.anything(), "timer", "red", "green");
+    });
+  });
+
+  describe("context", () => {
+    it("should expose context via ctx", () => {
+      const sm = new StateMachine<OrderState, OrderEvent, OrderContext>({
+        initial: "pending",
+        context: { orderId: "o42", attempts: 0 },
+        transitions: [],
+      });
+      expect(sm.ctx.orderId).toBe("o42");
+    });
+
+    it("should update context via updateContext", () => {
+      const sm = new StateMachine<OrderState, OrderEvent, OrderContext>({
+        initial: "pending",
+        context: { orderId: "o1", attempts: 0 },
+        transitions: [],
+      });
+      sm.updateContext((ctx) => { ctx.attempts = 3; });
+      expect(sm.ctx.attempts).toBe(3);
     });
   });
 
   describe("history", () => {
-    it("should record transition history", () => {
-      const m = new StateMachine({
-        id: "history-test",
-        initial: "a",
-        context: {},
-        states: {
-          a: { on: { GO: { target: "b" } } },
-          b: { on: { GO: { target: "c" } } },
-          c: {},
-        },
+    it("should record transitions in history", async () => {
+      const sm = new StateMachine<TrafficState, TrafficEvent>({
+        initial: "red",
+        transitions: [
+          { from: "red", event: "timer", to: "green" },
+          { from: "green", event: "timer", to: "yellow" },
+        ],
       });
+      await sm.send("timer");
+      await sm.send("timer");
+      const history = sm.getHistory();
+      expect(history).toHaveLength(2);
+      expect(history[0]).toMatchObject({ from: "red", to: "green", event: "timer" });
+      expect(history[1]).toMatchObject({ from: "green", to: "yellow", event: "timer" });
+    });
 
-      m.send("GO");
-      m.send("GO");
+    it("should not record failed transitions", async () => {
+      const sm = new StateMachine<TrafficState, TrafficEvent>({
+        initial: "red",
+        transitions: [{ from: "red", event: "timer", to: "green" }],
+      });
+      await sm.send("emergency"); // invalid
+      expect(sm.getHistory()).toHaveLength(0);
+    });
 
-      const history = m.getHistory();
-      expect(history.length).toBe(2);
-      expect(history[0].from).toBe("a");
-      expect(history[0].to).toBe("b");
-      expect(history[1].from).toBe("b");
-      expect(history[1].to).toBe("c");
+    it("should respect maxHistory limit", async () => {
+      const sm = new StateMachine<TrafficState, TrafficEvent>({
+        initial: "red",
+        maxHistory: 2,
+        transitions: [
+          { from: "red", event: "timer", to: "green" },
+          { from: "green", event: "timer", to: "yellow" },
+          { from: "yellow", event: "timer", to: "red" },
+          { from: "red", event: "emergency", to: "red" },
+        ],
+      });
+      await sm.send("timer"); // red→green
+      await sm.send("timer"); // green→yellow
+      await sm.send("timer"); // yellow→red
+      expect(sm.getHistory()).toHaveLength(2);
     });
   });
 
-  describe("subscribe", () => {
-    it("should notify listeners on state change", () => {
-      const snapshots: string[] = [];
-      const m = new StateMachine({
-        id: "sub-test",
-        initial: "idle",
-        context: {},
-        states: {
-          idle: { on: { START: { target: "running" } } },
-          running: {},
-        },
+  describe("onTransition listener", () => {
+    it("should notify listeners on transition", async () => {
+      const sm = new StateMachine<TrafficState, TrafficEvent>({
+        initial: "red",
+        transitions: [{ from: "red", event: "timer", to: "green" }],
       });
+      const entries: string[] = [];
+      sm.onTransition((entry) => entries.push(`${entry.from}→${entry.to}`));
+      await sm.send("timer");
+      expect(entries).toEqual(["red→green"]);
+    });
 
-      const unsub = m.subscribe((snap) => snapshots.push(snap.state));
-      m.send("START");
-      expect(snapshots).toContain("running");
-
+    it("should unsubscribe listener", async () => {
+      const sm = new StateMachine<TrafficState, TrafficEvent>({
+        initial: "red",
+        transitions: [
+          { from: "red", event: "timer", to: "green" },
+          { from: "green", event: "timer", to: "yellow" },
+        ],
+      });
+      const calls: number[] = [];
+      const unsub = sm.onTransition(() => calls.push(1));
+      await sm.send("timer");
       unsub();
-      m.send("START"); // no more notifications
-      expect(snapshots.length).toBe(1);
+      await sm.send("timer");
+      expect(calls).toHaveLength(1);
     });
   });
 
-  describe("getAvailableEvents", () => {
-    it("should return events for current state", () => {
-      const m = new StateMachine({
-        id: "events-test",
-        initial: "idle",
-        context: {},
-        states: {
-          idle: { on: { START: { target: "running" }, CANCEL: { target: "idle" } } },
-          running: { on: { STOP: { target: "idle" } } },
-        },
+  describe("sendSync", () => {
+    it("should transition synchronously", () => {
+      const sm = new StateMachine<TrafficState, TrafficEvent>({
+        initial: "red",
+        transitions: [{ from: "red", event: "timer", to: "green" }],
       });
-
-      expect(m.getAvailableEvents()).toContain("START");
-      expect(m.getAvailableEvents()).toContain("CANCEL");
-      m.send("START");
-      expect(m.getAvailableEvents()).toContain("STOP");
+      expect(sm.sendSync("timer")).toBe(true);
+      expect(sm.state).toBe("green");
     });
-  });
 
-  describe("reset", () => {
-    it("should reset to initial state and context", () => {
-      const m = new StateMachine({
-        id: "reset-test",
-        initial: "idle",
-        context: { count: 0 },
-        states: {
-          idle: {
-            on: {
-              GO: {
-                target: "active",
-                action: (ctx) => ({ count: ctx.count + 1 }),
-              },
-            },
-          },
-          active: {},
-        },
+    it("should return false for invalid event", () => {
+      const sm = new StateMachine<TrafficState, TrafficEvent>({
+        initial: "red",
+        transitions: [{ from: "red", event: "timer", to: "green" }],
       });
-
-      m.send("GO");
-      expect(m.matches("active")).toBe(true);
-
-      m.reset();
-      expect(m.matches("idle")).toBe(true);
-      expect(m.snapshot().context.count).toBe(0);
-      expect(m.getHistory().length).toBe(0);
+      expect(sm.sendSync("emergency")).toBe(false);
     });
   });
-});
 
-describe("createSwapStateMachine", () => {
-  it("should follow happy path: idle → validating → signing → submitting → completed", () => {
-    const m = createSwapStateMachine({ retries: 0 });
+  describe("order workflow", () => {
+    let sm: StateMachine<OrderState, OrderEvent, OrderContext>;
 
-    m.send("SUBMIT");
-    expect(m.matches("validating")).toBe(true);
+    beforeEach(() => {
+      sm = new StateMachine<OrderState, OrderEvent, OrderContext>({
+        initial: "pending",
+        context: { orderId: "order-1", attempts: 0 },
+        transitions: [
+          { from: "pending", event: "confirm", to: "confirmed" },
+          { from: "confirmed", event: "ship", to: "shipped" },
+          { from: "shipped", event: "deliver", to: "delivered" },
+          { from: ["pending", "confirmed"], event: "cancel", to: "cancelled" },
+        ],
+      });
+    });
 
-    m.send("VALID");
-    expect(m.matches("signing")).toBe(true);
+    it("should complete happy path", async () => {
+      await sm.send("confirm");
+      await sm.send("ship");
+      await sm.send("deliver");
+      expect(sm.state).toBe("delivered");
+    });
 
-    m.send("SIGNED");
-    expect(m.matches("submitting")).toBe(true);
+    it("should allow cancellation from pending", async () => {
+      await sm.send("cancel");
+      expect(sm.state).toBe("cancelled");
+    });
 
-    m.send({ type: "SUCCESS", data: "0xabc123" });
-    expect(m.matches("completed")).toBe(true);
-    expect(m.snapshot().done).toBe(true);
-    expect(m.snapshot().context.txHash).toBe("0xabc123");
-  });
+    it("should allow cancellation from confirmed", async () => {
+      await sm.send("confirm");
+      await sm.send("cancel");
+      expect(sm.state).toBe("cancelled");
+    });
 
-  it("should retry on failure when retries < 3", () => {
-    const m = createSwapStateMachine({ retries: 0 });
-
-    m.send("SUBMIT");
-    m.send("VALID");
-    m.send("SIGNED");
-    m.send({ type: "FAILURE", data: "network error" });
-
-    expect(m.matches("retrying")).toBe(true);
-    expect(m.snapshot().context.retries).toBe(1);
-    expect(m.snapshot().context.error).toBe("network error");
-  });
-
-  it("should not retry when retries >= 3", () => {
-    const m = createSwapStateMachine({ retries: 3 });
-
-    m.send("SUBMIT");
-    m.send("VALID");
-    m.send("SIGNED");
-    // FAILURE guard fails (retries >= 3), FAILURE_FINAL goes to failed
-    m.send({ type: "FAILURE_FINAL" });
-
-    expect(m.matches("failed")).toBe(true);
-    expect(m.snapshot().done).toBe(true);
+    it("should not allow cancellation from shipped", async () => {
+      await sm.send("confirm");
+      await sm.send("ship");
+      expect(await sm.send("cancel")).toBe(false);
+      expect(sm.state).toBe("shipped");
+    });
   });
 });
