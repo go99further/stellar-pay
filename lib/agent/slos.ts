@@ -332,10 +332,48 @@ export function getMetricsSummary() {
   };
 }
 
+export interface AlertWebhookConfig {
+  /** Webhook URL to POST violation payloads to */
+  url: string;
+  /** Optional Bearer token for Authorization header */
+  token?: string;
+  /** Only fire for this severity level or above ("warning" fires for both; "critical" fires only for critical) */
+  minSeverity?: "warning" | "critical";
+}
+
+/** Registered webhook configs — set via configureAlertWebhooks() */
+let _webhooks: AlertWebhookConfig[] = [];
+
+/** Register webhook endpoints for SLO violation alerts */
+export function configureAlertWebhooks(configs: AlertWebhookConfig[]): void {
+  _webhooks = configs;
+}
+
+/** Clear all registered webhooks (useful in tests) */
+export function clearAlertWebhooks(): void {
+  _webhooks = [];
+}
+
+async function postWebhook(
+  config: AlertWebhookConfig,
+  payload: object
+): Promise<void> {
+  const headers: Record<string, string> = { "Content-Type": "application/json" };
+  if (config.token) headers["Authorization"] = `Bearer ${config.token}`;
+  try {
+    await fetch(config.url, {
+      method: "POST",
+      headers,
+      body: JSON.stringify(payload),
+    });
+  } catch {
+    // Webhook delivery failures must not crash the agent
+  }
+}
+
 /**
- * Alert on SLO violations (integrate with your alerting system)
- *
- * @param violations - Array of SLO violations
+ * Alert on SLO violations.
+ * Logs to console and fires any registered webhooks.
  */
 export function alertOnViolations(violations: SLOViolation[]): void {
   if (violations.length === 0) return;
@@ -348,7 +386,6 @@ export function alertOnViolations(violations: SLOViolation[]): void {
       count: critical.length,
       violations: critical.map((v) => v.message),
     });
-    // TODO: Integrate with PagerDuty, Opsgenie, etc.
   }
 
   if (warnings.length > 0) {
@@ -356,7 +393,24 @@ export function alertOnViolations(violations: SLOViolation[]): void {
       count: warnings.length,
       violations: warnings.map((v) => v.message),
     });
-    // TODO: Send to Slack, email, etc.
+  }
+
+  if (_webhooks.length === 0) return;
+
+  const payload = {
+    timestamp: new Date().toISOString(),
+    critical: critical.map((v) => ({ name: v.target.name, message: v.message, current: v.target.current, target: v.target.target })),
+    warnings: warnings.map((v) => ({ name: v.target.name, message: v.message, current: v.target.current, target: v.target.target })),
+  };
+
+  for (const cfg of _webhooks) {
+    const minSev = cfg.minSeverity ?? "warning";
+    const shouldFire =
+      (minSev === "warning" && violations.length > 0) ||
+      (minSev === "critical" && critical.length > 0);
+    if (shouldFire) {
+      postWebhook(cfg, payload);
+    }
   }
 }
 

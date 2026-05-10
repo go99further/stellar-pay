@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 import {
   recordLatency,
   recordFirstTokenLatency,
@@ -9,6 +9,9 @@ import {
   resetMetrics,
   getMetricsSummary,
   withLatencyTracking,
+  alertOnViolations,
+  configureAlertWebhooks,
+  clearAlertWebhooks,
 } from "../lib/agent/slos";
 
 describe("slos", () => {
@@ -210,6 +213,99 @@ describe("slos", () => {
       await expect(
         withLatencyTracking("security", async () => { throw new Error("original"); })
       ).rejects.toThrow("original");
+    });
+  });
+
+  describe("alertOnViolations", () => {
+    beforeEach(() => {
+      clearAlertWebhooks();
+    });
+
+    it("does nothing when violations array is empty", () => {
+      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+      alertOnViolations([]);
+      expect(spy).not.toHaveBeenCalled();
+      spy.mockRestore();
+    });
+
+    it("logs critical violations to console.error", () => {
+      for (let i = 0; i < 20; i++) recordLatency("router", 9999);
+      const violations = checkSLOs();
+      const spy = vi.spyOn(console, "error").mockImplementation(() => {});
+      alertOnViolations(violations);
+      expect(spy).toHaveBeenCalledWith("[SLO CRITICAL]", expect.objectContaining({ count: expect.any(Number) }));
+      spy.mockRestore();
+    });
+
+    it("logs warning violations to console.warn", () => {
+      for (let i = 0; i < 20; i++) recordLatency("analytics", 9999);
+      const violations = checkSLOs();
+      const spy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      alertOnViolations(violations);
+      expect(spy).toHaveBeenCalledWith("[SLO WARNING]", expect.objectContaining({ count: expect.any(Number) }));
+      spy.mockRestore();
+    });
+
+    it("fires webhook when violations exist", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response());
+      configureAlertWebhooks([{ url: "https://hooks.example.com/slo" }]);
+
+      for (let i = 0; i < 20; i++) recordLatency("router", 9999);
+      const violations = checkSLOs();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      alertOnViolations(violations);
+
+      // postWebhook is fire-and-forget; flush microtasks
+      await Promise.resolve();
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "https://hooks.example.com/slo",
+        expect.objectContaining({ method: "POST" })
+      );
+      fetchSpy.mockRestore();
+    });
+
+    it("does not fire webhook when minSeverity=critical but only warnings exist", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response());
+      configureAlertWebhooks([{ url: "https://hooks.example.com/slo", minSeverity: "critical" }]);
+
+      for (let i = 0; i < 20; i++) recordLatency("analytics", 9999); // analytics is "warning" severity
+      const violations = checkSLOs();
+      vi.spyOn(console, "warn").mockImplementation(() => {});
+      alertOnViolations(violations);
+
+      await Promise.resolve();
+      expect(fetchSpy).not.toHaveBeenCalled();
+      fetchSpy.mockRestore();
+    });
+
+    it("includes Authorization header when token is configured", async () => {
+      const fetchSpy = vi.spyOn(globalThis, "fetch").mockResolvedValue(new Response());
+      configureAlertWebhooks([{ url: "https://hooks.example.com/slo", token: "secret-token" }]);
+
+      for (let i = 0; i < 20; i++) recordLatency("router", 9999);
+      const violations = checkSLOs();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      alertOnViolations(violations);
+
+      await Promise.resolve();
+      expect(fetchSpy).toHaveBeenCalledWith(
+        "https://hooks.example.com/slo",
+        expect.objectContaining({
+          headers: expect.objectContaining({ Authorization: "Bearer secret-token" }),
+        })
+      );
+      fetchSpy.mockRestore();
+    });
+
+    it("does not throw when webhook fetch fails", async () => {
+      vi.spyOn(globalThis, "fetch").mockRejectedValue(new Error("network error"));
+      configureAlertWebhooks([{ url: "https://hooks.example.com/slo" }]);
+
+      for (let i = 0; i < 20; i++) recordLatency("router", 9999);
+      const violations = checkSLOs();
+      vi.spyOn(console, "error").mockImplementation(() => {});
+      expect(() => alertOnViolations(violations)).not.toThrow();
+      await Promise.resolve();
     });
   });
 });
