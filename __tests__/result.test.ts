@@ -246,3 +246,46 @@ describe("Result Type", () => {
     });
   });
 });
+
+describe("handleError — individual error types", () => {
+  it("should format contract error with contractId and method", () => {
+    const msg = handleError(AgentErrors.contract("CXXX", "swap", "insufficient balance"));
+    expect(msg).toContain("CXXX");
+    expect(msg).toContain("swap");
+    expect(msg).toContain("insufficient balance");
+  });
+
+  it("should include panicCode when present", () => {
+    const msg = handleError(AgentErrors.contract("CXXX", "swap", "panic", "P001"));
+    expect(msg).toContain("P001");
+  });
+
+  it("should format user error with action", () => {
+    const msg = handleError(AgentErrors.user("submit_swap", "wallet not connected"));
+    expect(msg).toContain("submit_swap");
+    expect(msg).toContain("wallet not connected");
+  });
+
+  it("should format system error with component", () => {
+    const msg = handleError(AgentErrors.system("router", "unexpected state"));
+    expect(msg).toContain("router");
+    expect(msg).toContain("unexpected state");
+  });
+
+  it("should mark fatal system errors", () => {
+    const msg = handleError(AgentErrors.system("core", "crash", true));
+    expect(msg).toContain("FATAL");
+  });
+
+  it("should format timeout error with operation and ms", () => {
+    const msg = handleError(AgentErrors.timeout("fetchPrice", 3000));
+    expect(msg).toContain("fetchPrice");
+    expect(msg).toContain("3000");
+  });
+
+  it("should format rate limit error with service and retryAfter", () => {
+    const msg = handleError(AgentErrors.rateLimit("horizon", 2000));
+    expect(msg).toContain("horizon");
+    expect(msg).toContain("2000");
+  });
+});

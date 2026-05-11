@@ -24,7 +24,7 @@ vi.mock("../lib/agent/circuit-breaker", () => ({
   }),
 }));
 
-import { StellarClient } from "../lib/web3/stellar-client";
+import { StellarClient, stellarClient } from "../lib/web3/stellar-client";
 import { Horizon } from "@stellar/stellar-sdk";
 
 function getLastServerMock() {
@@ -201,5 +201,24 @@ describe("StellarClient — additional coverage", () => {
     const client = createMainnetClient();
     expect(client).toBeInstanceOf(StellarClient);
     expect(client.getStatus().horizonUrl).toContain("stellar.org");
+  });
+});
+
+describe("stellarClient — shared instance", () => {
+  it("should be a StellarClient instance", () => {
+    expect(stellarClient).toBeInstanceOf(StellarClient);
+  });
+
+  it("should have a valid status", () => {
+    const status = stellarClient.getStatus();
+    expect(status).toHaveProperty("horizonUrl");
+    expect(status).toHaveProperty("cacheEnabled");
+    expect(status).toHaveProperty("pendingRequests");
+  });
+
+  it("getCacheStats should return cache statistics", () => {
+    const stats = stellarClient.getCacheStats();
+    expect(stats).toHaveProperty("size");
+    expect(typeof stats.size).toBe("number");
   });
 });

@@ -9,7 +9,7 @@ vi.mock("@/lib/amm-contract", () => ({
   getLpTokenId: vi.fn(() => "LP_TOKEN_CONTRACT"),
 }));
 
-import { getPoolStatsHandler } from "../lib/agent/tools/get-pool-stats";
+import { getPoolStatsHandler, getPoolStatsSchema } from "../lib/agent/tools/get-pool-stats";
 import { getReserves, getLpSupply } from "@/lib/amm-contract";
 
 const DECIMALS = 7;
@@ -64,5 +64,20 @@ describe("get-pool-stats tool", () => {
       expect(result.tokenB.reserve).toBe("3.25");
       expect(result.lpToken.totalSupply).toBe("2.1");
     });
+  });
+});
+
+describe("getPoolStatsSchema", () => {
+  it("should have name get_pool_stats", () => {
+    expect(getPoolStatsSchema.name).toBe("get_pool_stats");
+  });
+
+  it("should have a description", () => {
+    expect(typeof getPoolStatsSchema.description).toBe("string");
+    expect(getPoolStatsSchema.description!.length).toBeGreaterThan(0);
+  });
+
+  it("should have an object input_schema", () => {
+    expect(getPoolStatsSchema.input_schema.type).toBe("object");
   });
 });

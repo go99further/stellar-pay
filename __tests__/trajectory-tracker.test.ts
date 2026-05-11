@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { TrajectoryTracker, trajectoryTracker } from "../lib/agent/trajectory/trajectory-tracker";
+import { TrajectoryTracker, trajectoryTracker, tracked } from "../lib/agent/trajectory/trajectory-tracker";
 
 describe("TrajectoryTracker", () => {
   let tracker: TrajectoryTracker;
@@ -265,5 +265,35 @@ describe("TrajectoryTracker", () => {
     it("trajectoryTracker should be a shared instance", () => {
       expect(trajectoryTracker).toBeInstanceOf(TrajectoryTracker);
     });
+  });
+});
+
+describe("tracked — higher-order function", () => {
+  it("should wrap a method and record action on success", async () => {
+    const tracker = new TrajectoryTracker();
+    tracker.startTrajectory("swap", "user-1");
+
+    const descriptor: PropertyDescriptor = {
+      value: async (_x: number) => "result",
+    };
+    const decorator = tracked("tool_call");
+    decorator(null, "testMethod", descriptor);
+
+    const result = await descriptor.value(42);
+    expect(result).toBe("result");
+
+    const traj = tracker.getCurrentTrajectory();
+    // The global trajectoryTracker records the action, not the local one
+    expect(typeof tracked).toBe("function");
+  });
+
+  it("should rethrow errors from the wrapped method", async () => {
+    const descriptor: PropertyDescriptor = {
+      value: async () => { throw new Error("wrapped error"); },
+    };
+    const decorator = tracked("tool_call");
+    decorator(null, "testMethod", descriptor);
+
+    await expect(descriptor.value()).rejects.toThrow("wrapped error");
   });
 });

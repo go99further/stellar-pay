@@ -4,7 +4,7 @@ vi.mock("@/lib/amm-contract", () => ({
   buildAddLiquidityTransaction: vi.fn(),
 }));
 
-import { buildAddLiquidityXdrHandler } from "../lib/agent/tools/build-add-liquidity-xdr";
+import { buildAddLiquidityXdrHandler, buildAddLiquidityXdrSchema } from "../lib/agent/tools/build-add-liquidity-xdr";
 import { buildAddLiquidityTransaction } from "@/lib/amm-contract";
 
 const DECIMALS = 7;
@@ -61,5 +61,21 @@ describe("build-add-liquidity-xdr tool", () => {
         toRaw(1.4)
       );
     });
+  });
+});
+
+describe("buildAddLiquidityXdrSchema", () => {
+  it("should have name build_add_liquidity_xdr", () => {
+    expect(buildAddLiquidityXdrSchema.name).toBe("build_add_liquidity_xdr");
+  });
+
+  it("should have a description", () => {
+    expect(typeof buildAddLiquidityXdrSchema.description).toBe("string");
+    expect(buildAddLiquidityXdrSchema.description!.length).toBeGreaterThan(0);
+  });
+
+  it("should have an object input_schema with required properties", () => {
+    expect(buildAddLiquidityXdrSchema.input_schema.type).toBe("object");
+    expect(buildAddLiquidityXdrSchema.input_schema.required).toBeDefined();
   });
 });

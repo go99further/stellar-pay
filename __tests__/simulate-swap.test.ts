@@ -9,7 +9,7 @@ vi.mock("@/lib/amm-contract", () => ({
   getTokenBId: vi.fn(() => "TOKEN_B_CONTRACT"),
 }));
 
-import { simulateSwapHandler, getTokenAddress } from "../lib/agent/tools/simulate-swap";
+import { simulateSwapHandler, getTokenAddress, simulateSwapSchema } from "../lib/agent/tools/simulate-swap";
 import { getReserves } from "@/lib/amm-contract";
 
 const DECIMALS = 7;
@@ -108,5 +108,21 @@ describe("simulate-swap tool", () => {
     it("should return TKNB contract address", () => {
       expect(getTokenAddress("TKNB")).toBe("TOKEN_B_CONTRACT");
     });
+  });
+});
+
+describe("simulateSwapSchema", () => {
+  it("should have name simulate_swap", () => {
+    expect(simulateSwapSchema.name).toBe("simulate_swap");
+  });
+
+  it("should have a description", () => {
+    expect(typeof simulateSwapSchema.description).toBe("string");
+    expect(simulateSwapSchema.description!.length).toBeGreaterThan(0);
+  });
+
+  it("should have an object input_schema with required properties", () => {
+    expect(simulateSwapSchema.input_schema.type).toBe("object");
+    expect(simulateSwapSchema.input_schema.required).toBeDefined();
   });
 });

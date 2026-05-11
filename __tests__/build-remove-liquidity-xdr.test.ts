@@ -9,6 +9,8 @@ vi.mock("@/lib/amm-contract", () => ({
 import {
   simulateRemoveLiquidityHandler,
   buildRemoveLiquidityXdrHandler,
+  simulateRemoveLiquiditySchema,
+  buildRemoveLiquidityXdrSchema,
 } from "../lib/agent/tools/build-remove-liquidity-xdr";
 import { getReserves, getLpSupply, buildRemoveLiquidityTransaction } from "@/lib/amm-contract";
 
@@ -98,5 +100,37 @@ describe("build-remove-liquidity-xdr tool", () => {
         toRaw(398)
       );
     });
+  });
+});
+
+describe("simulateRemoveLiquiditySchema", () => {
+  it("should have name simulate_remove_liquidity", () => {
+    expect(simulateRemoveLiquiditySchema.name).toBe("simulate_remove_liquidity");
+  });
+
+  it("should have a description", () => {
+    expect(typeof simulateRemoveLiquiditySchema.description).toBe("string");
+    expect(simulateRemoveLiquiditySchema.description!.length).toBeGreaterThan(0);
+  });
+
+  it("should have an object input_schema with required properties", () => {
+    expect(simulateRemoveLiquiditySchema.input_schema.type).toBe("object");
+    expect(simulateRemoveLiquiditySchema.input_schema.required).toBeDefined();
+  });
+});
+
+describe("buildRemoveLiquidityXdrSchema", () => {
+  it("should have name build_remove_liquidity_xdr", () => {
+    expect(buildRemoveLiquidityXdrSchema.name).toBe("build_remove_liquidity_xdr");
+  });
+
+  it("should have a description", () => {
+    expect(typeof buildRemoveLiquidityXdrSchema.description).toBe("string");
+    expect(buildRemoveLiquidityXdrSchema.description!.length).toBeGreaterThan(0);
+  });
+
+  it("should have an object input_schema with required properties", () => {
+    expect(buildRemoveLiquidityXdrSchema.input_schema.type).toBe("object");
+    expect(buildRemoveLiquidityXdrSchema.input_schema.required).toBeDefined();
   });
 });

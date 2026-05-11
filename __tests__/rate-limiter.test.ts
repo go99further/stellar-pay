@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { RateLimiter, MultiTierRateLimiter } from "../lib/agent/rate-limiter";
+import { RateLimiter, MultiTierRateLimiter, rateLimiters } from "../lib/agent/rate-limiter";
 
 describe("RateLimiter", () => {
   let limiter: RateLimiter;
@@ -142,5 +142,33 @@ describe("RateLimiter — additional coverage", () => {
     const limiter = new RateLimiter({ maxTokens: 10, refillRate: 10, refillInterval: 100 });
     const result = limiter.tryConsume(1);
     expect(result.resetAt).toBeGreaterThanOrEqual(Date.now());
+  });
+});
+
+describe("rateLimiters — shared instance", () => {
+  it("should be a MultiTierRateLimiter instance", () => {
+    expect(rateLimiters).toBeInstanceOf(MultiTierRateLimiter);
+  });
+
+  it("should have pre-configured rpc tier", () => {
+    const result = rateLimiters.tryConsume("rpc", 1);
+    expect(result.allowed).toBe(true);
+  });
+
+  it("should have pre-configured api tier", () => {
+    const result = rateLimiters.tryConsume("api", 1);
+    expect(result.allowed).toBe(true);
+  });
+
+  it("should have pre-configured heavy tier", () => {
+    const result = rateLimiters.tryConsume("heavy", 1);
+    expect(result.allowed).toBe(true);
+  });
+
+  it("getAllStats should include all three tiers", () => {
+    const stats = rateLimiters.getAllStats();
+    expect(stats).toHaveProperty("rpc");
+    expect(stats).toHaveProperty("api");
+    expect(stats).toHaveProperty("heavy");
   });
 });

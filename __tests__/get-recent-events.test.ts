@@ -10,7 +10,7 @@ vi.mock("@/lib/event-decoder", () => ({
   decodeLiquidityEvent: vi.fn(),
 }));
 
-import { getRecentEventsHandler } from "../lib/agent/tools/get-recent-events";
+import { getRecentEventsHandler, getRecentEventsSchema } from "../lib/agent/tools/get-recent-events";
 import { fetchAmmEvents } from "@/lib/amm-events";
 import { decodeEventTopic, decodeSwapEvent, decodeLiquidityEvent } from "@/lib/event-decoder";
 
@@ -163,5 +163,20 @@ describe("get-recent-events tool", () => {
       const evt = result.events[0] as { kind: string };
       expect(evt.kind).toBe("unknown");
     });
+  });
+});
+
+describe("getRecentEventsSchema", () => {
+  it("should have name get_recent_events", () => {
+    expect(getRecentEventsSchema.name).toBe("get_recent_events");
+  });
+
+  it("should have a description", () => {
+    expect(typeof getRecentEventsSchema.description).toBe("string");
+    expect(getRecentEventsSchema.description!.length).toBeGreaterThan(0);
+  });
+
+  it("should have an object input_schema", () => {
+    expect(getRecentEventsSchema.input_schema.type).toBe("object");
   });
 });

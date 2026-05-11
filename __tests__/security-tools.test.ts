@@ -18,6 +18,9 @@ import {
   checkPriceImpactHandler,
   analyzeLiquidityDepthHandler,
   scanRecentAnomaliesHandler,
+  checkPriceImpactSchema,
+  analyzeLiquidityDepthSchema,
+  scanRecentAnomaliesSchema,
 } from "../lib/agent/tools/security-tools";
 import { getReserves } from "@/lib/amm-contract";
 import { fetchAmmEvents } from "@/lib/amm-events";
@@ -150,5 +153,32 @@ describe("security-tools", () => {
       expect(typeof result.summary).toBe("string");
       expect(result.summary.length).toBeGreaterThan(0);
     });
+  });
+});
+
+describe("security-tools — schema exports", () => {
+  it("checkPriceImpactSchema should have correct name and input_schema", () => {
+    expect(checkPriceImpactSchema.name).toBe("check_price_impact");
+    expect(checkPriceImpactSchema.input_schema).toBeDefined();
+    expect(checkPriceImpactSchema.input_schema.type).toBe("object");
+  });
+
+  it("analyzeLiquidityDepthSchema should have correct name and input_schema", () => {
+    expect(analyzeLiquidityDepthSchema.name).toBe("analyze_liquidity_depth");
+    expect(analyzeLiquidityDepthSchema.input_schema).toBeDefined();
+    expect(analyzeLiquidityDepthSchema.input_schema.type).toBe("object");
+  });
+
+  it("scanRecentAnomaliesSchema should have correct name and input_schema", () => {
+    expect(scanRecentAnomaliesSchema.name).toBe("scan_recent_anomalies");
+    expect(scanRecentAnomaliesSchema.input_schema).toBeDefined();
+    expect(scanRecentAnomaliesSchema.input_schema.type).toBe("object");
+  });
+
+  it("all schemas should have description fields", () => {
+    for (const schema of [checkPriceImpactSchema, analyzeLiquidityDepthSchema, scanRecentAnomaliesSchema]) {
+      expect(typeof schema.description).toBe("string");
+      expect(schema.description!.length).toBeGreaterThan(0);
+    }
   });
 });

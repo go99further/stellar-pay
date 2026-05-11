@@ -4,7 +4,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const mockFetch = vi.fn();
 vi.stubGlobal("fetch", mockFetch);
 
-import { getMetricsHandler } from "../lib/agent/tools/get-metrics";
+import { getMetricsHandler, getMetricsSchema } from "../lib/agent/tools/get-metrics";
 
 describe("get-metrics tool", () => {
   beforeEach(() => {
@@ -66,5 +66,20 @@ describe("get-metrics tool", () => {
         { cache: "no-store" }
       );
     });
+  });
+});
+
+describe("getMetricsSchema", () => {
+  it("should have name get_metrics", () => {
+    expect(getMetricsSchema.name).toBe("get_metrics");
+  });
+
+  it("should have a description", () => {
+    expect(typeof getMetricsSchema.description).toBe("string");
+    expect(getMetricsSchema.description!.length).toBeGreaterThan(0);
+  });
+
+  it("should have an object input_schema", () => {
+    expect(getMetricsSchema.input_schema.type).toBe("object");
   });
 });

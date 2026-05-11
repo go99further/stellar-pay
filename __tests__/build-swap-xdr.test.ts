@@ -6,7 +6,7 @@ vi.mock("@/lib/amm-contract", () => ({
   getTokenBId: vi.fn(() => "TOKEN_B_CONTRACT"),
 }));
 
-import { buildSwapXdrHandler } from "../lib/agent/tools/build-swap-xdr";
+import { buildSwapXdrHandler, buildSwapXdrSchema } from "../lib/agent/tools/build-swap-xdr";
 import { buildSwapTransaction } from "@/lib/amm-contract";
 
 const DECIMALS = 7;
@@ -85,5 +85,21 @@ describe("build-swap-xdr tool", () => {
         toRaw(2.9)
       );
     });
+  });
+});
+
+describe("buildSwapXdrSchema", () => {
+  it("should have name build_swap_xdr", () => {
+    expect(buildSwapXdrSchema.name).toBe("build_swap_xdr");
+  });
+
+  it("should have a description", () => {
+    expect(typeof buildSwapXdrSchema.description).toBe("string");
+    expect(buildSwapXdrSchema.description!.length).toBeGreaterThan(0);
+  });
+
+  it("should have an object input_schema with required properties", () => {
+    expect(buildSwapXdrSchema.input_schema.type).toBe("object");
+    expect(buildSwapXdrSchema.input_schema.required).toBeDefined();
   });
 });

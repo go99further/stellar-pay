@@ -5,7 +5,7 @@ vi.mock("@/lib/amm-contract", () => ({
   getLpSupply: vi.fn(),
 }));
 
-import { simulateAddLiquidityHandler } from "../lib/agent/tools/simulate-add-liquidity";
+import { simulateAddLiquidityHandler, simulateAddLiquiditySchema } from "../lib/agent/tools/simulate-add-liquidity";
 import { getReserves, getLpSupply } from "@/lib/amm-contract";
 
 const DECIMALS = 7;
@@ -69,5 +69,21 @@ describe("simulate-add-liquidity tool", () => {
       const result = await simulateAddLiquidityHandler({ amountA: 0, amountB: 200 });
       expect(result.estimatedLp).toBe("0.0");
     });
+  });
+});
+
+describe("simulateAddLiquiditySchema", () => {
+  it("should have name simulate_add_liquidity", () => {
+    expect(simulateAddLiquiditySchema.name).toBe("simulate_add_liquidity");
+  });
+
+  it("should have a description", () => {
+    expect(typeof simulateAddLiquiditySchema.description).toBe("string");
+    expect(simulateAddLiquiditySchema.description!.length).toBeGreaterThan(0);
+  });
+
+  it("should have an object input_schema with required properties", () => {
+    expect(simulateAddLiquiditySchema.input_schema.type).toBe("object");
+    expect(simulateAddLiquiditySchema.input_schema.required).toBeDefined();
   });
 });
