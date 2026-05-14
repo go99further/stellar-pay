@@ -22,6 +22,7 @@ import {
   type SuggestionParams,
 } from "@/lib/agent/alert-feedback-tuning";
 import { seedDemoData, clearDemoData, isDemoDataPresent } from "@/lib/agent/demo-seed";
+import { loadRealPriceDataset, getDatasetMeta } from "@/lib/agent/price-source";
 import { InvariantsCheck } from "./InvariantsCheck";
 
 // ── Layer 1 helpers ───────────────────────────────────────────────────────────
@@ -85,11 +86,18 @@ export default function LoopPage() {
   // All data derived from localStorage — read once on mount (client only)
   const [layer1, setLayer1] = useState<ReturnType<typeof computeLayer1> | null>(null);
   const [params, setParams] = useState<SuggestionParams>(getSuggestionParams());
+  const [datasetMeta, setDatasetMeta] = useState(getDatasetMeta());
 
   useEffect(() => {
     setDemoSeeded(isDemoDataPresent());
     setLayer1(computeLayer1());
     setParams(getSuggestionParams());
+
+    // Try to fetch real mainnet/CEX price dataset for the optimizer.
+    // Failure is silent — engines fall back to localStorage transactions.
+    void loadRealPriceDataset().then(() => {
+      setDatasetMeta(getDatasetMeta());
+    });
   }, []);
 
   const handleLoadDemo = () => {
@@ -150,6 +158,15 @@ export default function LoopPage() {
               <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
                 4-layer self-learning system &bull; Read-only demo
               </p>
+              {datasetMeta.loaded ? (
+                <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300" title={datasetMeta.sources.map(s => `${s.name} (${s.count})`).join(" · ")}>
+                  ● Tuning on real data: {datasetMeta.totalPoints.toLocaleString()} points across {datasetMeta.sources.length} sources
+                </div>
+              ) : (
+                <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
+                  ○ Real dataset not loaded — using localStorage fallback
+                </div>
+              )}
             </div>
             <div className="flex flex-wrap gap-2">
               <button

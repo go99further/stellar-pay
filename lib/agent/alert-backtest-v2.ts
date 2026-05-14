@@ -22,6 +22,7 @@
 
 import { getTransactionHistory, type TransactionRecord } from "./transaction-history";
 import type { PriceAlert } from "./price-alerts";
+import { getRealPriceHistory, isRealPriceCacheLoaded } from "./price-source";
 
 export interface PricePoint {
   timestamp: number;
@@ -93,8 +94,23 @@ export interface BacktestResultV2 {
 
 /**
  * 从交易历史提取价格序列（带波动率计算）
+ *
+ * Priority order:
+ * 1. If the real-price cache (price-source.ts) is loaded, use it. This is the
+ *    production path on the Vercel demo where /api/price-dataset has been
+ *    fetched on page load.
+ * 2. Otherwise fall back to localStorage transaction history. This keeps the
+ *    existing test suite working without forced fetch mocks.
+ *
+ * The cache is opt-in (loadRealPriceDataset must be called explicitly), so
+ * any code path that hasn't loaded it sees the original localStorage behavior.
  */
 export function extractPriceHistoryV2(): PricePoint[] {
+  if (isRealPriceCacheLoaded()) {
+    const real = getRealPriceHistory("all");
+    if (real && real.length > 0) return real;
+  }
+
   const history = getTransactionHistory();
   const pricePoints: PricePoint[] = [];
 
