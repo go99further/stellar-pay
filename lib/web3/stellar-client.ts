@@ -11,7 +11,6 @@
  */
 
 import { Horizon } from "@stellar/stellar-sdk";
-import { CircuitBreaker } from "../agent/circuit-breaker";
 
 const Server = Horizon.Server;
 type Server = InstanceType<typeof Horizon.Server>;
@@ -48,7 +47,7 @@ export interface BatchRequest {
 export class StellarClient {
   private config: ClientConfig;
   private server: Server;
-  private circuitBreaker?: CircuitBreaker;
+  private circuitBreaker?: { execute: <T>(fn: () => Promise<T>) => Promise<T> };
   private cache: Map<string, CacheEntry<unknown>> = new Map();
   private batchQueue: BatchRequest[] = [];
   private batchTimer?: NodeJS.Timeout;
@@ -73,9 +72,6 @@ export class StellarClient {
       allowHttp: this.config.horizonUrl.startsWith("http://"),
     });
 
-    if (this.config.useCircuitBreaker) {
-      this.circuitBreaker = new CircuitBreaker({ failureThreshold: 5, resetTimeout: 60000, successThreshold: 2 });
-    }
 
     // Start cache cleanup timer
     this.startCacheCleanup();
@@ -353,7 +349,7 @@ export class StellarClient {
       cacheEnabled: this.config.cacheEnabled,
       cacheSize: this.cache.size,
       pendingRequests: this.pendingRequests.size,
-      circuitBreakerState: this.circuitBreaker?.getState(),
+      circuitBreakerState: undefined,
     };
   }
 
