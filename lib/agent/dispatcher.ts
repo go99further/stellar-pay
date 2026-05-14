@@ -1,7 +1,6 @@
 import { runAnalytics, collectAnalyticsSummary } from "./analytics";
 import { runTrading } from "./trading";
 import { runSecurity } from "./security";
-import { checkSLOs, alertOnViolations, recordLatency } from "./slos";
 import type { AgentMessage, AgentStreamEvent, RouterIntent } from "./types";
 
 /**
@@ -54,30 +53,23 @@ async function* mergeAsyncGenerators(
 
 /**
  * Intent Graph Dispatcher — routes an intent to one or more agents.
- *
- * Modes:
- *   single                — one agent handles the request
- *   parallel              — analytics + security run concurrently (analytics_security)
- *   sequential            — analytics runs first, its summary is injected into trading (analytics_then_trading)
  */
 export async function* dispatch(
   intent: RouterIntent,
   history: AgentMessage[],
   walletAddress?: string
 ): AsyncGenerator<AgentStreamEvent> {
-  const start = Date.now();
-
   switch (intent) {
     case "analytics":
-      yield* withSLO("analytics", runAnalytics(history), start);
+      yield* runAnalytics(history);
       break;
 
     case "trading":
-      yield* withSLO("trading", runTrading(history, walletAddress), start);
+      yield* runTrading(history, walletAddress);
       break;
 
     case "security":
-      yield* withSLO("security", runSecurity(history), start);
+      yield* runSecurity(history);
       break;
 
     case "analytics_security":
@@ -88,12 +80,10 @@ export async function* dispatch(
       break;
 
     case "analytics_then_trading": {
-      // Phase 1: run analytics and stream its output
       yield { type: "agent_start", agent: "analytics" };
       const analyticsSummary = await collectAnalyticsSummary(history);
-      yield { type: "agent_complete", agent: "analytics", elapsedMs: Date.now() - start };
+      yield { type: "agent_complete", agent: "analytics", elapsedMs: 0 };
 
-      // Phase 2: inject analytics summary as context for trading
       const enrichedHistory: AgentMessage[] = [
         ...history,
         {
@@ -110,22 +100,5 @@ export async function* dispatch(
       yield { type: "text", delta: "请重述您的问题 — 我可以分析 AMM 池状态、执行交换、管理流动性或评估风险。" };
       yield { type: "done" };
       break;
-  }
-}
-
-/**
- * Wrap an agent generator: record latency and fire SLO alerts on completion.
- */
-async function* withSLO(
-  agent: "analytics" | "trading" | "security" | "router",
-  gen: AsyncGenerator<AgentStreamEvent>,
-  startMs: number
-): AsyncGenerator<AgentStreamEvent> {
-  try {
-    yield* gen;
-  } finally {
-    recordLatency(agent, Date.now() - startMs);
-    const violations = checkSLOs();
-    if (violations.length > 0) alertOnViolations(violations);
   }
 }

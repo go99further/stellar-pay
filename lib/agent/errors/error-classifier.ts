@@ -36,6 +36,7 @@ export interface ClassifiedError {
   code?: string;
   recoveryStrategy: RecoveryStrategy;
   suggestions: string[];
+  priority?: number;
   metadata: Record<string, unknown>;
   retryable: boolean;
   userFacing: boolean;
@@ -47,6 +48,7 @@ export interface ErrorPattern {
   severity: ErrorSeverity;
   recoveryStrategy: RecoveryStrategy;
   suggestions: string[];
+  priority?: number;
 }
 
 /**

@@ -8,15 +8,10 @@ export async function GET() {
   try {
     const rpcServer = new StellarSdk.rpc.Server(SOROBAN_RPC_URL);
     const latest = await rpcServer.getLatestLedger();
-    return NextResponse.json({
-      status: "ok",
-      rpc: true,
-      latestLedger: latest.sequence,
-      timestamp: new Date().toISOString(),
-    });
-  } catch {
+    return NextResponse.json({ status: "ok", ledger: latest.sequence, timestamp: new Date().toISOString() });
+  } catch (err) {
     return NextResponse.json(
-      { status: "degraded", rpc: false, latestLedger: 0, timestamp: new Date().toISOString() },
+      { status: "degraded", error: err instanceof Error ? err.message : "rpc error", timestamp: new Date().toISOString() },
       { status: 503 }
     );
   }
