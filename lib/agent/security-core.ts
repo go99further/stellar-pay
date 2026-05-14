@@ -1,4 +1,5 @@
 import { getPriceImpact } from "@/lib/amm-math";
+import { getActiveThresholds } from "./security-thresholds-runtime";
 
 export type RiskLevel = "low" | "medium" | "high";
 
@@ -41,14 +42,15 @@ export function detectPriceImpact(
   reserveA: bigint,
   reserveB: bigint
 ): { priceImpactPct: number; riskLevel: RiskLevel; recommendation: string } {
+  const t = getActiveThresholds();
   const isAtoB = tokenIn === "TKNA";
   const reserveIn = isAtoB ? reserveA : reserveB;
   const reserveOut = isAtoB ? reserveB : reserveA;
   const impact = getPriceImpact(amountIn, reserveIn, reserveOut);
   const riskLevel: RiskLevel =
-    impact < THRESHOLDS.priceImpact.medium
+    impact < t.priceImpactMedium
       ? "low"
-      : impact < THRESHOLDS.priceImpact.high
+      : impact < t.priceImpactHigh
       ? "medium"
       : "high";
   const recommendation =
@@ -80,10 +82,11 @@ export function detectLiquidityFlow(
   }
   const outflowPct =
     reserveA > 0n ? (Number(netRemoveA) / Number(reserveA)) * 100 : 0;
+  const t = getActiveThresholds();
   const riskLevel: RiskLevel =
-    outflowPct < THRESHOLDS.liquidityOutflow.medium
+    outflowPct < t.liquidityOutflowMedium
       ? "low"
-      : outflowPct < THRESHOLDS.liquidityOutflow.high
+      : outflowPct < t.liquidityOutflowHigh
       ? "medium"
       : "high";
   const recommendation =
@@ -113,7 +116,7 @@ export function detectSandwich(events: DecodedAmmEvent[]): {
     .sort((a, b) => a.ledger - b.ledger);
 
   const hits: SandwichHit[] = [];
-  const window = THRESHOLDS.sandwichWindowLedgers;
+  const window = getActiveThresholds().sandwichWindowLedgers;
 
   for (let i = 0; i < swaps.length; i++) {
     const front = swaps[i];
@@ -168,9 +171,10 @@ export function detectAnomalies(
     }
   }
   const flagged: { address: string; reason: string }[] = [];
+  const activeThresholds = getActiveThresholds();
   for (const [addr, amount] of removeByAddress.entries()) {
     const pct = reserveA > 0n ? (Number(amount) / Number(reserveA)) * 100 : 0;
-    if (pct > THRESHOLDS.anomalyRemovalPct) {
+    if (pct > activeThresholds.anomalyRemovalPct) {
       flagged.push({
         address: addr,
         reason: `Removed ${pct.toFixed(1)}% of pool reserves — potential large exit or sandwich setup`,

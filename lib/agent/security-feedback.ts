@@ -13,7 +13,8 @@
  * 3. suggestSecurityThresholds never mutates the live THRESHOLDS object.
  */
 
-import { THRESHOLDS, type DecodedAmmEvent } from "./security-core";
+import { type DecodedAmmEvent } from "./security-core";
+import { getActiveThresholds } from "./security-thresholds-runtime";
 
 const STORAGE_KEY = "stellar-pay-security-feedback";
 const MAX_RECORDS = 200;
@@ -497,7 +498,7 @@ export function suggestSecurityThresholds(
 }
 
 /**
- * Read current thresholds for a detector from security-core's THRESHOLDS.
+ * Read current thresholds for a detector from the runtime override layer.
  * Returns { medium, high } in the same unit as the detector uses.
  * For sandwich, maps sandwichWindowLedgers → medium, anomalyRemovalPct → high
  * (closest analogue; suggestion targets anomalyRemovalPct adjustment).
@@ -506,24 +507,15 @@ function getCurrentThresholds(detectorType: SecurityDetectorType): {
   medium: number;
   high: number;
 } {
-  // Read from THRESHOLDS — never mutate
+  const t = getActiveThresholds();
   if (detectorType === "price_impact") {
-    return {
-      medium: THRESHOLDS.priceImpact.medium,
-      high: THRESHOLDS.priceImpact.high,
-    };
+    return { medium: t.priceImpactMedium, high: t.priceImpactHigh };
   }
   if (detectorType === "liquidity_flow") {
-    return {
-      medium: THRESHOLDS.liquidityOutflow.medium,
-      high: THRESHOLDS.liquidityOutflow.high,
-    };
+    return { medium: t.liquidityOutflowMedium, high: t.liquidityOutflowHigh };
   }
   // sandwich: use sandwichWindowLedgers as medium, anomalyRemovalPct as high
-  return {
-    medium: THRESHOLDS.sandwichWindowLedgers,
-    high: THRESHOLDS.anomalyRemovalPct,
-  };
+  return { medium: t.sandwichWindowLedgers, high: t.anomalyRemovalPct };
 }
 
 // ── Utility ───────────────────────────────────────────────────────────────────
