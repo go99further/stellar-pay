@@ -1,4 +1,5 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
+import { withRetry } from "./agent/tools/utils";
 
 const SOROBAN_RPC_URL =
   process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org";
@@ -23,26 +24,28 @@ export async function fetchAmmEvents(startLedger?: number): Promise<{
 }> {
   if (!AMM_CONTRACT_ID) return { events: [], latestLedger: 0 };
 
-  const latest = await rpcServer.getLatestLedger();
-  const start = startLedger ?? Math.max(1, latest.sequence - 1000);
+  return withRetry(async () => {
+    const latest = await rpcServer.getLatestLedger();
+    const start = startLedger ?? Math.max(1, latest.sequence - 1000);
 
-  const result = await rpcServer.getEvents({
-    startLedger: start,
-    filters: [
-      {
-        type: "contract" as const,
-        contractIds: [AMM_CONTRACT_ID],
-      },
-    ],
-    limit: 100,
+    const result = await rpcServer.getEvents({
+      startLedger: start,
+      filters: [
+        {
+          type: "contract" as const,
+          contractIds: [AMM_CONTRACT_ID],
+        },
+      ],
+      limit: 100,
+    });
+
+    const events: RawAmmEvent[] = (result.events || []).map((evt) => ({
+      id: evt.id,
+      topic: evt.topic.map((t) => t.toXDR("base64")),
+      value: evt.value.toXDR("base64"),
+      ledger: evt.ledger,
+    }));
+
+    return { events, latestLedger: latest.sequence };
   });
-
-  const events: RawAmmEvent[] = (result.events || []).map((evt) => ({
-    id: evt.id,
-    topic: evt.topic.map((t) => t.toXDR("base64")),
-    value: evt.value.toXDR("base64"),
-    ledger: evt.ledger,
-  }));
-
-  return { events, latestLedger: latest.sequence };
 }

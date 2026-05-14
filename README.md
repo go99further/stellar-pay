@@ -1,56 +1,64 @@
 # Stellar Pay + AI Agent
 
-[![CI](https://github.com/go99further/stellar-pay/actions/workflows/ci.yml/badge.svg)](https://github.com/go99further/stellar-pay/actions/workflows/ci.yml)
+[![CI](https://github.com/go99further/stellar-pay/actions/workflows/ci.yml/badge.svg)](https://github.com/go99further/stellar-pay/actions/workflows/ci.yml) ![tests](https://img.shields.io/badge/tests-803%2F803-brightgreen) ![closed-loop](https://img.shields.io/badge/closed--loop-4%20layers-indigo)
 
-**AI Agent 驱动的 Stellar DeFi DApp**——用户用自然语言完成链上交易。
+**AI Agent 驱动的 Stellar DeFi DApp** — 用户用自然语言完成链上交易，Security Agent 自己学着调阈值。
 
-> 💡 一句话：说"帮我用 100 TKNA 换 TKNB"，Agent 自动模拟 → 风险检查 → 构建交易 → 你签名上链。
-
-## What's Interesting Here
-
-- **4 层数据闭环**：Security Agent 自己学着调阈值——在线统计 → 多检测器结算 → 蒙特卡洛参数搜索 → HITL 调参桥接。详见 [docs/CLOSED_LOOP.md](./docs/CLOSED_LOOP.md)
-- **K2-audit-grade 不变量**：future-leak 禁止 / settle 幂等 / HITL 不自动改，全部 enforced + tested（777/777 绿）
-- **多 Agent 并行**：Intent Graph Dispatcher 支持单点/并行/串行/门控 4 种拓扑，Fan-out/Fan-in 延迟砍半
-- **双 Provider**：Anthropic + DeepSeek 自动切换，Router 用 Haiku（$0.0003/次），子 Agent 用 Sonnet
-- **手写 SDK**：不依赖 LangChain/AutoGen，31 个核心文件，完全可控
+> 💡 一句话：说"帮我用 100 TKNA 换 TKNB"，Agent 自动模拟 → 风险检查 → 构建交易 → 你签名上链。**所有阈值参数都通过数据闭环自学习**，不靠拍脑袋。
 
 ## 🎬 在线演示
 
-Vercel 部署：[stellar-pay-dapp.vercel.app](https://stellar-pay-dapp-ap1pmx6ke-go99furthers-projects.vercel.app) *(需连接 Stellar 钱包)*
+| 入口 | 说明 |
+|---|---|
+| **[/loop](https://stellar-pay-dapp-ap1pmx6ke-go99furthers-projects.vercel.app/loop)** | **Closed-Loop Dashboard** — 4 层闭环可视化（无需钱包，可点 "Load Demo Data"） |
+| [/agent](https://stellar-pay-dapp-ap1pmx6ke-go99furthers-projects.vercel.app/agent) | Multi-Agent 对话界面（需连接 Stellar 钱包做交易） |
+| [/](https://stellar-pay-dapp-ap1pmx6ke-go99furthers-projects.vercel.app) | 主页（Pay / Vote / Swap） |
 
----
+> 没装 Freighter 钱包？`/loop` 页面**完全只读**，可以直接看闭环 dashboard、跑回测、加载预置 demo 数据。
 
-## 一分钟看懂
+## What's Interesting Here
 
-### 架构
+- **4 层数据闭环**：警报触发 → 多检测器结算 → 蒙特卡洛参数搜索 → HITL 调参桥接。**Security Agent 自己学着调阈值**，不靠拍脑袋。详见 [docs/CLOSED_LOOP.md](./docs/CLOSED_LOOP.md)
+- **K2-audit-grade 不变量**：no-future-leak / idempotent-settle / HITL-only / read-only-suggestions，全部 enforced + tested（**803/803 绿**），dashboard 实时校验
+- **架构决策可追溯**：6 条 ADR（含 1 条自我审查记录）解释了"为什么不用 k-fold / 为什么不做 Analytics 闭环 / surrogate 怎么改成真跑"。详见 [docs/DESIGN_DECISIONS.md](./docs/DESIGN_DECISIONS.md)
+- **多 Agent 并行**：Intent Graph Dispatcher 支持单点/并行/串行/门控 4 种拓扑
+- **双 Provider**：Anthropic + DeepSeek 自动切换，Router 用 Haiku（$0.0003/次），子 Agent 用 Sonnet
+- **手写 SDK**：不依赖 LangChain/AutoGen，完全可控
 
+## 架构图
+
+```mermaid
+graph TD
+    User[用户自然语言] --> Router[Router Agent<br/>Haiku/DeepSeek]
+    Router --> Analytics[Analytics Agent]
+    Router --> Trading[Trading Agent]
+    Router --> Security[Security Agent]
+    Analytics --> Tools[Tool Layer<br/>12 个工具]
+    Trading --> Tools
+    Security --> Tools
+    Tools --> Soroban[Stellar Soroban<br/>4 个 Rust 合约]
+
+    Security -.触发.-> L1[Layer 1<br/>在线统计]
+    Security -.触发.-> L2[Layer 2<br/>多检测器结算]
+    L1 --> L3[Layer 3<br/>Monte Carlo + Walk-forward CV]
+    L2 --> L3
+    L3 --> L4[Layer 4<br/>HITL 调参桥接]
+    L4 -.建议.-> Security
+
+    style L1 fill:#e0e7ff,stroke:#6366f1
+    style L2 fill:#e0e7ff,stroke:#6366f1
+    style L3 fill:#e0e7ff,stroke:#6366f1
+    style L4 fill:#e0e7ff,stroke:#6366f1
 ```
-用户自然语言输入
-        ↓
-   Router Agent     (Haiku / DeepSeek — 意图分类)
-        ↓
-┌───────┼────────┐
-↓       ↓        ↓
-Analytics  Trading  Security
-   Agent      Agent    Agent   (Sonnet — 推理执行)
-        ↓
-    Tool Layer        (12 个工具：查询/模拟/构建 XDR/风险检测)
-        ↓
-  Stellar Soroban     (4 个 Rust 合约：AMM + LP + Poll + RewardToken)
-```
 
-### 访问入口
+## Quick Tour（推荐阅读顺序）
 
-| 路径 | 功能 |
-|------|------|
-| `/` | 主页（Pay / Vote / Swap 三合一） |
-| `/agent` | **AI Agent 对话界面**（项目亮点） |
-| `/metrics` | AMM 实时指标仪表板 |
-| `/backtest-comparison` | V1 vs V2 回测引擎对比（防过拟合演示） |
+1. **[docs/CLOSED_LOOP.md](./docs/CLOSED_LOOP.md)** — 4 层闭环架构 + 自我审查记录（首推）
+2. **[docs/DESIGN_DECISIONS.md](./docs/DESIGN_DECISIONS.md)** — 6 条 ADR，回答"为什么不...?"
+3. [AGENT_ARCHITECTURE.md](./AGENT_ARCHITECTURE.md) — 完整原始设计（1364 行）
+4. [docs/BACKTEST_GUIDE.md](./docs/BACKTEST_GUIDE.md) — 回测系统（防过拟合 V2）
 
----
-
-## 🚀 快速开始
+## 🚀 本地运行
 
 ### 1. 环境准备
 

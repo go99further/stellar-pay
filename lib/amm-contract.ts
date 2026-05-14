@@ -1,5 +1,6 @@
 import * as StellarSdk from "@stellar/stellar-sdk";
 import { cache, CACHE_KEYS, CACHE_TTL } from "./cache";
+import { withRetry } from "./agent/tools/utils";
 
 const SOROBAN_RPC_URL =
   process.env.NEXT_PUBLIC_SOROBAN_RPC_URL || "https://soroban-testnet.stellar.org";
@@ -61,13 +62,15 @@ export async function getReserves(
   const cached = cache.get<[bigint, bigint]>(CACHE_KEYS.AMM_RESERVES);
   if (cached) return cached;
 
-  const retval = await simulateRead(callerPublicKey, AMM_CONTRACT_ID, "get_reserves");
-  if (!retval) return [0n, 0n];
+  return withRetry(async () => {
+    const retval = await simulateRead(callerPublicKey, AMM_CONTRACT_ID, "get_reserves");
+    if (!retval) return [0n, 0n] as [bigint, bigint];
 
-  const native = StellarSdk.scValToNative(retval) as [unknown, unknown];
-  const result: [bigint, bigint] = [BigInt(String(native[0])), BigInt(String(native[1]))];
-  cache.set(CACHE_KEYS.AMM_RESERVES, result, CACHE_TTL.AMM_RESERVES);
-  return result;
+    const native = StellarSdk.scValToNative(retval) as [unknown, unknown];
+    const result: [bigint, bigint] = [BigInt(String(native[0])), BigInt(String(native[1]))];
+    cache.set(CACHE_KEYS.AMM_RESERVES, result, CACHE_TTL.AMM_RESERVES);
+    return result;
+  });
 }
 
 /**

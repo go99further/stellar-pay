@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
+import { seedDemoData, clearDemoData, isDemoDataPresent } from "@/lib/agent/demo-seed";
 import { formatPrice, type PriceAlert } from "@/lib/agent/price-alerts";
 import { backtestAlertsV2, generateBacktestReportV2, type BacktestResultV2 } from "@/lib/agent/alert-backtest-v2";
 import {
@@ -38,6 +39,7 @@ export function PriceAlerts({ walletAddress, enabled = true }: PriceAlertsProps)
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [backtestResult, setBacktestResult] = useState<BacktestResultV2 | null>(null);
   const [showBacktest, setShowBacktest] = useState(false);
+  const [demoSeeded, setDemoSeeded] = useState(() => isDemoDataPresent());
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,16 +75,46 @@ export function PriceAlerts({ walletAddress, enabled = true }: PriceAlertsProps)
     setShowBacktest(true);
   };
 
-  if (!walletAddress) {
-    return (
-      <div className="rounded border border-neutral-200 bg-neutral-50 p-4 text-sm text-neutral-600 dark:border-neutral-800 dark:bg-neutral-900 dark:text-neutral-400">
-        Connect your wallet to use price alerts
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-4">
+      {/* Read-only mode banner */}
+      {!walletAddress && (
+        <div className="rounded border border-amber-300 bg-amber-50 p-3 text-xs text-amber-800 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300">
+          <strong>Read-only demo mode.</strong> You can browse alerts, run backtests, and analyze the closed loop. Connect Freighter to create new alerts that interact with the AMM.
+        </div>
+      )}
+
+      {/* Demo data row */}
+      {(!walletAddress || (activeAlerts.length === 0 && triggeredAlerts.length === 0)) && (
+        <div className="rounded border border-indigo-200 bg-indigo-50 p-3 dark:border-indigo-800 dark:bg-indigo-950">
+          <div className="text-xs text-indigo-800 dark:text-indigo-300">
+            {demoSeeded ? "Demo data loaded — explore the closed-loop dashboard at /loop." : "Empty? Load pre-baked demo data to see the closed loop in action."}
+          </div>
+          <div className="mt-2 flex gap-2">
+            <button
+              onClick={() => {
+                if (demoSeeded) {
+                  clearDemoData();
+                } else {
+                  seedDemoData();
+                }
+                setDemoSeeded(!demoSeeded);
+                window.location.reload();
+              }}
+              className="rounded bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-700"
+            >
+              {demoSeeded ? "Clear Demo Data" : "Load Demo Data"}
+            </button>
+            <a
+              href="/loop"
+              className="rounded border border-indigo-300 px-3 py-1 text-xs text-indigo-700 hover:bg-indigo-100 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900"
+            >
+              View Closed-Loop Dashboard →
+            </a>
+          </div>
+        </div>
+      )}
+
       {/* Header with current price */}
       <div className="flex items-center justify-between">
         <div>
@@ -389,7 +421,7 @@ export function PriceAlerts({ walletAddress, enabled = true }: PriceAlertsProps)
       )}
 
       {/* Create alert form */}
-      {showForm ? (
+      {walletAddress && (showForm ? (
         <form onSubmit={handleSubmit} className="space-y-3 rounded border border-neutral-200 bg-white p-4 dark:border-neutral-800 dark:bg-neutral-900">
           <div className="flex items-center justify-between">
             <h3 className="text-sm font-medium">Create New Alert</h3>
@@ -472,7 +504,7 @@ export function PriceAlerts({ walletAddress, enabled = true }: PriceAlertsProps)
         >
           {activeAlerts.length >= 10 ? "Maximum alerts reached" : "+ Create Price Alert"}
         </button>
-      )}
+      ))}
 
       {/* Active alerts */}
       {activeAlerts.length > 0 && (

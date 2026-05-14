@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import { getReserves } from "@/lib/amm-contract";
+import { getReadOnlyReader } from "@/lib/read-only-reader";
 import {
   type PriceAlert,
   loadAlerts,
@@ -64,13 +65,14 @@ export function usePriceAlerts(
 
   // Fetch current price from reserves
   const fetchPrice = useCallback(async () => {
-    if (!walletAddress || !enabled) {
+    if (!enabled) {
       setIsLoading(false);
       return;
     }
 
     try {
-      const [reserveA, reserveB] = await getReserves(walletAddress);
+      const reader = getReadOnlyReader(walletAddress);
+      const [reserveA, reserveB] = await getReserves(reader);
       const priceAtoB = calculatePrice(reserveA, reserveB, "TKNA/TKNB");
       const priceBtoA = calculatePrice(reserveA, reserveB, "TKNB/TKNA");
       const observedAt = Date.now();
@@ -140,7 +142,7 @@ export function usePriceAlerts(
 
   // Set up polling
   useEffect(() => {
-    if (!enabled || !walletAddress) {
+    if (!enabled) {
       setIsLoading(false);
       return;
     }
