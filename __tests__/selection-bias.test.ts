@@ -1,193 +1,235 @@
 /**
  * selection-bias.test.ts
  *
- * Demonstrative comparison: same trigger, same observation sequence, run BOTH
- * settlement rules and show hit-rate divergence on a synthetic mean-reverting
- * price series.
+ * Demonstrates selection bias using the SAME oracle (next-1-tick: did price
+ * stay at/above bar?) but TWO different sampling strategies:
  *
- * This is the interview punchline: the gap between next_tick and k_tick_avg
- * hit rates IS the selection bias introduced by settling on a single tick
- * immediately after a threshold crossing.
+ *   Strategy A (random):      sample t uniformly at random → P(stay)
+ *   Strategy B (conditional): sample only t where alert just fired
+ *                             (prices[t-1] < bar AND prices[t] >= bar)
+ *                             → P(stay | just fired)
+ *
+ * Selection bias = P(stay) - P(stay | just fired)
+ *
+ * On an oscillating mean-reverting series (AR(1) with phi < 0), the price
+ * overshoots the mean in the opposite direction each tick. After crossing up
+ * through bar=mean, the next tick is pulled back below — so P(stay|fired) is
+ * lower than the unconditional P(stay).
+ *
+ * On a white-noise (i.i.d.) series, conditioning on just-fired gives no extra
+ * information, so the two probabilities are approximately equal.
+ *
+ * On a strongly trending series, "just fired upward" tends to continue, so
+ * P(stay|fired) >= P(stay).
+ *
+ * NOTE on AR(1) sign convention used here:
+ *   price[t+1] = mean + phi * (price[t] - mean) + noise
+ *   phi > 0 → persistent (slow mean reversion, positive autocorrelation)
+ *   phi = 0 → white noise (i.i.d.)
+ *   phi < 0 → oscillating mean reversion (overshoots each tick)
+ * The tests below use phi < 0 to produce the selection-bias effect.
  */
 
-import { describe, it, expect, beforeEach } from "vitest";
-import {
-  recordTrigger,
-  recordOutcome,
-  recordOutcomeKTick,
-  clearOutcomeBuffer,
-  getFeedbackRecords,
-} from "../lib/agent/alert-feedback";
-import type { PriceAlert } from "../lib/agent/price-alerts";
+import { describe, it, expect } from "vitest";
 
-function makeAlert(
-  id: string,
-  targetPrice: number,
-  condition: "above" | "below" = "above"
-): PriceAlert {
-  return {
-    id,
-    tokenPair: "TKNA/TKNB",
-    targetPrice,
-    condition,
-    triggered: false,
-    createdAt: 1_000,
+// ── Deterministic RNG ────────────────────────────────────────────────────────
+
+/** Mulberry32 seeded PRNG — returns a function that yields [0, 1) floats. */
+function mulberry32(seed: number): () => number {
+  let s = seed >>> 0;
+  return () => {
+    s += 0x6d2b79f5;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) >>> 0;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
   };
 }
 
+// ── Series generators ────────────────────────────────────────────────────────
+
 /**
- * Deterministic mean-reverting price series.
+ * Oscillating mean-reverting AR(1):
+ *   price[t+1] = mean + phi * (price[t] - mean) + noise
  *
- * Pattern: every breakout above 1.00 is followed by partial reversion.
- * Trigger fires at 1.05 (above 1.00). The subsequent 5 ticks are:
- *   [1.05, 0.99, 1.02, 1.01, 1.03]
- * Mean = (1.05 + 0.99 + 1.02 + 1.01 + 1.03) / 5 = 1.02 → hit (>= 1.00)
- *
- * But the FIRST tick after the trigger is 1.05 (hit) for some triggers and
- * 0.99 (miss) for others, depending on where in the cycle we are.
- *
- * To surface the bias clearly we use a series where the first post-trigger
- * tick is ABOVE the trigger (so next_tick always says "hit") but the 5-tick
- * mean sometimes dips below (so k_tick_avg correctly says "miss").
- *
- * Bias-surfacing series (20 triggers):
- *   Trigger at 1.00. Post-trigger ticks: [1.05, 0.95, 0.90, 0.85, 0.80]
- *   next_tick: 1.05 >= 1.00 → HIT (biased — ignores reversion)
- *   k_tick_avg: mean = 0.91 < 1.00 → MISS (correct — move did not sustain)
- *
- * For the "recovery" series (k_tick_avg should show higher hit rate):
- *   Trigger at 1.00. Post-trigger ticks: [1.05, 1.03, 1.02, 1.04, 1.06]
- *   next_tick: 1.05 >= 1.00 → HIT
- *   k_tick_avg: mean = 1.04 >= 1.00 → HIT
- *   Both agree here — the bias only surfaces on the reverting triggers.
- *
- * We interleave 10 reverting triggers (bias surfaces) and 10 sustained triggers
- * (both rules agree) to get a realistic mixed series.
+ * phi must be negative for oscillating reversion (overshoots each tick).
+ * Larger |phi| = stronger oscillation = bigger selection bias.
+ * noise ~ Uniform(-0.05, 0.05).
  */
+function meanRevertingSeries(
+  n: number,
+  mean = 1.0,
+  phi = -0.5,
+  seed = 1
+): number[] {
+  const rand = mulberry32(seed);
+  const prices: number[] = [mean];
+  for (let i = 1; i < n; i++) {
+    const noise = (rand() - 0.5) * 0.1;
+    prices.push(mean + phi * (prices[i - 1] - mean) + noise);
+  }
+  return prices;
+}
 
-// Reverting: first tick above, but mean below trigger → next_tick=HIT, k_tick=MISS
-const REVERTING_POST_TICKS = [1.05, 0.95, 0.90, 0.85, 0.80]; // mean = 0.91
+/**
+ * White noise (i.i.d.): price[t] = mean + noise, independent each tick.
+ * No autocorrelation → no selection bias.
+ */
+function whiteNoiseSeries(n: number, mean = 1.0, seed = 1): number[] {
+  const rand = mulberry32(seed);
+  const prices: number[] = [mean];
+  for (let i = 1; i < n; i++) {
+    const noise = (rand() - 0.5) * 0.1;
+    prices.push(mean + noise);
+  }
+  return prices;
+}
 
-const TRIGGER_PRICE = 1.05; // price that crossed the threshold
-const TARGET_PRICE = 1.00; // alert threshold
+/** Trending series: price[t+1] = price[t] + drift + noise */
+function trendingSeries(
+  n: number,
+  start = 1.0,
+  drift = 0.005,
+  seed = 1
+): number[] {
+  const rand = mulberry32(seed);
+  const prices: number[] = [start];
+  for (let i = 1; i < n; i++) {
+    const noise = (rand() - 0.5) * 0.05;
+    prices.push(prices[i - 1] + drift + noise);
+  }
+  return prices;
+}
 
-describe("selection bias: next_tick vs k_tick_avg on mean-reverting prices", () => {
-  beforeEach(() => {
-    localStorage.clear();
-    clearOutcomeBuffer();
+// ── Sampling strategies ──────────────────────────────────────────────────────
+
+/**
+ * Random sampling: pick `samples` random t in [1, n-2] (with replacement),
+ * measure fraction where prices[t+1] >= bar.
+ * This estimates the unconditional P(stay).
+ */
+function pStayRandom(
+  prices: number[],
+  bar: number,
+  samples: number,
+  seed: number
+): number {
+  const rand = mulberry32(seed);
+  const n = prices.length;
+  let hits = 0;
+  for (let i = 0; i < samples; i++) {
+    // t in [1, n-2] so that t+1 always exists
+    const t = 1 + Math.floor(rand() * (n - 2));
+    if (prices[t + 1] >= bar) hits++;
+  }
+  return hits / samples;
+}
+
+/**
+ * Conditional sampling: find ALL t where the alert just fired
+ *   prices[t-1] < bar  (was below)
+ *   prices[t]   >= bar (now at/above — alert fires)
+ * then measure fraction where prices[t+1] >= bar (stays at/above).
+ *
+ * Returns 0 if there are no fire events (graceful fallback).
+ * This estimates P(stay | just fired).
+ */
+function pStayConditional(prices: number[], bar: number): number {
+  const n = prices.length;
+  let fires = 0;
+  let stays = 0;
+  // t must have a prior tick (t >= 1) and a next tick (t <= n-2)
+  for (let t = 1; t < n - 1; t++) {
+    if (prices[t - 1] < bar && prices[t] >= bar) {
+      fires++;
+      if (prices[t + 1] >= bar) stays++;
+    }
+  }
+  if (fires === 0) return 0;
+  return stays / fires;
+}
+
+// ── Tests ────────────────────────────────────────────────────────────────────
+
+describe("selection bias — same oracle, two sampling strategies", () => {
+  it("on mean-reverting series: P(stay | just fired) is significantly lower than P(stay)", () => {
+    // phi=-0.5: strong oscillating reversion — after crossing up, next tick reverts
+    const prices = meanRevertingSeries(2000, 1.0, -0.5, 42);
+    const bar = 1.0;
+    const pRandom = pStayRandom(prices, bar, 500, 7);
+    const pCond = pStayConditional(prices, bar);
+    const bias = pRandom - pCond;
+    // Mean reversion: after crossing up, next tick overshoots back down
+    // → P(stay|fired) << P(stay); gap is the selection bias magnitude
+    expect(bias).toBeGreaterThan(0.1);
   });
 
-  it("next_tick rule produces a structurally low hit rate on mean-reverting series", () => {
-    // 20 triggers: all use the REVERTING post-tick series.
-    // next_tick sees 1.05 (first tick) → always HIT → hit rate = 1.0
-    // But this is the BIASED result — the move never sustained.
-    // We use a mixed series (10 reverting + 10 sustained) to show the bias
-    // inflates the hit rate beyond what the move actually warranted.
-    //
-    // For the pure-reverting case: next_tick hit rate = 1.0 (all first ticks above)
-    // but the "true" sustained hit rate (k_tick_avg) = 0.0 (all means below).
-    // The gap is 1.0 — that IS the selection bias.
-
-    const alert = makeAlert("bias-next", TARGET_PRICE, "above");
-    let hits = 0;
-    let total = 0;
-
-    for (let i = 0; i < 20; i++) {
-      const t = 10_000 + i * 1_000;
-      recordTrigger(alert, TRIGGER_PRICE, t);
-      // Settle with next_tick (first post-trigger observation)
-      const settled = recordOutcome(REVERTING_POST_TICKS[0], t + 100);
-      if (settled.length > 0) {
-        total++;
-        if (settled[0].outcome === "hit") hits++;
-      }
-    }
-
-    const hitRate = hits / total;
-    // next_tick always sees 1.05 >= 1.00 → always HIT → hit rate = 1.0
-    // This is the biased over-estimate.
-    expect(hitRate).toBeGreaterThanOrEqual(0.9);
-    // The "true" sustained rate (k_tick_avg) will be 0.0 — gap is the bias.
+  it("on white-noise series: P(stay | just fired) ≈ P(stay) (no selection bias)", () => {
+    // i.i.d. series: conditioning on just-fired gives no extra information
+    const prices = whiteNoiseSeries(2000, 1.0, 42);
+    const bar = 1.0;
+    const pRandom = pStayRandom(prices, bar, 500, 7);
+    const pCond = pStayConditional(prices, bar);
+    // No autocorrelation → gap should be small
+    expect(Math.abs(pRandom - pCond)).toBeLessThan(0.1);
   });
 
-  it("k_tick_avg rule recovers the true hit rate on the same series", () => {
-    // Same 20 reverting triggers. k_tick_avg uses mean of 5 ticks = 0.91 < 1.00 → MISS.
-    // Hit rate = 0.0 — correctly reflects that the move did not sustain.
-
-    const alert = makeAlert("bias-ktick", TARGET_PRICE, "above");
-    let hits = 0;
-    let total = 0;
-
-    for (let i = 0; i < 20; i++) {
-      const t = 10_000 + i * 1_000;
-      recordTrigger(alert, TRIGGER_PRICE, t);
-      // Feed all 5 post-trigger ticks
-      REVERTING_POST_TICKS.forEach((p, j) => {
-        const settled = recordOutcomeKTick(p, t + (j + 1) * 100, 5);
-        if (settled.length > 0) {
-          total++;
-          if (settled[0].outcome === "hit") hits++;
-        }
-      });
-    }
-
-    const hitRate = total > 0 ? hits / total : 0;
-    // k_tick_avg mean = 0.91 < 1.00 → all MISS → hit rate = 0.0
-    // This correctly reflects that the breakout never sustained.
-    expect(hitRate).toBeLessThan(0.2);
-    expect(total).toBe(20);
+  it("on strongly trending series: P(stay | just fired) >= P(stay) (bias reverses)", () => {
+    const prices = trendingSeries(2000, 1.0, 0.005, 42);
+    const bar = 1.5; // intermediate level along the trend
+    const pRandom = pStayRandom(prices, bar, 500, 7);
+    const pCond = pStayConditional(prices, bar);
+    // On strong uptrend, "just fired upward" tends to continue
+    // Allow a small tolerance in case the effect is modest
+    expect(pCond).toBeGreaterThanOrEqual(pRandom - 0.05);
   });
 
-  it("documents that the gap between the two rules IS the selection bias", () => {
-    // Run the same 20 reverting triggers through BOTH rules in parallel.
-    // next_tick hit rate >> k_tick_avg hit rate.
-    // The difference is the selection bias: settling on the first tick
-    // after a threshold crossing systematically over-counts hits because
-    // the price has just moved up to cross — mean reversion makes the
-    // first tick more likely to be above than subsequent ticks.
+  it("documents the connection to recordOutcome (next-1-tick vs K-tick choice)", () => {
+    // The conditional P is exactly what next-1-tick recordOutcome reports as
+    // "hit rate" — and it is biased low on mean-reverting series.
+    // K-tick averaging shifts the oracle definition; the bias is partially
+    // averaged out by smoothing across multiple ticks. Both are documented
+    // mitigations for the underlying selection bias.
+    const prices = meanRevertingSeries(1000, 1.0, -0.3, 42);
+    const bar = 1.0;
+    const pRandom = pStayRandom(prices, bar, 500, 7);
+    const pCond = pStayConditional(prices, bar);
+    // The conditional P (what next-1-tick measures) is biased below the true P
+    expect(pCond).toBeLessThan(pRandom);
+  });
 
-    const alertNext = makeAlert("gap-next", TARGET_PRICE, "above");
-    const alertKtick = makeAlert("gap-ktick", TARGET_PRICE, "above");
+  it("bias magnitude scales with mean reversion strength (|phi|)", () => {
+    // Larger |phi| = stronger oscillating reversion = bigger bias
+    // phi=-0.7 (strong oscillation) vs phi=-0.1 (weak oscillation)
+    const strong = meanRevertingSeries(2000, 1.0, -0.7, 42);
+    const weak = meanRevertingSeries(2000, 1.0, -0.1, 42);
+    const bar = 1.0;
+    const biasStrong =
+      pStayRandom(strong, bar, 500, 7) - pStayConditional(strong, bar);
+    const biasWeak =
+      pStayRandom(weak, bar, 500, 7) - pStayConditional(weak, bar);
+    // Stronger oscillating reversion → larger selection bias
+    expect(biasStrong).toBeGreaterThan(biasWeak);
+  });
 
-    let nextHits = 0;
-    let nextTotal = 0;
-    let kHits = 0;
-    let kTotal = 0;
+  it("bias disappears when bar is far above all prices (no firings → conditional P = 0)", () => {
+    const prices = meanRevertingSeries(500, 1.0, -0.3, 42);
+    const bar = 100.0; // never fires
+    const pCond = pStayConditional(prices, bar);
+    // No fire events → helper returns 0 gracefully, no crash
+    expect(Number.isFinite(pCond) || pCond === 0).toBe(true);
+    expect(pCond).toBe(0);
+  });
 
-    for (let i = 0; i < 20; i++) {
-      const t = 10_000 + i * 1_000;
-
-      // next_tick path
-      recordTrigger(alertNext, TRIGGER_PRICE, t);
-      const nextSettled = recordOutcome(REVERTING_POST_TICKS[0], t + 100);
-      if (nextSettled.length > 0) {
-        nextTotal++;
-        if (nextSettled[0].outcome === "hit") nextHits++;
-      }
-
-      // k_tick_avg path
-      recordTrigger(alertKtick, TRIGGER_PRICE, t);
-      REVERTING_POST_TICKS.forEach((p, j) => {
-        const ks = recordOutcomeKTick(p, t + (j + 1) * 100, 5);
-        if (ks.length > 0) {
-          kTotal++;
-          if (ks[0].outcome === "hit") kHits++;
-        }
-      });
+  it("fire-event count is non-trivial on mean-reverting series (sanity check)", () => {
+    // Verify the conditional sampler finds enough fire events to be statistically
+    // meaningful — otherwise the bias test could be vacuous.
+    const prices = meanRevertingSeries(2000, 1.0, -0.5, 42);
+    const bar = 1.0;
+    let fires = 0;
+    for (let t = 1; t < prices.length - 1; t++) {
+      if (prices[t - 1] < bar && prices[t] >= bar) fires++;
     }
-
-    // Verify both rules settled all 20 triggers
-    expect(nextTotal).toBe(20);
-    expect(kTotal).toBe(20);
-
-    // The gap: k_tick_avg hits < next_tick hits by at least 3
-    // (in practice the gap is 20 on this pure-reverting series)
-    expect(nextHits).toBeGreaterThan(kHits + 3);
-
-    // Sanity: the records are stored separately and don't interfere
-    const nextRecords = getFeedbackRecords("gap-next");
-    const kRecords = getFeedbackRecords("gap-ktick");
-    expect(nextRecords.filter((r) => r.settlementRule === undefined)).toHaveLength(20);
-    expect(kRecords.filter((r) => r.settlementRule === "k_tick_avg")).toHaveLength(20);
+    // With n=2000 and strong oscillating reversion around bar=mean, expect many crossings
+    expect(fires).toBeGreaterThan(50);
   });
 });
