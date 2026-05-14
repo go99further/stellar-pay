@@ -264,7 +264,7 @@ export function tuneSuggestionParams(): TuningReport {
   const report = walkForwardOptimize(
     prices,
     SUGGESTION_PARAM_SPACE,
-    simulateSuggestion,
+    simulateSuggestion as unknown as SimulateFn<Record<string, number>>,
     monteCarloSearch,
     { iterations: 500, seed: 42, windowSize: Math.min(50, Math.floor(prices.length / 2)) }
   );
@@ -273,11 +273,11 @@ export function tuneSuggestionParams(): TuningReport {
   const fullDist = monteCarloSearch(
     prices,
     SUGGESTION_PARAM_SPACE,
-    simulateSuggestion,
+    simulateSuggestion as unknown as SimulateFn<Record<string, number>>,
     { iterations: 500, seed: 42, windowSize: Math.min(50, Math.floor(prices.length / 2)) }
   );
 
-  const rawParams = report.recommended as SuggestionParams;
+  const rawParams = report.recommended as unknown as SuggestionParams;
   const clamped = clampToSpace(rawParams);
 
   // Validate the clamped result is usable
@@ -293,8 +293,8 @@ export function tuneSuggestionParams(): TuningReport {
       success: false,
       params: clamped,
       confidenceInterval: {
-        p25: clampToSpace(fullDist.confidenceInterval.p25 as SuggestionParams),
-        p75: clampToSpace(fullDist.confidenceInterval.p75 as SuggestionParams),
+        p25: clampToSpace(fullDist.confidenceInterval.p25 as unknown as SuggestionParams),
+        p75: clampToSpace(fullDist.confidenceInterval.p75 as unknown as SuggestionParams),
       },
       trainScore: report.trainScore,
       validationScore: report.validationScore,
@@ -313,8 +313,8 @@ export function tuneSuggestionParams(): TuningReport {
     success: true,
     params: clamped,
     confidenceInterval: {
-      p25: clampToSpace(fullDist.confidenceInterval.p25 as SuggestionParams),
-      p75: clampToSpace(fullDist.confidenceInterval.p75 as SuggestionParams),
+      p25: clampToSpace(fullDist.confidenceInterval.p25 as unknown as SuggestionParams),
+      p75: clampToSpace(fullDist.confidenceInterval.p75 as unknown as SuggestionParams),
     },
     trainScore: report.trainScore,
     validationScore: report.validationScore,

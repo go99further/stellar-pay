@@ -63,6 +63,8 @@ export interface SecurityStats {
   expired: number;
   pending: number;
   precision: number | null;
+  expirationRate: number;
+  effectiveSampleRate: number;
   confidence: "high" | "medium" | "low";
 }
 
@@ -418,6 +420,8 @@ export function getSecurityStats(detectorType?: SecurityDetectorType): SecurityS
     expired,
     pending,
     precision,
+    expirationRate: records.length > 0 ? expired / records.length : 0,
+    effectiveSampleRate: records.length > 0 ? (confirmed + falsePositives) / records.length : 0,
     confidence,
   };
 }

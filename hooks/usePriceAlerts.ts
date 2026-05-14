@@ -14,6 +14,7 @@ import {
   getTriggeredAlerts,
 } from "@/lib/agent/price-alerts";
 import { recordOutcome } from "@/lib/agent/alert-feedback";
+import { settleAllPending } from "@/lib/agent/security-feedback";
 
 const POLL_INTERVAL = 30000; // 30 seconds
 
@@ -88,6 +89,21 @@ export function usePriceAlerts(
       // agnostic; the price magnitude lives on each record).
       recordOutcome(priceAtoB, observedAt);
       recordOutcome(priceBtoA, observedAt);
+
+      // Settle security feedback records (Issue 1 fix):
+      // - liquidity_flow: use current reserves as TVL proxy
+      // - sandwich: settled via decoded events (requires event-decoder, done async)
+      // - expired: 24h safety net
+      const reserveANum = Number(reserveA) / 1e7;
+      const reserveBNum = Number(reserveB) / 1e7;
+      try {
+        settleAllPending({
+          tvlChange: { currentReserveA: reserveANum, currentReserveB: reserveBNum, observedAt },
+          expireNow: observedAt,
+        });
+      } catch {
+        // Non-critical: settlement failure should not block price alerts
+      }
 
       // Check alerts against current prices
       const triggered = checkAlerts(priceAtoB, priceBtoA);

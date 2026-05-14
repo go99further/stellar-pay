@@ -10,6 +10,7 @@ import { handleAgentError, type ErrorRecovery } from "@/lib/agent/error-handler"
 import { ErrorMessage, RetryStatus } from "@/components/agent/ErrorMessage";
 import { TransactionHistory } from "@/components/agent/TransactionHistory";
 import { saveTransaction } from "@/lib/agent/transaction-history";
+import { settleByExecutedSwap } from "@/lib/agent/security-feedback";
 import { PriceAlerts } from "@/components/agent/PriceAlerts";
 
 const HISTORY_KEY = "stellar-pay-agent-history";
@@ -222,6 +223,16 @@ export default function AgentPage() {
             txHash: result.hash,
             status: result.status === "SUCCESS" ? "success" : "failed",
           });
+
+          // Settle security feedback: if a price_impact warning was pending,
+          // use the actual swap details to confirm/reject the prediction
+          if (pendingXdr.operationType === "swap" && pendingXdr.details) {
+            const details = pendingXdr.details as { amountIn?: number; amountOut?: number; estimatedOut?: number };
+            if (details.estimatedOut && details.amountOut) {
+              const actualImpact = Math.abs(details.estimatedOut - details.amountOut) / details.estimatedOut * 100;
+              settleByExecutedSwap(actualImpact, Date.now());
+            }
+          }
         }
 
         // Clear the pending XDR from the turn
