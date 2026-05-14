@@ -104,6 +104,42 @@ For each item: **what's wrong**, **how it manifests**, and **what would fix it i
 
 ---
 
+## L9 — No Bonferroni correction for multiple comparisons
+
+**What:** The method comparison panel reports four pairwise Welch t-tests ("MC vs Random", "MC vs Grid", "Grid vs Random", "Tuned vs Default"). Each test uses α=0.05 in isolation. With four tests, the family-wise error rate (chance of at least one false positive) inflates to roughly 1 − 0.95⁴ ≈ 18.5%.
+
+**How it manifests:** A reader interpreting any single "p < 0.05" as "definitely real" would overestimate the certainty given that we ran four tests.
+
+**Fix path:** Apply Bonferroni correction (divide α by number of tests → 0.0125) or Holm step-down. In practice, for the tests we report, p-values are typically << 0.001, so the conclusion does not change. We surface the issue rather than silently apply a correction that reads worse than the raw p-values without explanation.
+
+**Status:** Acknowledged. ADR-8 documents the choice. UI shows raw p-values plus a footnote linking here.
+
+---
+
+## L10 — Normality of score distributions not formally verified
+
+**What:** Welch's t-test relies on the sample means being approximately normally distributed. With n=30 per method, the Central Limit Theorem suggests the mean's sampling distribution is close to normal even if individual scores are not. We do not run a formal normality test (Shapiro–Wilk or Kolmogorov–Smirnov) on the score distributions.
+
+**How it manifests:** If the score distribution is heavily skewed or multimodal at n=30, p-values from Welch may be slightly off. Unlikely to flip a "p < 0.001" conclusion, but possible at marginal cases.
+
+**Fix path:** Add Shapiro–Wilk per method, surface the W-statistic and p-value in the comparison report. Or use a non-parametric alternative (Mann–Whitney U, Wilcoxon rank-sum) which makes no normality assumption.
+
+**Status:** Acknowledged. n=30 + CLT is a defensible default for a demonstration; for production claims we would test or use the non-parametric variant.
+
+---
+
+## L11 — No prospective power analysis
+
+**What:** Power analysis prescribes the sample size needed to detect a hypothesized effect size with target power (typically 0.8). We did not pre-specify a target effect size; we picked n=30 for runtime + CLT reasons, then ran the comparison and reported observed effect sizes.
+
+**How it manifests:** This is post-hoc analysis — the n=30 sample size was not chosen to detect any particular Cohen's d. If the true effect were small (e.g., d=0.2), n=30 would be underpowered (detecting it would require ~400 runs at 0.8 power). Our reported "Monte Carlo wins p < 0.001" depends on the effect being moderate or large.
+
+**Fix path:** Pre-register a target effect size (e.g., d=0.5, "medium") before collecting data. Compute required n from power = 0.8, α = 0.05. Run that many. Report power achieved.
+
+**Status:** Acknowledged. For a methods-comparison demonstration where the structured-search-vs-random effect is empirically large (d > 1.0), the sample size is adequate. A formal prospective design would be required for publication.
+
+---
+
 ## What we don't claim
 
 To be explicit about scope:

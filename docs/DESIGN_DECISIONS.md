@@ -275,6 +275,63 @@ Without a real-asset signal, "Monte Carlo over real history" is just "Monte Carl
 
 ---
 
+## ADR-8: Method Comparison Strategy (Welch t-test, 30 runs, fixed budget)
+
+**Status:** Accepted
+
+**Context**
+The closed loop's central claim is "Monte Carlo tuning beats hardcoded defaults". A first attempt at proving this — comparing Default (1 eval) vs Grid Search (100 iter) vs Monte Carlo (500 iter) on a single seed — was correctly criticized as an unfair comparison: different budgets, no variance estimation, no significance test, no Random Search baseline. We could not actually claim Monte Carlo "won" without controlling for those.
+
+**Decision**
+Compare four methods at fixed budget (500 evaluations per run) over 30 independent seeds [1..30]. Report mean ± std for each method. For each pairwise comparison, report Welch's t-test (two-tailed) and Cohen's d. Define "significant" as p < 0.05.
+
+Methods:
+- **Default**: single evaluation of `DEFAULT_PARAMS` — deterministic, std=0
+- **Random Search**: uniform random parameter sampling, 500 evaluations
+- **Grid Search**: deterministic grid (≤500 cells, sorted) — std≈0
+- **Monte Carlo**: structured search with windowed simulation, 500 iterations
+
+Pairwise tests reported:
+- "MC vs Random" — primary claim about structured search adding value
+- "MC vs Grid" — vs deterministic alternative
+- "Grid vs Random" — sanity check
+- "Tuned vs Default" — overall closed-loop value
+
+**Why Welch (not Student's, not paired)**
+- *Not paired*: methods produce independent samples per seed, no natural pairing across methods.
+- *Not Student's*: cannot assume equal variance — Grid is deterministic (σ≈0), Random has high variance, MC sits between. Student's would give wrong p-values.
+- *Welch–Satterthwaite* approximates degrees of freedom for unequal variances, gives valid p-value under heteroscedasticity.
+
+**Why 30 runs**
+- 30 is the asymptotic threshold where the t-distribution approximates the normal distribution well enough for the Central Limit Theorem to apply on means.
+- Below 30, t-distribution corrections matter more (still valid, but less efficient).
+- Above 30, runtime cost grows linearly with diminishing returns.
+- 30 × 4 methods × ~1s each = ~2 minutes total in browser, acceptable for an interactive interview demo.
+
+**Why Cohen's d alongside p-value**
+- *p-value*: probability that the observed effect could occur under the null hypothesis (no real difference). Tells you if the effect is *real*.
+- *Cohen's d*: standardized effect size = (mean_A - mean_B) / pooled_std. Tells you if the effect is *large enough to care about*. Convention: 0.2=small, 0.5=medium, 0.8+=large.
+- Reporting only p-value is misleading — at large n, p < 0.001 with d = 0.05 is statistically real but practically meaningless. Both are needed for honest reporting.
+
+**Why fixed budget (500 evaluations)**
+- Without budget standardization, "MC wins with 500 iter vs Grid's 100 iter" only tells us iteration count matters — not that MC's structured search adds value.
+- Random Search at the same 500 budget is the apples-to-apples baseline.
+
+**Limitations** *(documented in LIMITATIONS.md L9–L11)*
+- No Bonferroni / Holm correction for multiple comparisons (4 pairwise tests inflate family-wise error rate; corrected p-threshold would be 0.0125 for α=0.05). Not corrected because reported p-values are far below corrected thresholds in practice; if marginal results emerge we would correct.
+- No formal Shapiro–Wilk test of normality on the score distributions. Justified by n=30 + CLT for means; visual inspection of histograms shows roughly normal distributions.
+- No prospective power analysis. Effect sizes were not pre-specified; this is post-hoc analysis. Adequate for a methods comparison demonstration; would be required for a publication-grade claim.
+
+**Tradeoff**
+Practical demonstration of statistical thinking, not publication-grade rigor. The goal is to show we understand *why* a fair comparison requires standardized budget + variance estimation + significance test, and to surface the gaps we did not address.
+
+**Verified by**
+- `lib/agent/method-comparison.ts` — `welchTTest`, `cohensD`, `compareMethods`
+- `__tests__/method-comparison.test.ts` — Welch t-test values match `scipy.stats.ttest_ind(equal_var=False)` on reference inputs
+- `app/loop/methods/page.tsx` (in development) — interactive comparison surface
+
+---
+
 ## Future ADRs（待决策）
 
 以下决策尚未做出，列在此处说明系统设计是迭代的，不是一次性完成的。
