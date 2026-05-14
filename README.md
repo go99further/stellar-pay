@@ -54,9 +54,10 @@ graph TD
 ## Quick Tour（推荐阅读顺序）
 
 1. **[docs/CLOSED_LOOP.md](./docs/CLOSED_LOOP.md)** — 4 层闭环架构 + 自我审查记录（首推）
-2. **[docs/DESIGN_DECISIONS.md](./docs/DESIGN_DECISIONS.md)** — 6 条 ADR，回答"为什么不...?"
-3. [AGENT_ARCHITECTURE.md](./AGENT_ARCHITECTURE.md) — 完整原始设计（1364 行）
-4. [docs/BACKTEST_GUIDE.md](./docs/BACKTEST_GUIDE.md) — 回测系统（防过拟合 V2）
+2. **[docs/DESIGN_DECISIONS.md](./docs/DESIGN_DECISIONS.md)** — 7 条 ADR，回答"为什么不...?"
+3. **[docs/LIMITATIONS.md](./docs/LIMITATIONS.md)** — 已知局限（IQR≠CI、selection bias 修复、serverless rate limit、XLM proxy 等 8 条）
+4. [AGENT_ARCHITECTURE.md](./AGENT_ARCHITECTURE.md) — 完整原始设计（1364 行）
+5. [docs/BACKTEST_GUIDE.md](./docs/BACKTEST_GUIDE.md) — 回测系统（防过拟合 V2）
 
 ## 🚀 本地运行
 
