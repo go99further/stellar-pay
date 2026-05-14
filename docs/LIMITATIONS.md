@@ -42,7 +42,7 @@ For each item: **what's wrong**, **how it manifests**, and **what would fix it i
 
 **Fix path:** Move the bucket state to Vercel KV (Redis-backed, distributed) or Upstash. Token-bucket math stays the same; only the storage backend changes. Estimated cost: 1 hour + a Vercel KV addon (~$0/month at low traffic).
 
-**Status:** Known. The current limiter is "better than nothing" — it does block within-instance bursts and slow down obvious abuse — but isn't an actual production rate limit. The 429 response message is honest about it being a "demo rate limit".
+**Status:** Mitigated. `lib/agent/distributed-rate-limiter.ts` adds a Vercel KV / Upstash backend that shares state across Lambda instances when `KV_REST_API_URL` and `KV_REST_API_TOKEN` are set. Local dev and no-KV deployments still use per-instance fallback (now an explicit, documented choice rather than the only option). The 429 response now reports which path is active. See `__tests__/distributed-rate-limiter.test.ts` for cross-instance and degradation-to-fallback coverage.
 
 ---
 
@@ -113,3 +113,15 @@ To be explicit about scope:
 - **Not a sandwich detector you'd run on mainnet.** L2 — the detector logic is correct, but it's been validated against synthetic and proxy data only.
 
 The architecture, invariants, and data-flow design are the contributions worth discussing. The numerical results are illustrative.
+
+---
+
+## Resolved (was on this list, now fixed)
+
+### ✓ Apply button is no longer theater — security threshold overrides flow to detectors
+
+Previously: `suggestSecurityThresholds()` returned recommendations, but the four detectors (`detectPriceImpact`, `detectLiquidityFlow`, `detectSandwich`, `detectAnomalies`) read from a compile-time `THRESHOLDS` const. Clicking Apply persisted nothing useful.
+
+Fix: `lib/agent/security-thresholds-runtime.ts` provides a localStorage-backed override layer. Each detector calls `getActiveThresholds()` at the start of every invocation. Overrides flow through immediately. Verified by integration tests in `__tests__/security-thresholds-runtime.test.ts` ("detectAnomalies uses overridden anomalyRemovalPct" etc).
+
+The compile-time `THRESHOLDS` const stays untouched — overrides are layered on top, not in place. This preserves the read-only-suggestions invariant from the original audit posture.
