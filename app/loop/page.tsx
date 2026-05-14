@@ -24,6 +24,7 @@ import {
 import { seedDemoData, clearDemoData, isDemoDataPresent } from "@/lib/agent/demo-seed";
 import { loadRealPriceDataset, getDatasetMeta } from "@/lib/agent/price-source";
 import { InvariantsCheck } from "./InvariantsCheck";
+import { useLocale, type Locale } from "./i18n";
 
 // ── Layer 1 helpers ───────────────────────────────────────────────────────────
 
@@ -77,6 +78,7 @@ function confidenceBadge(c: "high" | "medium" | "low"): string {
 // ── Main page ─────────────────────────────────────────────────────────────────
 
 export default function LoopPage() {
+  const { locale, t, toggle } = useLocale();
   const [demoSeeded, setDemoSeeded] = useState(false);
   const [tuning, setTuning] = useState(false);
   const [tuningResult, setTuningResult] = useState<TuningReport | null>(null);
@@ -153,46 +155,50 @@ export default function LoopPage() {
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
             <div>
               <h1 className="text-xl font-semibold text-neutral-900 dark:text-neutral-100">
-                Closed-Loop Dashboard
+                {t("header.title")}
               </h1>
               <p className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                4-layer self-learning system &bull; Read-only demo
+                {t("header.subtitle")}
               </p>
               {datasetMeta.loaded ? (
                 <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300" title={datasetMeta.proxyDisclaimer ?? datasetMeta.sources.map(s => `${s.name} (${s.count})`).join(" · ")}>
-                  ● Tuning on real data: {datasetMeta.totalPoints.toLocaleString()} points across {datasetMeta.sources.length} sources
+                  {t("header.tuning_real", {
+                    points: datasetMeta.totalPoints.toLocaleString(),
+                    sources: datasetMeta.sources.length,
+                  })}
                   {datasetMeta.proxyAsset && <span className="ml-1 opacity-70">({datasetMeta.proxyAsset})</span>}
                 </div>
               ) : (
                 <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
-                  ○ Real dataset not loaded — using localStorage fallback
+                  {t("header.tuning_fallback")}
                 </div>
               )}
-              {datasetMeta.proxyDisclaimer && (
+              {datasetMeta.loaded && (
                 <p className="mt-1 text-[10px] text-neutral-500 dark:text-neutral-400 max-w-md">
-                  {datasetMeta.proxyDisclaimer}
+                  {t("header.proxy_disclaimer")}
                 </p>
               )}
             </div>
             <div className="flex flex-wrap gap-2">
+              <LocaleToggle locale={locale} onToggle={toggle} t={t} />
               <button
                 onClick={demoSeeded ? handleClearDemo : handleLoadDemo}
                 className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
               >
-                {demoSeeded ? "Clear Demo Data" : "Load Demo Data"}
+                {demoSeeded ? t("header.btn.clear_demo") : t("header.btn.load_demo")}
               </button>
               <button
                 onClick={() => void handleTune()}
                 disabled={tuning}
                 className="rounded border border-indigo-300 px-3 py-1.5 text-xs text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-950"
               >
-                {tuning ? "Tuning…" : "Tune Now"}
+                {tuning ? t("header.btn.tuning") : t("header.btn.tune_now")}
               </button>
               <Link
                 href="/"
                 className="rounded border border-neutral-300 px-3 py-1.5 text-xs text-neutral-600 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-400 dark:hover:bg-neutral-800"
               >
-                &larr; Back
+                {t("header.btn.back")}
               </Link>
             </div>
           </div>
@@ -201,25 +207,24 @@ export default function LoopPage() {
         {/* ── Empty state ── */}
         {isEmpty && (
           <div className="rounded border border-neutral-200 bg-neutral-50 p-8 text-center dark:border-neutral-800 dark:bg-neutral-900">
-            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">No data yet</p>
+            <p className="text-sm font-medium text-neutral-700 dark:text-neutral-300">{t("empty.title")}</p>
             <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400 max-w-sm mx-auto">
-              This dashboard visualizes a 4-layer data closed-loop. To see it populated, click
-              &ldquo;Load Demo Data&rdquo; above.
+              {t("empty.body")}
             </p>
             <p className="mt-2 text-xs text-neutral-500 dark:text-neutral-400">
-              Or visit{" "}
+              {t("empty.or_visit")}{" "}
               <a href="/agent" className="text-indigo-600 hover:underline dark:text-indigo-400">
                 /agent
               </a>{" "}
-              to interact with the system and generate real data.
+              {t("empty.to_generate")}
             </p>
           </div>
         )}
 
         {/* ── Layer cards grid ── */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Layer1Card layer1={layer1} />
-          <Layer2Card />
+          <Layer1Card layer1={layer1} t={t} />
+          <Layer2Card t={t} />
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -229,20 +234,44 @@ export default function LoopPage() {
             tuningResult={tuningResult}
             tuningError={tuningError}
             onTune={() => void handleTune()}
+            t={t}
           />
           <Layer4Card
             params={params}
             tuningResult={tuningResult}
             applyError={applyError}
             onApply={handleApplySuggested}
+            t={t}
           />
         </div>
 
         {/* ── Invariants ── */}
-        <InvariantsCheck />
+        <InvariantsCheck t={t} />
 
       </div>
     </div>
+  );
+}
+
+// ── Locale toggle ─────────────────────────────────────────────────────────────
+
+function LocaleToggle({
+  locale,
+  onToggle,
+  t,
+}: {
+  locale: Locale;
+  onToggle: () => void;
+  t: (key: string) => string;
+}) {
+  return (
+    <button
+      onClick={onToggle}
+      className="rounded border border-neutral-300 px-3 py-1.5 text-xs font-medium text-neutral-700 hover:bg-neutral-50 dark:border-neutral-700 dark:text-neutral-300 dark:hover:bg-neutral-800"
+      title={locale === "zh" ? "Switch to English" : "切换到中文"}
+    >
+      {locale === "zh" ? t("header.btn.locale_en") : t("header.btn.locale_zh")}
+    </button>
   );
 }
 
@@ -250,9 +279,10 @@ export default function LoopPage() {
 
 interface Layer1CardProps {
   layer1: ReturnType<typeof computeLayer1> | null;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
-function Layer1Card({ layer1 }: Layer1CardProps) {
+function Layer1Card({ layer1, t }: Layer1CardProps) {
   const hitRate = layer1?.hitRate ?? null;
   const borderClass = hitRateBorder(hitRate);
   const colorClass = hitRateColor(hitRate);
@@ -260,17 +290,17 @@ function Layer1Card({ layer1 }: Layer1CardProps) {
   return (
     <div className={`rounded border p-4 ${borderClass}`}>
       <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
-        Layer 1: Alert Feedback
+        {t("layer1.title")}
       </h2>
       <div className="mt-1 h-px bg-neutral-200 dark:bg-neutral-700" />
       {layer1 === null || layer1.records.length === 0 ? (
         <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
-          No feedback records yet.
+          {t("layer1.empty")}
         </p>
       ) : (
         <dl className="mt-3 space-y-1 text-xs">
           <div className="flex justify-between">
-            <dt className="text-neutral-600 dark:text-neutral-400">Hit rate</dt>
+            <dt className="text-neutral-600 dark:text-neutral-400">{t("layer1.hit_rate")}</dt>
             <dd className={`font-mono font-semibold ${colorClass}`}>
               {hitRate !== null
                 ? `${(hitRate * 100).toFixed(0)}% (${layer1.confidence})`
@@ -278,23 +308,23 @@ function Layer1Card({ layer1 }: Layer1CardProps) {
             </dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-neutral-600 dark:text-neutral-400">Hits / Misses</dt>
+            <dt className="text-neutral-600 dark:text-neutral-400">{t("layer1.hits_misses")}</dt>
             <dd className="font-mono text-neutral-800 dark:text-neutral-200">
-              {layer1.hits} hits / {layer1.misses} miss
+              {layer1.hits} {t("layer1.hits")} / {layer1.misses} {t("layer1.miss")}
             </dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-neutral-600 dark:text-neutral-400">Pending</dt>
+            <dt className="text-neutral-600 dark:text-neutral-400">{t("layer1.pending")}</dt>
             <dd className="font-mono text-neutral-800 dark:text-neutral-200">{layer1.pending}</dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-neutral-600 dark:text-neutral-400">Settled</dt>
+            <dt className="text-neutral-600 dark:text-neutral-400">{t("layer1.settled")}</dt>
             <dd className="font-mono text-neutral-800 dark:text-neutral-200">
               {layer1.settled.length}
             </dd>
           </div>
           <div className="flex justify-between">
-            <dt className="text-neutral-600 dark:text-neutral-400">Total records</dt>
+            <dt className="text-neutral-600 dark:text-neutral-400">{t("layer1.total_records")}</dt>
             <dd className="font-mono text-neutral-800 dark:text-neutral-200">
               {layer1.records.length}
             </dd>
@@ -307,7 +337,7 @@ function Layer1Card({ layer1 }: Layer1CardProps) {
 
 // ── Layer 2 Card ──────────────────────────────────────────────────────────────
 
-function Layer2Card() {
+function Layer2Card({ t }: { t: (key: string, vars?: Record<string, string | number>) => string }) {
   const detectorStats = DETECTOR_TYPES.map(d => ({
     type: d,
     stats: getSecurityStats(d),
@@ -316,7 +346,7 @@ function Layer2Card() {
   return (
     <div className="rounded border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-950">
       <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
-        Layer 2: Security Detectors
+        {t("layer2.title")}
       </h2>
       <div className="mt-1 h-px bg-indigo-200 dark:bg-indigo-800" />
       <div className="mt-3 space-y-3">
@@ -339,7 +369,7 @@ function Layer2Card() {
               </div>
               <dl className="mt-2 space-y-1 text-xs">
                 <div className="flex justify-between">
-                  <dt className="text-neutral-600 dark:text-neutral-400">Precision</dt>
+                  <dt className="text-neutral-600 dark:text-neutral-400">{t("layer2.precision")}</dt>
                   <dd className="font-mono">
                     {stats.precision !== null ? (
                       highExpiration ? (
@@ -347,7 +377,7 @@ function Layer2Card() {
                           <span className="line-through">
                             {(stats.precision * 100).toFixed(0)}%
                           </span>
-                          {" ⚠ data unreliable due to high expiration"}
+                          {t("layer2.unreliable_warning")}
                         </span>
                       ) : (
                         <span className="text-neutral-800 dark:text-neutral-200">
@@ -360,7 +390,7 @@ function Layer2Card() {
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-neutral-600 dark:text-neutral-400">expirationRate</dt>
+                  <dt className="text-neutral-600 dark:text-neutral-400">{t("layer2.expiration_rate")}</dt>
                   <dd
                     className={`font-mono ${
                       highExpiration
@@ -373,14 +403,14 @@ function Layer2Card() {
                   </dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-neutral-600 dark:text-neutral-400">effectiveSampleRate</dt>
+                  <dt className="text-neutral-600 dark:text-neutral-400">{t("layer2.effective_sample_rate")}</dt>
                   <dd className="font-mono text-neutral-800 dark:text-neutral-200">
                     {(stats.effectiveSampleRate * 100).toFixed(0)}%
                   </dd>
                 </div>
                 <div className="flex justify-between">
                   <dt className="text-neutral-600 dark:text-neutral-400">
-                    confirmed / fp / pending
+                    {t("layer2.confirmed_fp_pending")}
                   </dt>
                   <dd className="font-mono text-neutral-800 dark:text-neutral-200">
                     {stats.confirmed} / {stats.falsePositives} / {stats.pending}
@@ -403,18 +433,19 @@ interface Layer3CardProps {
   tuningResult: TuningReport | null;
   tuningError: string | null;
   onTune: () => void;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
-function Layer3Card({ params, tuning, tuningResult, tuningError, onTune }: Layer3CardProps) {
+function Layer3Card({ params, tuning, tuningResult, tuningError, onTune, t }: Layer3CardProps) {
   return (
     <div className="rounded border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-950">
       <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
-        Layer 3: Parameter Optimizer
+        {t("layer3.title")}
       </h2>
       <div className="mt-1 h-px bg-indigo-200 dark:bg-indigo-800" />
 
       <div className="mt-3 space-y-1 text-xs">
-        <p className="font-medium text-neutral-600 dark:text-neutral-400">Current weights:</p>
+        <p className="font-medium text-neutral-600 dark:text-neutral-400">{t("layer3.current_weights")}</p>
         <dl className="ml-2 space-y-1">
           <div className="flex justify-between">
             <dt className="font-mono text-neutral-600 dark:text-neutral-400">onlineWeight</dt>
@@ -455,7 +486,7 @@ function Layer3Card({ params, tuning, tuningResult, tuningError, onTune }: Layer
           disabled={tuning}
           className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
         >
-          {tuning ? "Running 500 iterations…" : "Tune Now (500 iterations)"}
+          {tuning ? t("layer3.btn_running") : t("layer3.btn_idle")}
         </button>
       </div>
 
@@ -467,11 +498,11 @@ function Layer3Card({ params, tuning, tuningResult, tuningError, onTune }: Layer
 
       {tuningResult && (
         <div className="mt-3 space-y-2 rounded border border-indigo-300 bg-white p-3 text-xs dark:border-indigo-700 dark:bg-indigo-900">
-          <p className="font-medium text-indigo-800 dark:text-indigo-200">Tuning result</p>
+          <p className="font-medium text-indigo-800 dark:text-indigo-200">{t("layer3.tuning_result")}</p>
 
           {!tuningResult.success && (
             <div className="rounded border border-amber-300 bg-amber-50 p-2 text-amber-700 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-300">
-              Overfit / invalid: test score significantly below train. Params not auto-applied.
+              {t("layer3.overfit_warning")}
             </div>
           )}
 
@@ -482,7 +513,7 @@ function Layer3Card({ params, tuning, tuningResult, tuningError, onTune }: Layer
                 {tuningResult.params.onlineWeight.toFixed(3)}
                 {tuningResult.iqr && (
                   <span className="text-neutral-500 dark:text-neutral-400">
-                    {" (top-5% IQR: "}
+                    {t("layer3.iqr_prefix")}
                     {tuningResult.iqr.p25.onlineWeight.toFixed(2)}
                     {"–"}
                     {tuningResult.iqr.p75.onlineWeight.toFixed(2)}
@@ -492,14 +523,14 @@ function Layer3Card({ params, tuning, tuningResult, tuningError, onTune }: Layer
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-neutral-600 dark:text-neutral-400">Train / Val / Test</dt>
+              <dt className="text-neutral-600 dark:text-neutral-400">{t("layer3.train_val_test")}</dt>
               <dd className="font-mono text-neutral-800 dark:text-neutral-200">
                 {tuningResult.trainScore.toFixed(1)} / {tuningResult.validationScore.toFixed(1)} /{" "}
                 {tuningResult.testScore.toFixed(1)}
               </dd>
             </div>
             <div className="flex justify-between">
-              <dt className="text-neutral-600 dark:text-neutral-400">Sample count</dt>
+              <dt className="text-neutral-600 dark:text-neutral-400">{t("layer3.sample_count")}</dt>
               <dd className="font-mono text-neutral-800 dark:text-neutral-200">
                 {tuningResult.sampleCount}
               </dd>
@@ -507,9 +538,9 @@ function Layer3Card({ params, tuning, tuningResult, tuningError, onTune }: Layer
           </dl>
 
           <div className="text-xs text-neutral-700 dark:text-neutral-300">
-            Baseline (default params) test score:{" "}
+            {t("layer3.baseline_label")}{" "}
             <span className="font-mono">{tuningResult.baseline.testScore.toFixed(2)}</span>
-            {" "}· Tuned delta:{" "}
+            {" "}· {t("layer3.baseline_delta")}{" "}
             <span className={`font-mono font-semibold ${
               tuningResult.testScore - tuningResult.baseline.testScore >= 0
                 ? "text-emerald-700 dark:text-emerald-400"
@@ -536,20 +567,21 @@ interface Layer4CardProps {
   tuningResult: TuningReport | null;
   applyError: string | null;
   onApply: () => void;
+  t: (key: string, vars?: Record<string, string | number>) => string;
 }
 
-function Layer4Card({ params, tuningResult, applyError, onApply }: Layer4CardProps) {
+function Layer4Card({ params, tuningResult, applyError, onApply, t }: Layer4CardProps) {
   const canApply = tuningResult !== null && tuningResult.success;
 
   return (
     <div className="rounded border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-950">
       <h2 className="text-sm font-semibold text-neutral-800 dark:text-neutral-200">
-        Layer 4: HITL Bridge
+        {t("layer4.title")}
       </h2>
       <div className="mt-1 h-px bg-indigo-200 dark:bg-indigo-800" />
 
       <div className="mt-3 space-y-1 text-xs">
-        <p className="font-medium text-neutral-600 dark:text-neutral-400">Current params:</p>
+        <p className="font-medium text-neutral-600 dark:text-neutral-400">{t("layer4.current_params")}</p>
         <dl className="ml-2 space-y-1">
           <div className="flex justify-between">
             <dt className="font-mono text-neutral-600 dark:text-neutral-400">onlineWeight</dt>
@@ -586,17 +618,16 @@ function Layer4Card({ params, tuningResult, applyError, onApply }: Layer4CardPro
 
       <div className="mt-3 space-y-1 rounded border border-indigo-200 bg-white p-3 text-xs dark:border-indigo-700 dark:bg-indigo-900">
         <p className="text-neutral-600 dark:text-neutral-400">
-          Human-in-the-loop gate: parameter changes require explicit user confirmation.
-          The optimizer only <em>suggests</em> — it never auto-applies.
+          {t("layer4.hitl_explainer")}<em>{t("layer4.suggests")}</em>{t("layer4.never_auto")}
         </p>
         {!tuningResult && (
           <p className="text-neutral-500 dark:text-neutral-400">
-            Run &ldquo;Tune Now&rdquo; in Layer 3 to generate a suggestion.
+            {t("layer4.run_tune_first")}
           </p>
         )}
         {tuningResult && !canApply && (
           <p className="text-amber-700 dark:text-amber-400">
-            Suggestion blocked: tuning did not succeed (overfit or invalid params). Expand data window and retry.
+            {t("layer4.suggestion_blocked")}
           </p>
         )}
       </div>
@@ -607,10 +638,10 @@ function Layer4Card({ params, tuningResult, applyError, onApply }: Layer4CardPro
             onClick={onApply}
             className="rounded bg-emerald-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-emerald-700"
           >
-            Apply Suggested Params (HITL)
+            {t("layer4.btn_apply")}
           </button>
           <p className="mt-1 text-xs text-neutral-500 dark:text-neutral-400">
-            Persists to localStorage and reloads the page.
+            {t("layer4.persists_note")}
           </p>
         </div>
       )}
