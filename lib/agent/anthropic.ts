@@ -52,14 +52,22 @@ export function hasAnyKey(): boolean {
 }
 
 // Model mappings (configurable via env vars, with fallback defaults)
+//
+// DeepSeek V4 model lineup (per docs):
+//   deepseek-v4-flash  — fast/cheap, replaces deepseek-chat for routing
+//   deepseek-v4-pro    — strongest, replaces deepseek-chat for sub-agents
+//   deepseek-chat      — legacy alias, deprecated 2026/07/24
+//
+// Override via MODEL_ROUTER / MODEL_ANALYTICS env vars if you want to pin
+// a specific generation or experiment with a different cost/quality point.
 export function getModelRouter(): string {
   if (process.env.MODEL_ROUTER) return process.env.MODEL_ROUTER;
-  return useDeepSeek() ? "deepseek-chat" : "claude-haiku-4-5-20251001";
+  return useDeepSeek() ? "deepseek-v4-flash" : "claude-haiku-4-5-20251001";
 }
 
 export function getModelAnalytics(): string {
   if (process.env.MODEL_ANALYTICS) return process.env.MODEL_ANALYTICS;
-  return useDeepSeek() ? "deepseek-chat" : "claude-sonnet-4-6";
+  return useDeepSeek() ? "deepseek-v4-pro" : "claude-sonnet-4-6";
 }
 
 // Legacy exports (for backward compatibility)
