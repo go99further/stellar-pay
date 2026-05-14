@@ -3,6 +3,8 @@
  * Manages price alerts for TKNA/TKNB token pairs with localStorage persistence.
  */
 
+import { recordTrigger } from "./alert-feedback";
+
 export interface PriceAlert {
   id: string;
   tokenPair: "TKNA/TKNB" | "TKNB/TKNA";
@@ -177,10 +179,12 @@ export function checkAlerts(
 
     if (conditionMet) {
       triggered.push(alert.id);
+      const triggeredAt = Date.now();
+      recordTrigger(alert, currentPrice, triggeredAt);
       return {
         ...alert,
         triggered: true,
-        triggeredAt: Date.now(),
+        triggeredAt,
       };
     }
 

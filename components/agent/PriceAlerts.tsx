@@ -2,8 +2,13 @@
 
 import { useState } from "react";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
-import { formatPrice } from "@/lib/agent/price-alerts";
+import { formatPrice, type PriceAlert } from "@/lib/agent/price-alerts";
 import { backtestAlertsV2, generateBacktestReportV2, type BacktestResultV2 } from "@/lib/agent/alert-backtest-v2";
+import {
+  getOnlineStats,
+  suggestThreshold,
+  type ThresholdSuggestion,
+} from "@/lib/agent/alert-feedback";
 
 interface PriceAlertsProps {
   walletAddress: string | null;
@@ -477,26 +482,19 @@ export function PriceAlerts({ walletAddress, enabled = true }: PriceAlertsProps)
           </h3>
           <div className="space-y-2">
             {activeAlerts.map((alert) => (
-              <div
+              <ActiveAlertRow
                 key={alert.id}
-                className="flex items-center justify-between rounded border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900"
-              >
-                <div className="flex-1">
-                  <div className="text-sm font-medium">
-                    {alert.tokenPair} {alert.condition === "above" ? "≥" : "≤"}{" "}
-                    <span className="font-mono">{formatPrice(alert.targetPrice)}</span>
-                  </div>
-                  <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
-                    Created {new Date(alert.createdAt).toLocaleString()}
-                  </div>
-                </div>
-                <button
-                  onClick={() => removeAlert(alert.id)}
-                  className="ml-2 text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
-                >
-                  Delete
-                </button>
-              </div>
+                alert={alert}
+                onDelete={() => removeAlert(alert.id)}
+                onApplySuggestion={async (suggested) => {
+                  const res = await createNewAlert(
+                    alert.tokenPair,
+                    suggested,
+                    alert.condition
+                  );
+                  if (res.success) removeAlert(alert.id);
+                }}
+              />
             ))}
           </div>
         </div>
@@ -549,6 +547,155 @@ export function PriceAlerts({ walletAddress, enabled = true }: PriceAlertsProps)
             No price alerts yet. Create one to get notified when prices change.
           </div>
         </div>
+      )}
+    </div>
+  );
+}
+
+// ── Active alert row with feedback loop UI ───────────────────────────────────
+
+interface ActiveAlertRowProps {
+  alert: PriceAlert;
+  onDelete: () => void;
+  onApplySuggestion: (suggestedTarget: number) => void | Promise<void>;
+}
+
+function ActiveAlertRow({ alert, onDelete, onApplySuggestion }: ActiveAlertRowProps) {
+  const [showSuggestion, setShowSuggestion] = useState(false);
+  const [suggestion, setSuggestion] = useState<ThresholdSuggestion | null>(null);
+  const stats = getOnlineStats(alert.id);
+
+  const handleAnalyze = () => {
+    setSuggestion(suggestThreshold(alert));
+    setShowSuggestion(true);
+  };
+
+  const accuracyLabel =
+    stats.hitRate === null
+      ? "no settled samples yet"
+      : `${(stats.hitRate * 100).toFixed(0)}% hit rate (${stats.hits}/${stats.settled})`;
+
+  return (
+    <div className="rounded border border-neutral-200 bg-white p-3 dark:border-neutral-800 dark:bg-neutral-900">
+      <div className="flex items-center justify-between">
+        <div className="flex-1">
+          <div className="text-sm font-medium">
+            {alert.tokenPair} {alert.condition === "above" ? "≥" : "≤"}{" "}
+            <span className="font-mono">{formatPrice(alert.targetPrice)}</span>
+          </div>
+          <div className="mt-0.5 text-xs text-neutral-500 dark:text-neutral-400">
+            Created {new Date(alert.createdAt).toLocaleString()}
+          </div>
+          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-neutral-600 dark:text-neutral-400">
+            <span>
+              Live accuracy:{" "}
+              <span className="font-mono text-indigo-700 dark:text-indigo-300">
+                {accuracyLabel}
+              </span>
+            </span>
+            <span>
+              Pending: <span className="font-mono">{stats.pending}</span>
+            </span>
+            <span>
+              Confidence:{" "}
+              <span className="font-mono uppercase">{stats.confidence}</span>
+            </span>
+          </div>
+        </div>
+        <div className="ml-2 flex flex-col items-end gap-1">
+          <button
+            onClick={handleAnalyze}
+            className="text-xs text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+            title="Analyze threshold from feedback loop"
+          >
+            🔬 Analyze
+          </button>
+          <button
+            onClick={onDelete}
+            className="text-xs text-red-600 hover:text-red-800 dark:text-red-400 dark:hover:text-red-200"
+          >
+            Delete
+          </button>
+        </div>
+      </div>
+
+      {showSuggestion && suggestion && (
+        <SuggestionCard
+          suggestion={suggestion}
+          onClose={() => setShowSuggestion(false)}
+          onApply={onApplySuggestion}
+        />
+      )}
+    </div>
+  );
+}
+
+interface SuggestionCardProps {
+  suggestion: ThresholdSuggestion;
+  onClose: () => void;
+  onApply: (suggestedTarget: number) => void | Promise<void>;
+}
+
+function SuggestionCard({ suggestion, onClose, onApply }: SuggestionCardProps) {
+  const tone =
+    suggestion.action === "keep"
+      ? "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950"
+      : suggestion.action === "insufficient_data"
+      ? "border-neutral-300 bg-neutral-50 dark:border-neutral-700 dark:bg-neutral-900"
+      : "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950";
+
+  const canApply =
+    suggestion.suggestedTarget !== null &&
+    suggestion.action !== "keep" &&
+    suggestion.action !== "insufficient_data";
+
+  return (
+    <div className={`mt-3 rounded border p-3 text-xs ${tone}`}>
+      <div className="flex items-start justify-between">
+        <div className="font-medium uppercase tracking-wide text-neutral-700 dark:text-neutral-200">
+          Suggestion: {suggestion.action.replace("_", " ")}
+        </div>
+        <button
+          onClick={onClose}
+          className="text-neutral-500 hover:text-neutral-700 dark:text-neutral-400 dark:hover:text-neutral-200"
+        >
+          Close
+        </button>
+      </div>
+      <div className="mt-2 space-y-1 text-neutral-700 dark:text-neutral-300">
+        <div>
+          Current target:{" "}
+          <span className="font-mono">{formatPrice(suggestion.currentTarget)}</span>
+        </div>
+        {suggestion.suggestedTarget !== null && (
+          <div>
+            Suggested target:{" "}
+            <span className="font-mono text-indigo-700 dark:text-indigo-300">
+              {formatPrice(suggestion.suggestedTarget)}
+            </span>
+          </div>
+        )}
+        <div className="leading-relaxed">{suggestion.reason}</div>
+        <div className="mt-1 text-neutral-500 dark:text-neutral-400">
+          Online: {suggestion.online.hits} hits / {suggestion.online.misses} misses /{" "}
+          {suggestion.online.pending} pending · Backtest stability:{" "}
+          {suggestion.backtest
+            ? `${(suggestion.backtest.stability.thresholdSensitivity * 100).toFixed(0)}% sensitivity`
+            : "n/a"}
+        </div>
+      </div>
+      {canApply && (
+        <button
+          onClick={() => {
+            if (suggestion.suggestedTarget !== null) {
+              void onApply(suggestion.suggestedTarget);
+            }
+            onClose();
+          }}
+          className="mt-3 rounded bg-indigo-600 px-3 py-1 text-xs font-medium text-white hover:bg-indigo-700"
+        >
+          Apply (replaces current alert)
+        </button>
       )}
     </div>
   );

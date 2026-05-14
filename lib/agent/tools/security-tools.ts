@@ -8,6 +8,7 @@ import {
   detectAnomalies,
   type DecodedAmmEvent,
 } from "../security-core";
+import { recordSecurityTrigger } from "../security-feedback";
 
 const DECIMALS = 7;
 const DUMMY_READER = "GAAZI4TCR3TY5OJHCTJC2A4QSY6CJWJH5IAJTGKIN2ER7LBNVKOCCWN";
@@ -67,7 +68,17 @@ export async function checkPriceImpactHandler(input: {
   recommendation: string;
 }> {
   const [reserveA, reserveB] = await getReserves(DUMMY_READER);
-  const r = detectPriceImpact(toRaw(input.amountIn), input.tokenIn, reserveA, reserveB);
+  const amountInRaw = toRaw(input.amountIn);
+  const r = detectPriceImpact(amountInRaw, input.tokenIn, reserveA, reserveB);
+  // Close the loop: record medium/high triggers so settleByExecutedSwap can
+  // grade the prediction once a real trade lands.
+  recordSecurityTrigger("price_impact", r.riskLevel, {
+    predictedImpactPct: r.priceImpactPct,
+    amountIn: amountInRaw.toString(),
+    tokenIn: input.tokenIn,
+    reserveAAtTrigger: reserveA.toString(),
+    reserveBAtTrigger: reserveB.toString(),
+  });
   return {
     priceImpactPct: r.priceImpactPct.toFixed(4),
     riskLevel: r.riskLevel,
@@ -98,6 +109,12 @@ export async function analyzeLiquidityDepthHandler(): Promise<{
     loadDecodedEvents(),
   ]);
   const r = detectLiquidityFlow(events, reserveA);
+  recordSecurityTrigger("liquidity_flow", r.riskLevel, {
+    outflowPct: r.outflowPct,
+    reserveAAtTrigger: reserveA.toString(),
+    reserveBAtTrigger: reserveB.toString(),
+    tvlAtTrigger: Number(reserveA) + Number(reserveB),
+  });
   return {
     reserveA: formatAmount(reserveA),
     reserveB: formatAmount(reserveB),
@@ -129,6 +146,19 @@ export async function scanRecentAnomaliesHandler(): Promise<{
     getReserves(DUMMY_READER),
   ]);
   const r = detectAnomalies(events, reserveA);
+  // Record one sandwich trigger per flagged address so settleBySandwichBehavior
+  // can grade each suspect independently. Use the latest swap ledger we saw
+  // as the trigger ledger; settlement waits ledgerWindow blocks past that.
+  if (r.riskLevel !== "low") {
+    const lastLedger = events.reduce((max, e) => Math.max(max, e.ledger), 0);
+    for (const flag of r.flaggedAddresses) {
+      recordSecurityTrigger("sandwich", r.riskLevel, {
+        suspectAddress: flag.address,
+        frontRunLedger: lastLedger,
+        observedAtLedger: lastLedger,
+      });
+    }
+  }
   return {
     totalEvents: events.length,
     flaggedAddresses: r.flaggedAddresses,

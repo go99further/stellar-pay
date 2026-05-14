@@ -13,6 +13,7 @@ import {
   getActiveAlerts,
   getTriggeredAlerts,
 } from "@/lib/agent/price-alerts";
+import { recordOutcome } from "@/lib/agent/alert-feedback";
 
 const POLL_INTERVAL = 30000; // 30 seconds
 
@@ -71,14 +72,22 @@ export function usePriceAlerts(
       const [reserveA, reserveB] = await getReserves(walletAddress);
       const priceAtoB = calculatePrice(reserveA, reserveB, "TKNA/TKNB");
       const priceBtoA = calculatePrice(reserveA, reserveB, "TKNB/TKNA");
+      const observedAt = Date.now();
 
       setPriceData({
         priceAtoB,
         priceBtoA,
         reserveA,
         reserveB,
-        lastUpdate: Date.now(),
+        lastUpdate: observedAt,
       });
+
+      // Settle any pending feedback records for both directions before we
+      // evaluate new triggers. Each call only settles records whose triggered
+      // pair matches the observed price stream (above/below check is direction-
+      // agnostic; the price magnitude lives on each record).
+      recordOutcome(priceAtoB, observedAt);
+      recordOutcome(priceBtoA, observedAt);
 
       // Check alerts against current prices
       const triggered = checkAlerts(priceAtoB, priceBtoA);
