@@ -6,6 +6,14 @@
 
 > 💡 一句话：说"帮我用 100 TKNA 换 TKNB"，Agent 自动模拟 → 风险检查 → 构建交易 → 你签名上链。
 
+## What's Interesting Here
+
+- **4 层数据闭环**：Security Agent 自己学着调阈值——在线统计 → 多检测器结算 → 蒙特卡洛参数搜索 → HITL 调参桥接。详见 [docs/CLOSED_LOOP.md](./docs/CLOSED_LOOP.md)
+- **K2-audit-grade 不变量**：future-leak 禁止 / settle 幂等 / HITL 不自动改，全部 enforced + tested（777/777 绿）
+- **多 Agent 并行**：Intent Graph Dispatcher 支持单点/并行/串行/门控 4 种拓扑，Fan-out/Fan-in 延迟砍半
+- **双 Provider**：Anthropic + DeepSeek 自动切换，Router 用 Haiku（$0.0003/次），子 Agent 用 Sonnet
+- **手写 SDK**：不依赖 LangChain/AutoGen，31 个核心文件，完全可控
+
 ## 🎬 在线演示
 
 Vercel 部署：[stellar-pay-dapp.vercel.app](https://stellar-pay-dapp-ap1pmx6ke-go99furthers-projects.vercel.app) *(需连接 Stellar 钱包)*
@@ -156,6 +164,7 @@ npm test          # 跑测试
 
 ## 📚 深入阅读
 
+- [docs/CLOSED_LOOP.md](./docs/CLOSED_LOOP.md) — **4 层数据闭环架构**（推荐首读）
 - [ARCHITECTURE.md](./ARCHITECTURE.md) — 技术架构详解、设计决策、演化路线
 - [SECURITY.md](./SECURITY.md) — 安全 checklist（`require_auth`、滑点保护、私钥隔离）
 - [docs/BACKTEST_GUIDE.md](./docs/BACKTEST_GUIDE.md) — 回测系统使用指南
