@@ -410,3 +410,12 @@ export function tuneSuggestionParams(): TuningReport {
     sampleCount: fullDist.sampleCount,
   };
 }
+
+// ── Re-exports for /loop/methods statistical comparison page ─────────────────
+// We name them explicitly *forOptimizer* to make the cross-module dependency
+// obvious — these are not the public tuning API, they're the building blocks
+// used by lib/agent/method-comparison.ts to set up identical search problems
+// across Default / Random Search / Grid / Monte Carlo.
+
+export const simulateSuggestionForOptimizer = simulateSuggestion;
+export { SUGGESTION_PARAM_SPACE };

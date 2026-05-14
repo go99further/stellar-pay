@@ -181,6 +181,13 @@ export default function LoopPage() {
             </div>
             <div className="flex flex-wrap gap-2">
               <LocaleToggle locale={locale} onToggle={toggle} t={t} />
+              <Link
+                href="/loop/methods"
+                className="rounded border border-emerald-300 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-50 dark:border-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-950"
+                title={locale === "zh" ? "方法对比 (Welch t-test)" : "Method comparison (Welch t-test)"}
+              >
+                📊 {locale === "zh" ? "方法对比" : "Method Comparison"}
+              </Link>
               <button
                 onClick={demoSeeded ? handleClearDemo : handleLoadDemo}
                 className="rounded bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-700"
