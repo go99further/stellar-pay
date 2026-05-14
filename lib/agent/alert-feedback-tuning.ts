@@ -5,7 +5,8 @@
  * localStorage 读取、可通过 walkForwardOptimize 自动调优的参数对象。
  *
  * 循环依赖规避：本文件不导入 alert-feedback.ts。
- * 模拟器逻辑是内联的简化版本，与 alert-feedback.ts 的 suggestThreshold 语义对齐。
+ * 模拟器内联了 suggestThreshold 的完整决策树（combined accuracy → keep/tighten/loosen），
+ * 不是 surrogate——优化器找到的参数和真实闭环使用的是同一套逻辑。
  */
 
 import {
@@ -136,63 +137,112 @@ export function clearSuggestionParams(): void {
   }
 }
 
-// ── Simulator (self-contained, no import from alert-feedback.ts) ──────────────
+// ── Simulator (真跑 suggestThreshold 决策逻辑，非 surrogate) ─────────────────
+//
+// 之前这里是一个 shadow simulator（用中位数模拟触发），和 suggestThreshold 的
+// 真实逻辑不同。Issue 2 重构：现在 simulator 内联了 suggestThreshold 的完整
+// 决策树（combined accuracy → keep/tighten/loosen），用价格窗口模拟触发和结算，
+// 然后用参数化的阈值做决策，计算 hits/misses/falseAlarms。
+//
+// 这保证了优化器找到的参数和真实闭环使用的是同一套逻辑。
 
-/**
- * Inline simulator for the suggestion logic.
- *
- * Given a price window and a set of SuggestionParams, splits the window in
- * half, uses the median of the first half as the trigger price, then scores
- * how well that trigger discriminates rises from falls in the second half.
- *
- * Scoring:
- *   hits        — fired and next price stayed at/above trigger
- *   misses      — fired but next price fell below trigger
- *   falseAlarms — didn't fire but was within loosenDelta of trigger AND next
- *                 price fell (proxy for "would have been a useful signal")
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const simulateSuggestion: SimulateFn<SuggestionParams> = (window, params, _rng) => {
-  if (window.length < 4) {
+  if (window.length < 6) {
     return { hits: 0, misses: 0, falseAlarms: 0 };
   }
 
-  const midpoint = Math.floor(window.length / 2);
-  const trainSlice = window.slice(0, midpoint);
-  const testSlice = window.slice(midpoint);
+  // Split window: first 60% = "history" (for backtest), last 40% = "live" (for online)
+  const splitIdx = Math.floor(window.length * 0.6);
+  const historySlice = window.slice(0, splitIdx);
+  const liveSlice = window.slice(splitIdx);
 
-  // Median of train slice as trigger price
-  const sorted = trainSlice.slice().sort((a, b) => a - b);
-  const mid = Math.floor(sorted.length / 2);
-  const triggerPrice =
-    sorted.length % 2 === 0
-      ? (sorted[mid - 1] + sorted[mid]) / 2
-      : sorted[mid];
+  // Simulate an "above" alert with target = median of history
+  const sortedHistory = historySlice.slice().sort((a, b) => a - b);
+  const mid = Math.floor(sortedHistory.length / 2);
+  const targetPrice = sortedHistory.length % 2 === 0
+    ? (sortedHistory[mid - 1] + sortedHistory[mid]) / 2
+    : sortedHistory[mid];
+
+  // Simulate offline backtest accuracy using history slice
+  let offlineTriggered = 0;
+  let offlineAccurate = 0;
+  for (let i = 0; i < historySlice.length - 1; i++) {
+    if (historySlice[i] >= targetPrice) {
+      offlineTriggered++;
+      if (historySlice[i + 1] >= targetPrice) offlineAccurate++;
+    }
+  }
+  const offlineAccuracy = offlineTriggered > 0 ? offlineAccurate / offlineTriggered : 0;
+
+  // Simulate online triggers + settlements using live slice
+  let onlineHits = 0;
+  let onlineMisses = 0;
+  for (let i = 0; i < liveSlice.length - 1; i++) {
+    if (liveSlice[i] >= targetPrice) {
+      // Triggered — settle with next price
+      if (liveSlice[i + 1] >= liveSlice[i]) {
+        onlineHits++;
+      } else {
+        onlineMisses++;
+      }
+    }
+  }
+  const onlineSettled = onlineHits + onlineMisses;
+  const onlineHitRate = onlineSettled > 0 ? onlineHits / onlineSettled : 0;
+
+  // ── Real suggestThreshold decision tree (parameterized) ──
+  const onlineWeight = onlineSettled >= 3 ? params.onlineWeight : params.onlineWeight * 0.33;
+  const offlineWeight = 1 - onlineWeight;
+  const combinedAccuracy = onlineHitRate * onlineWeight + offlineAccuracy * offlineWeight;
 
   let hits = 0;
   let misses = 0;
   let falseAlarms = 0;
 
-  for (let i = 0; i < testSlice.length; i++) {
-    const price = testSlice[i];
-    const nextPrice = i + 1 < testSlice.length ? testSlice[i + 1] : testSlice[i];
-    const fired = price >= triggerPrice;
-
-    if (fired) {
-      if (nextPrice >= triggerPrice) {
-        hits++;
-      } else {
-        misses++;
-      }
+  // Decision: what would suggestThreshold recommend?
+  if (onlineSettled === 0 && offlineTriggered === 0) {
+    // "loosen" path — no data, suggest moving threshold closer
+    // Score: if the last live price is near target, loosen would help → hit
+    // If far away, loosen is premature → falseAlarm
+    const lastLive = liveSlice[liveSlice.length - 1];
+    const distance = Math.abs(lastLive - targetPrice) / targetPrice;
+    if (distance < params.loosenDelta * 3) {
+      hits++; // loosen would bring threshold into useful range
     } else {
-      // Near-miss: within loosenDelta of trigger and next price fell
-      if (
-        price >= triggerPrice * (1 - params.loosenDelta) &&
-        nextPrice < triggerPrice
-      ) {
-        falseAlarms++;
+      falseAlarms++; // loosen wouldn't help, target is too far
+    }
+  } else if (combinedAccuracy >= params.keepThreshold) {
+    // "keep" path — good accuracy, correct decision
+    hits += onlineHits;
+    misses += onlineMisses;
+  } else if (combinedAccuracy < params.tightenThreshold && (onlineSettled >= 3 || offlineTriggered >= 3)) {
+    // "tighten" path — would tightening have helped?
+    // Simulate: if we raised threshold by tightenDelta, how many misses become non-triggers?
+    const tightenedTarget = targetPrice * (1 + params.tightenDelta);
+    let tightenedHits = 0;
+    let tightenedMisses = 0;
+    for (let i = 0; i < liveSlice.length - 1; i++) {
+      if (liveSlice[i] >= tightenedTarget) {
+        if (liveSlice[i + 1] >= liveSlice[i]) {
+          tightenedHits++;
+        } else {
+          tightenedMisses++;
+        }
       }
     }
+    // Tighten is a "hit" if it reduced misses without killing all hits
+    if (tightenedMisses < onlineMisses && tightenedHits > 0) {
+      hits += tightenedHits;
+      misses += tightenedMisses;
+    } else {
+      // Tighten didn't help — count as false alarm (bad suggestion)
+      falseAlarms += onlineMisses;
+      hits += onlineHits;
+    }
+  } else {
+    // Middle band — "keep" with borderline warning
+    hits += onlineHits;
+    misses += onlineMisses;
   }
 
   return { hits, misses, falseAlarms };
