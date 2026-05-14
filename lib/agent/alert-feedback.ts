@@ -30,6 +30,12 @@ export interface FeedbackRecord {
   outcome: FeedbackOutcome;
   settledAt?: number;
   settledPrice?: number;
+  /** Which settlement rule was used. Undefined for legacy next-tick records. */
+  settlementRule?: "next_tick" | "k_tick_avg";
+  /** K used at settlement (only present when settlementRule === "k_tick_avg"). */
+  observationCount?: number;
+  /** Cumulative average of K observations that decided the outcome. */
+  observedAvgPrice?: number;
 }
 
 export interface OnlineAlertStats {
@@ -160,6 +166,88 @@ export function recordOutcome(
   });
   if (changed) writeAll(updated);
   return updated.filter((r) => r.settledAt === observedAt);
+}
+
+// ── K-tick averaged settlement ────────────────────────────────────────────────
+
+/**
+ * In-memory buffer for K-tick settlement.
+ * Key: record id → array of { price, observedAt } observations collected so far.
+ * Dropped once the record settles. Not persisted — acceptable loss on reload.
+ */
+const _kTickBuffer = new Map<string, Array<{ price: number; observedAt: number }>>();
+
+/** Test/debug helper — clears the in-flight K-tick observation buffer. */
+export function clearOutcomeBuffer(): void {
+  _kTickBuffer.clear();
+}
+
+/**
+ * Settle pending records using the cumulative average of K observed prices
+ * after the trigger.
+ *
+ * Why this exists: settling on the next-1-tick price suffers from a subtle
+ * selection bias. Conditional on "alert just fired", the trigger price has
+ * just moved up to cross the threshold; mean reversion makes a single-tick
+ * dip-back more likely than continued movement, so the next-tick estimator
+ * systematically under-reports true hit rate. Averaging K subsequent ticks
+ * is a much less biased estimator of "did the move sustain".
+ *
+ * Trade-off: K-tick rule needs K observations before it can settle. We model
+ * this by buffering observations per record until enough have accumulated.
+ *
+ * Caller pattern:
+ *   - Call once per polled tick with the latest observed price.
+ *   - Internal buffer accumulates per-record observations.
+ *   - Once a record has K observations, it settles in one shot using the mean.
+ */
+export function recordOutcomeKTick(
+  observedPrice: number,
+  observedAt: number = Date.now(),
+  k: number = 5
+): FeedbackRecord[] {
+  const all = readAll();
+  const settled: FeedbackRecord[] = [];
+  let changed = false;
+
+  const updated = all.map((rec) => {
+    if (rec.outcome !== "pending") return rec;
+    // No future-leak: observation must be strictly after the trigger.
+    if (observedAt <= rec.triggeredAt) return rec;
+
+    // Accumulate into buffer.
+    let buf = _kTickBuffer.get(rec.id);
+    if (!buf) {
+      buf = [];
+      _kTickBuffer.set(rec.id, buf);
+    }
+    buf.push({ price: observedPrice, observedAt });
+
+    if (buf.length < k) return rec; // not enough observations yet
+
+    // We have K observations — compute mean and settle.
+    const mean = buf.reduce((sum, o) => sum + o.price, 0) / buf.length;
+    const hit =
+      rec.condition === "above" ? mean >= rec.triggerPrice : mean <= rec.triggerPrice;
+
+    _kTickBuffer.delete(rec.id);
+    changed = true;
+
+    const settledRec: FeedbackRecord = {
+      ...rec,
+      outcome: hit ? "hit" : "miss",
+      settledAt: observedAt,
+      settledPrice: mean,
+      settlementRule: "k_tick_avg",
+      observationCount: k,
+      observedAvgPrice: mean,
+    };
+    settled.push(settledRec);
+    return settledRec;
+  });
+
+  if (changed) writeAll(updated);
+  return settled;
 }
 
 export function getFeedbackRecords(alertId?: string): FeedbackRecord[] {

@@ -2,6 +2,8 @@ import { describe, it, expect, beforeEach, afterEach } from "vitest";
 import {
   recordTrigger,
   recordOutcome,
+  recordOutcomeKTick,
+  clearOutcomeBuffer,
   getFeedbackRecords,
   getOnlineStats,
   suggestThreshold,
@@ -252,6 +254,152 @@ describe("alert-feedback", () => {
       expect(custom.action).toBe("keep");
       // The reason string for the high-confidence branch contains "阈值稳定"
       expect(custom.reason).toContain("阈值稳定");
+    });
+  });
+
+  describe("recordOutcomeKTick — selection-bias-aware settlement", () => {
+    beforeEach(() => {
+      localStorage.clear();
+      clearOutcomeBuffer();
+    });
+
+    it("buffers observations until K reached, then settles on the Kth", () => {
+      const alert = makeAlert("a1", 1.0, "above");
+      recordTrigger(alert, 1.05, 1_000);
+      // 4 observations with K=5 — record stays pending
+      for (let i = 1; i <= 4; i++) {
+        const result = recordOutcomeKTick(1.1, 1_000 + i * 100, 5);
+        expect(result).toHaveLength(0);
+      }
+      expect(getOnlineStats("a1").pending).toBe(1);
+      // 5th observation triggers settlement
+      const settled = recordOutcomeKTick(1.1, 1_600, 5);
+      expect(settled).toHaveLength(1);
+      expect(settled[0].outcome).toBe("hit");
+      expect(getOnlineStats("a1").pending).toBe(0);
+    });
+
+    it("respects no-future-leak: observation at or before triggeredAt is ignored", () => {
+      const alert = makeAlert("a1", 1.0, "above");
+      recordTrigger(alert, 1.05, 1_000);
+      // observation at exactly triggeredAt must be ignored
+      const r1 = recordOutcomeKTick(2.0, 1_000, 5);
+      expect(r1).toHaveLength(0);
+      // observation before triggeredAt must also be ignored
+      const r2 = recordOutcomeKTick(2.0, 999, 5);
+      expect(r2).toHaveLength(0);
+      expect(getOnlineStats("a1").pending).toBe(1);
+    });
+
+    it("settles 'above' as hit when mean of K observations >= triggerPrice", () => {
+      const alert = makeAlert("a1", 1.0, "above");
+      recordTrigger(alert, 1.05, 1_000);
+      // All 5 observations above trigger → mean 1.1 >= 1.05 → hit
+      const prices = [1.1, 1.12, 1.08, 1.11, 1.09];
+      let settled: ReturnType<typeof recordOutcomeKTick> = [];
+      prices.forEach((p, i) => {
+        settled = recordOutcomeKTick(p, 1_000 + (i + 1) * 100, 5);
+      });
+      expect(settled).toHaveLength(1);
+      expect(settled[0].outcome).toBe("hit");
+      expect(settled[0].settlementRule).toBe("k_tick_avg");
+      expect(settled[0].observationCount).toBe(5);
+      expect(settled[0].observedAvgPrice).toBeCloseTo(1.1, 5);
+    });
+
+    it("settles 'above' as miss when mean dips below trigger despite first tick being above — KEY BIAS DEMO", () => {
+      // Trigger at 1.0, first tick 1.05 (above) → next_tick rule would say HIT.
+      // But subsequent ticks mean-revert: [1.05, 0.95, 0.90, 0.85, 0.80] → mean 0.91 < 1.0 → MISS.
+      const alert = makeAlert("a1", 1.0, "above");
+      recordTrigger(alert, 1.0, 1_000);
+      const prices = [1.05, 0.95, 0.90, 0.85, 0.80];
+      // Verify next_tick would call it a hit on the first observation
+      const nextTickResult = recordOutcome(prices[0], 1_100);
+      expect(nextTickResult[0].outcome).toBe("hit"); // biased result
+
+      // Reset and run k_tick_avg on a fresh record
+      localStorage.clear();
+      clearOutcomeBuffer();
+      recordTrigger(alert, 1.0, 1_000);
+      let kSettled: ReturnType<typeof recordOutcomeKTick> = [];
+      prices.forEach((p, i) => {
+        kSettled = recordOutcomeKTick(p, 1_000 + (i + 1) * 100, 5);
+      });
+      expect(kSettled).toHaveLength(1);
+      expect(kSettled[0].outcome).toBe("miss"); // unbiased: mean 0.91 < 1.0
+      const mean = prices.reduce((s, p) => s + p, 0) / prices.length;
+      expect(kSettled[0].observedAvgPrice).toBeCloseTo(mean, 5);
+    });
+
+    it("settles 'below' with symmetric semantics", () => {
+      const alert = makeAlert("a1", 1.0, "below");
+      recordTrigger(alert, 0.95, 1_000);
+      // Mean of [0.90, 0.88, 0.92, 0.89, 0.91] = 0.9 <= 0.95 → hit
+      const prices = [0.90, 0.88, 0.92, 0.89, 0.91];
+      let settled: ReturnType<typeof recordOutcomeKTick> = [];
+      prices.forEach((p, i) => {
+        settled = recordOutcomeKTick(p, 1_000 + (i + 1) * 100, 5);
+      });
+      expect(settled[0].outcome).toBe("hit");
+
+      // Mean above trigger → miss
+      localStorage.clear();
+      clearOutcomeBuffer();
+      recordTrigger(alert, 0.95, 1_000);
+      const highPrices = [1.0, 1.05, 1.02, 1.03, 1.01];
+      let settled2: ReturnType<typeof recordOutcomeKTick> = [];
+      highPrices.forEach((p, i) => {
+        settled2 = recordOutcomeKTick(p, 1_000 + (i + 1) * 100, 5);
+      });
+      expect(settled2[0].outcome).toBe("miss");
+    });
+
+    it("idempotent: settled record cannot be re-settled by more observations", () => {
+      const alert = makeAlert("a1", 1.0, "above");
+      recordTrigger(alert, 1.05, 1_000);
+      const prices = [1.1, 1.1, 1.1, 1.1, 1.1];
+      prices.forEach((p, i) => recordOutcomeKTick(p, 1_000 + (i + 1) * 100, 5));
+      // Record is now settled — further observations must not re-settle it
+      const extra = recordOutcomeKTick(0.5, 2_000, 5);
+      expect(extra).toHaveLength(0);
+      expect(getOnlineStats("a1").hits).toBe(1);
+      expect(getOnlineStats("a1").misses).toBe(0);
+    });
+
+    it("writes settlementRule, observationCount, and observedAvgPrice on settled record", () => {
+      const alert = makeAlert("a1", 1.0, "above");
+      recordTrigger(alert, 1.05, 1_000);
+      const prices = [1.1, 1.2, 1.15, 1.18, 1.12];
+      let settled: ReturnType<typeof recordOutcomeKTick> = [];
+      prices.forEach((p, i) => {
+        settled = recordOutcomeKTick(p, 1_000 + (i + 1) * 100, 5);
+      });
+      expect(settled[0].settlementRule).toBe("k_tick_avg");
+      expect(settled[0].observationCount).toBe(5);
+      const expectedMean = prices.reduce((s, p) => s + p, 0) / 5;
+      expect(settled[0].observedAvgPrice).toBeCloseTo(expectedMean, 5);
+    });
+
+    it("legacy records (no settlementRule field) still validate via isValidRecord", () => {
+      // Records created by recordTrigger + recordOutcome have no settlementRule.
+      const alert = makeAlert("a1", 1.0, "above");
+      recordTrigger(alert, 1.05, 1_000);
+      const settled = recordOutcome(1.1, 2_000);
+      expect(settled[0].settlementRule).toBeUndefined();
+      // The record must still be readable from storage (isValidRecord accepts it).
+      const all = getFeedbackRecords("a1");
+      expect(all).toHaveLength(1);
+      expect(all[0].outcome).toBe("hit");
+    });
+
+    it("handles K=1 (degenerates to single-tick, but via k_tick_avg path)", () => {
+      const alert = makeAlert("a1", 1.0, "above");
+      recordTrigger(alert, 1.05, 1_000);
+      const settled = recordOutcomeKTick(1.1, 2_000, 1);
+      expect(settled).toHaveLength(1);
+      expect(settled[0].settlementRule).toBe("k_tick_avg");
+      expect(settled[0].observationCount).toBe(1);
+      expect(settled[0].observedAvgPrice).toBeCloseTo(1.1, 5);
     });
   });
 });
