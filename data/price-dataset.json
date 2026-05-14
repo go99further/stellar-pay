@@ -1,4 +1,6 @@
 {
+  "proxyAsset": "XLM as proxy for TKNA/TKNB",
+  "proxyDisclaimer": "TKNA/TKNB are testnet-only tokens with no real price feed. We use XLM/USDC (Stellar Horizon mainnet) and XLM/USD (CoinGecko/Binance/Kraken) as a behavioral proxy. The volatility profile differs from a realistic AMM token pair; tuning results are illustrative not production-grade.",
   "fetchedAt": 1778735417848,
   "totalPoints": 3589,
   "sources": [
@@ -35,7 +37,7 @@
         "txHash": "coingecko_0",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1770962595792,
@@ -315,7 +317,7 @@
         "txHash": "coingecko_35",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 6.545591723390783e-06
+        "volatility": 0.000006545591723390783
       },
       {
         "timestamp": 1771088405599,
@@ -643,7 +645,7 @@
         "txHash": "coingecko_76",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 6.584513354614783e-05
+        "volatility": 0.00006584513354614783
       },
       {
         "timestamp": 1771236112213,
@@ -1411,7 +1413,7 @@
         "txHash": "coingecko_172",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 1.8577631733111774e-05
+        "volatility": 0.000018577631733111774
       },
       {
         "timestamp": 1771581629404,
@@ -3075,7 +3077,7 @@
         "txHash": "coingecko_380",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 9.74830647330358e-05
+        "volatility": 0.0000974830647330358
       },
       {
         "timestamp": 1772330465204,
@@ -3395,7 +3397,7 @@
         "txHash": "coingecko_420",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 4.412618206268786e-05
+        "volatility": 0.00004412618206268786
       },
       {
         "timestamp": 1772474552185,
@@ -3787,7 +3789,7 @@
         "txHash": "coingecko_469",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 1.3800121251481664e-05
+        "volatility": 0.000013800121251481664
       },
       {
         "timestamp": 1772647440325,
@@ -4451,7 +4453,7 @@
         "txHash": "coingecko_552",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 5.980516598437999e-05
+        "volatility": 0.00005980516598437999
       },
       {
         "timestamp": 1772946176801,
@@ -4571,7 +4573,7 @@
         "txHash": "coingecko_567",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 4.224715012959121e-05
+        "volatility": 0.00004224715012959121
       },
       {
         "timestamp": 1773000201512,
@@ -5475,7 +5477,7 @@
         "txHash": "coingecko_680",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 2.7209414496640065e-05
+        "volatility": 0.000027209414496640065
       },
       {
         "timestamp": 1773407001494,
@@ -5635,7 +5637,7 @@
         "txHash": "coingecko_700",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 1.817322366419673e-05
+        "volatility": 0.00001817322366419673
       },
       {
         "timestamp": 1773478998772,
@@ -5883,7 +5885,7 @@
         "txHash": "coingecko_731",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 8.669816304686758e-05
+        "volatility": 0.00008669816304686758
       },
       {
         "timestamp": 1773590605985,
@@ -6131,7 +6133,7 @@
         "txHash": "coingecko_762",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 8.616205916161385e-05
+        "volatility": 0.00008616205916161385
       },
       {
         "timestamp": 1773702201106,
@@ -6219,7 +6221,7 @@
         "txHash": "coingecko_773",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 9.991364298309745e-05
+        "volatility": 0.00009991364298309745
       },
       {
         "timestamp": 1773741731708,
@@ -6747,7 +6749,7 @@
         "txHash": "coingecko_839",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 8.044408320474749e-05
+        "volatility": 0.00008044408320474749
       },
       {
         "timestamp": 1773979348057,
@@ -6843,7 +6845,7 @@
         "txHash": "coingecko_851",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 2.592691557166894e-05
+        "volatility": 0.00002592691557166894
       },
       {
         "timestamp": 1774022564067,
@@ -7387,7 +7389,7 @@
         "txHash": "coingecko_919",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 1.3517252186196856e-06
+        "volatility": 0.0000013517252186196856
       },
       {
         "timestamp": 1774267367615,
@@ -7435,7 +7437,7 @@
         "txHash": "coingecko_925",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 7.736664382162822e-05
+        "volatility": 0.00007736664382162822
       },
       {
         "timestamp": 1774289022908,
@@ -8091,7 +8093,7 @@
         "txHash": "coingecko_1007",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 9.263361160563038e-05
+        "volatility": 0.00009263361160563038
       },
       {
         "timestamp": 1774584107375,
@@ -8595,7 +8597,7 @@
         "txHash": "coingecko_1070",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 3.45383822237966e-05
+        "volatility": 0.0000345383822237966
       },
       {
         "timestamp": 1774810944659,
@@ -9099,7 +9101,7 @@
         "txHash": "coingecko_1133",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 8.44771114936482e-05
+        "volatility": 0.0000844771114936482
       },
       {
         "timestamp": 1775037719318,
@@ -9851,7 +9853,7 @@
         "txHash": "coingecko_1227",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 3.915975112763795e-05
+        "volatility": 0.00003915975112763795
       },
       {
         "timestamp": 1775376024526,
@@ -9971,7 +9973,7 @@
         "txHash": "coingecko_1242",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 1.594143302517184e-06
+        "volatility": 0.000001594143302517184
       },
       {
         "timestamp": 1775430201038,
@@ -10059,7 +10061,7 @@
         "txHash": "coingecko_1253",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 4.173468347729779e-05
+        "volatility": 0.00004173468347729779
       },
       {
         "timestamp": 1775469751677,
@@ -10539,7 +10541,7 @@
         "txHash": "coingecko_1313",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 3.598616438601998e-05
+        "volatility": 0.00003598616438601998
       },
       {
         "timestamp": 1775685720314,
@@ -10987,7 +10989,7 @@
         "txHash": "coingecko_1369",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 5.9225746696602564e-06
+        "volatility": 0.0000059225746696602564
       },
       {
         "timestamp": 1775885990728,
@@ -11131,7 +11133,7 @@
         "txHash": "coingecko_1387",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 5.333221737971883e-05
+        "volatility": 0.00005333221737971883
       },
       {
         "timestamp": 1775951720504,
@@ -11179,7 +11181,7 @@
         "txHash": "coingecko_1393",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1775958780735,
@@ -11187,7 +11189,7 @@
         "txHash": "coingecko_1394",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1775958830453,
@@ -11195,7 +11197,7 @@
         "txHash": "coingecko_1395",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1775959260612,
@@ -11411,7 +11413,7 @@
         "txHash": "coingecko_1422",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 1.732188502400309e-05
+        "volatility": 0.00001732188502400309
       },
       {
         "timestamp": 1776056447630,
@@ -11491,7 +11493,7 @@
         "txHash": "coingecko_1432",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 3.833676009290821e-05
+        "volatility": 0.00003833676009290821
       },
       {
         "timestamp": 1776092443482,
@@ -11499,7 +11501,7 @@
         "txHash": "coingecko_1433",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 4.5730436693907324e-05
+        "volatility": 0.000045730436693907324
       },
       {
         "timestamp": 1776096044401,
@@ -11611,7 +11613,7 @@
         "txHash": "kraken_0",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1776142826832,
@@ -12731,7 +12733,7 @@
         "txHash": "kraken_70",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 8.417963935050354e-05
+        "volatility": 0.00008417963935050354
       },
       {
         "timestamp": 1776394815362,
@@ -13027,7 +13029,7 @@
         "txHash": "coingecko_1535",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 4.6066000867945116e-05
+        "volatility": 0.000046066000867945116
       },
       {
         "timestamp": 1776463200000,
@@ -13331,7 +13333,7 @@
         "txHash": "coingecko_1554",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 9.309845629667039e-05
+        "volatility": 0.00009309845629667039
       },
       {
         "timestamp": 1776531600000,
@@ -13547,7 +13549,7 @@
         "txHash": "kraken_121",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 7.641529951837064e-05
+        "volatility": 0.00007641529951837064
       },
       {
         "timestamp": 1776578465968,
@@ -13763,7 +13765,7 @@
         "txHash": "coingecko_1581",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 7.681532189518697e-05
+        "volatility": 0.00007681532189518697
       },
       {
         "timestamp": 1776628800000,
@@ -14779,7 +14781,7 @@
         "txHash": "kraken_198",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 8.911017916734595e-05
+        "volatility": 0.00008911017916734595
       },
       {
         "timestamp": 1776855604247,
@@ -14923,7 +14925,7 @@
         "txHash": "kraken_207",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1776888051187,
@@ -15147,7 +15149,7 @@
         "txHash": "binance_0",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1776938400000,
@@ -15315,7 +15317,7 @@
         "txHash": "binance_7",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1776963600000,
@@ -15547,7 +15549,7 @@
         "txHash": "coingecko_1684",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 6.554614266194655e-05
+        "volatility": 0.00006554614266194655
       },
       {
         "timestamp": 1776999600000,
@@ -15939,7 +15941,7 @@
         "txHash": "binance_33",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777057200000,
@@ -16083,7 +16085,7 @@
         "txHash": "binance_39",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777078800000,
@@ -16187,7 +16189,7 @@
         "txHash": "kraken_264",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 1.1532030213795852e-05
+        "volatility": 0.000011532030213795852
       },
       {
         "timestamp": 1777093248556,
@@ -16219,7 +16221,7 @@
         "txHash": "coingecko_1712",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 5.2319521404680884e-05
+        "volatility": 0.000052319521404680884
       },
       {
         "timestamp": 1777100400000,
@@ -16299,7 +16301,7 @@
         "txHash": "binance_48",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777111200000,
@@ -16483,7 +16485,7 @@
         "txHash": "coingecko_1723",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 8.527958167753884e-05
+        "volatility": 0.00008527958167753884
       },
       {
         "timestamp": 1777140000000,
@@ -16491,7 +16493,7 @@
         "txHash": "binance_56",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777140000000,
@@ -16603,7 +16605,7 @@
         "txHash": "coingecko_1728",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 1.8316355463710945e-05
+        "volatility": 0.000018316355463710945
       },
       {
         "timestamp": 1777158000000,
@@ -16699,7 +16701,7 @@
         "txHash": "coingecko_1732",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 5.6792291534699425e-05
+        "volatility": 0.000056792291534699425
       },
       {
         "timestamp": 1777172400000,
@@ -17187,7 +17189,7 @@
         "txHash": "binance_85",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777244400000,
@@ -17733,7 +17735,7 @@
         "txHash": "coingecko_1775",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 1.6558219161251283e-06
+        "volatility": 0.0000016558219161251283
       },
       {
         "timestamp": 1777327200000,
@@ -17869,7 +17871,7 @@
         "txHash": "kraken_334",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 4.850777943502367e-05
+        "volatility": 0.00004850777943502367
       },
       {
         "timestamp": 1777345273322,
@@ -17885,7 +17887,7 @@
         "txHash": "binance_114",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777348800000,
@@ -17909,7 +17911,7 @@
         "txHash": "binance_115",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777352400000,
@@ -18749,7 +18751,7 @@
         "txHash": "binance_150",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777478400000,
@@ -19157,7 +19159,7 @@
         "txHash": "binance_167",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777539600000,
@@ -19349,7 +19351,7 @@
         "txHash": "binance_175",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777568400000,
@@ -19421,7 +19423,7 @@
         "txHash": "binance_178",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777579200000,
@@ -19565,7 +19567,7 @@
         "txHash": "binance_184",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777600800000,
@@ -19925,7 +19927,7 @@
         "txHash": "binance_199",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777654800000,
@@ -20029,7 +20031,7 @@
         "txHash": "kraken_424",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777669222583,
@@ -20181,7 +20183,7 @@
         "txHash": "coingecko_1877",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 8.599889007970959e-05
+        "volatility": 0.00008599889007970959
       },
       {
         "timestamp": 1777694400000,
@@ -20333,7 +20335,7 @@
         "txHash": "binance_216",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777716000000,
@@ -20381,7 +20383,7 @@
         "txHash": "binance_218",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777723200000,
@@ -20429,7 +20431,7 @@
         "txHash": "binance_220",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777730400000,
@@ -20573,7 +20575,7 @@
         "txHash": "binance_226",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777752000000,
@@ -20869,7 +20871,7 @@
         "txHash": "kraken_459",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 6.283775292214468e-05
+        "volatility": 0.00006283775292214468
       },
       {
         "timestamp": 1777795236833,
@@ -21029,7 +21031,7 @@
         "txHash": "binance_245",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777820400000,
@@ -21245,7 +21247,7 @@
         "txHash": "binance_254",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777852800000,
@@ -21389,7 +21391,7 @@
         "txHash": "binance_260",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777874400000,
@@ -21477,7 +21479,7 @@
         "txHash": "coingecko_1931",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 6.327775507920825e-05
+        "volatility": 0.00006327775507920825
       },
       {
         "timestamp": 1777888800000,
@@ -21573,7 +21575,7 @@
         "txHash": "coingecko_1935",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 9.319657612281248e-05
+        "volatility": 0.00009319657612281248
       },
       {
         "timestamp": 1777903200000,
@@ -21781,7 +21783,7 @@
         "txHash": "kraken_497",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 9.538647419802804e-05
+        "volatility": 0.00009538647419802804
       },
       {
         "timestamp": 1777932003891,
@@ -22005,7 +22007,7 @@
         "txHash": "coingecko_1953",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 5.774342664817076e-05
+        "volatility": 0.00005774342664817076
       },
       {
         "timestamp": 1777968000000,
@@ -22013,7 +22015,7 @@
         "txHash": "binance_286",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777968000000,
@@ -22021,7 +22023,7 @@
         "txHash": "kraken_507",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 5.659060470209159e-05
+        "volatility": 0.00005659060470209159
       },
       {
         "timestamp": 1777968046880,
@@ -22205,7 +22207,7 @@
         "txHash": "binance_294",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1777996800000,
@@ -22349,7 +22351,7 @@
         "txHash": "horizon_dex_199",
         "type": "swap",
         "source": "Stellar Horizon DEX mainnet (XLM/USDC)",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778018400000,
@@ -22773,7 +22775,7 @@
         "txHash": "binance_313",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778065200000,
@@ -22917,7 +22919,7 @@
         "txHash": "coingecko_1985",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 4.9366388897483845e-05
+        "volatility": 0.000049366388897483845
       },
       {
         "timestamp": 1778083200000,
@@ -23335,7 +23337,7 @@
         "txHash": "coingecko_1998",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 6.958929791899645e-06
+        "volatility": 0.000006958929791899645
       },
       {
         "timestamp": 1778130000000,
@@ -23343,7 +23345,7 @@
         "txHash": "horizon_dex_168",
         "type": "swap",
         "source": "Stellar Horizon DEX mainnet (XLM/USDC)",
-        "volatility": 4.040178016450162e-05
+        "volatility": 0.00004040178016450162
       },
       {
         "timestamp": 1778130000000,
@@ -23759,7 +23761,7 @@
         "txHash": "horizon_dex_155",
         "type": "swap",
         "source": "Stellar Horizon DEX mainnet (XLM/USDC)",
-        "volatility": 5.7813166697417104e-05
+        "volatility": 0.000057813166697417104
       },
       {
         "timestamp": 1778176800000,
@@ -23767,7 +23769,7 @@
         "txHash": "binance_344",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778176800000,
@@ -23775,7 +23777,7 @@
         "txHash": "kraken_565",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 6.28590825088056e-05
+        "volatility": 0.0000628590825088056
       },
       {
         "timestamp": 1778176816836,
@@ -23895,7 +23897,7 @@
         "txHash": "binance_348",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778191200000,
@@ -24023,7 +24025,7 @@
         "txHash": "binance_352",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778205600000,
@@ -24031,7 +24033,7 @@
         "txHash": "kraken_573",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 6.316919869803905e-06
+        "volatility": 0.000006316919869803905
       },
       {
         "timestamp": 1778205610935,
@@ -24311,7 +24313,7 @@
         "txHash": "binance_361",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778238000000,
@@ -24359,7 +24361,7 @@
         "txHash": "coingecko_2030",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 4.529510979886535e-05
+        "volatility": 0.00004529510979886535
       },
       {
         "timestamp": 1778245200000,
@@ -24375,7 +24377,7 @@
         "txHash": "binance_363",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778245200000,
@@ -24567,7 +24569,7 @@
         "txHash": "binance_369",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778266800000,
@@ -24631,7 +24633,7 @@
         "txHash": "binance_371",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778274000000,
@@ -25079,7 +25081,7 @@
         "txHash": "binance_385",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778324400000,
@@ -25239,7 +25241,7 @@
         "txHash": "binance_390",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778342400000,
@@ -25247,7 +25249,7 @@
         "txHash": "kraken_611",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 9.881117801430258e-05
+        "volatility": 0.00009881117801430258
       },
       {
         "timestamp": 1778342472921,
@@ -25559,7 +25561,7 @@
         "txHash": "binance_400",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778378400000,
@@ -25567,7 +25569,7 @@
         "txHash": "kraken_621",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 9.904667574594656e-05
+        "volatility": 0.00009904667574594656
       },
       {
         "timestamp": 1778378439095,
@@ -25623,7 +25625,7 @@
         "txHash": "binance_402",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778385600000,
@@ -25671,7 +25673,7 @@
         "txHash": "coingecko_2071",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 5.0982826720116756e-05
+        "volatility": 0.000050982826720116756
       },
       {
         "timestamp": 1778392800000,
@@ -25847,7 +25849,7 @@
         "txHash": "binance_409",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778410800000,
@@ -26231,7 +26233,7 @@
         "txHash": "binance_421",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778454000000,
@@ -26503,7 +26505,7 @@
         "txHash": "coingecko_2097",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 3.946691578036821e-05
+        "volatility": 0.00003946691578036821
       },
       {
         "timestamp": 1778486400000,
@@ -26919,7 +26921,7 @@
         "txHash": "coingecko_2110",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 7.839698238881292e-05
+        "volatility": 0.00007839698238881292
       },
       {
         "timestamp": 1778533200000,
@@ -26959,7 +26961,7 @@
         "txHash": "horizon_dex_55",
         "type": "swap",
         "source": "Stellar Horizon DEX mainnet (XLM/USDC)",
-        "volatility": 5.339132817990503e-06
+        "volatility": 0.000005339132817990503
       },
       {
         "timestamp": 1778536800000,
@@ -26967,7 +26969,7 @@
         "txHash": "binance_444",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778536800000,
@@ -26991,7 +26993,7 @@
         "txHash": "horizon_dex_54",
         "type": "swap",
         "source": "Stellar Horizon DEX mainnet (XLM/USDC)",
-        "volatility": 2.3136118684762834e-05
+        "volatility": 0.000023136118684762834
       },
       {
         "timestamp": 1778540400000,
@@ -27087,7 +27089,7 @@
         "txHash": "horizon_dex_51",
         "type": "swap",
         "source": "Stellar Horizon DEX mainnet (XLM/USDC)",
-        "volatility": 3.236112134867796e-05
+        "volatility": 0.00003236112134867796
       },
       {
         "timestamp": 1778551200000,
@@ -27103,7 +27105,7 @@
         "txHash": "kraken_669",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 3.0010023347682893e-05
+        "volatility": 0.000030010023347682893
       },
       {
         "timestamp": 1778551242464,
@@ -27151,7 +27153,7 @@
         "txHash": "horizon_dex_49",
         "type": "swap",
         "source": "Stellar Horizon DEX mainnet (XLM/USDC)",
-        "volatility": 8.52973754836743e-05
+        "volatility": 0.0000852973754836743
       },
       {
         "timestamp": 1778558400000,
@@ -27655,7 +27657,7 @@
         "txHash": "coingecko_2133",
         "type": "swap",
         "source": "CoinGecko XLM/USD 90d hourly",
-        "volatility": 1.8237937900468016e-05
+        "volatility": 0.000018237937900468016
       },
       {
         "timestamp": 1778616000000,
@@ -28255,7 +28257,7 @@
         "txHash": "kraken_705",
         "type": "swap",
         "source": "Kraken XLM/USD 1h",
-        "volatility": 8.737439930113955e-05
+        "volatility": 0.00008737439930113955
       },
       {
         "timestamp": 1778680800708,
@@ -28599,7 +28601,7 @@
         "txHash": "binance_495",
         "type": "swap",
         "source": "Binance XLM/USDT 1h",
-        "volatility": 0.0
+        "volatility": 0
       },
       {
         "timestamp": 1778720400000,

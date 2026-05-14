@@ -159,13 +159,19 @@ export default function LoopPage() {
                 4-layer self-learning system &bull; Read-only demo
               </p>
               {datasetMeta.loaded ? (
-                <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300" title={datasetMeta.sources.map(s => `${s.name} (${s.count})`).join(" · ")}>
+                <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-emerald-100 px-2 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900 dark:text-emerald-300" title={datasetMeta.proxyDisclaimer ?? datasetMeta.sources.map(s => `${s.name} (${s.count})`).join(" · ")}>
                   ● Tuning on real data: {datasetMeta.totalPoints.toLocaleString()} points across {datasetMeta.sources.length} sources
+                  {datasetMeta.proxyAsset && <span className="ml-1 opacity-70">({datasetMeta.proxyAsset})</span>}
                 </div>
               ) : (
                 <div className="mt-1.5 inline-flex items-center gap-1 rounded bg-neutral-100 px-2 py-0.5 text-[10px] font-medium text-neutral-600 dark:bg-neutral-800 dark:text-neutral-400">
                   ○ Real dataset not loaded — using localStorage fallback
                 </div>
+              )}
+              {datasetMeta.proxyDisclaimer && (
+                <p className="mt-1 text-[10px] text-neutral-500 dark:text-neutral-400 max-w-md">
+                  {datasetMeta.proxyDisclaimer}
+                </p>
               )}
             </div>
             <div className="flex flex-wrap gap-2">
@@ -474,13 +480,13 @@ function Layer3Card({ params, tuning, tuningResult, tuningError, onTune }: Layer
               <dt className="text-neutral-600 dark:text-neutral-400">onlineWeight</dt>
               <dd className="font-mono text-neutral-800 dark:text-neutral-200">
                 {tuningResult.params.onlineWeight.toFixed(3)}
-                {tuningResult.confidenceInterval && (
+                {tuningResult.iqr && (
                   <span className="text-neutral-500 dark:text-neutral-400">
-                    {" ["}
-                    {tuningResult.confidenceInterval.p25.onlineWeight.toFixed(2)}
+                    {" (top-5% IQR: "}
+                    {tuningResult.iqr.p25.onlineWeight.toFixed(2)}
                     {"–"}
-                    {tuningResult.confidenceInterval.p75.onlineWeight.toFixed(2)}
-                    {"]"}
+                    {tuningResult.iqr.p75.onlineWeight.toFixed(2)}
+                    {")"}
                   </span>
                 )}
               </dd>
@@ -499,6 +505,20 @@ function Layer3Card({ params, tuning, tuningResult, tuningError, onTune }: Layer
               </dd>
             </div>
           </dl>
+
+          <div className="text-xs text-neutral-700 dark:text-neutral-300">
+            Baseline (default params) test score:{" "}
+            <span className="font-mono">{tuningResult.baseline.testScore.toFixed(2)}</span>
+            {" "}· Tuned delta:{" "}
+            <span className={`font-mono font-semibold ${
+              tuningResult.testScore - tuningResult.baseline.testScore >= 0
+                ? "text-emerald-700 dark:text-emerald-400"
+                : "text-red-700 dark:text-red-400"
+            }`}>
+              {tuningResult.testScore - tuningResult.baseline.testScore >= 0 ? "+" : ""}
+              {(tuningResult.testScore - tuningResult.baseline.testScore).toFixed(2)}
+            </span>
+          </div>
 
           <p className="leading-relaxed text-neutral-500 dark:text-neutral-400">
             {tuningResult.message}

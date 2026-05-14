@@ -239,6 +239,42 @@ Analytics Agent 只依赖 V2 回测做离线评估，没有在线学习能力。
 
 ---
 
+## ADR-7: Use XLM as proxy asset for closed-loop tuning
+
+**Status:** Accepted (with documented limitation)
+
+**Context**
+The closed loop tunes thresholds for a hypothetical TKNA/TKNB AMM. TKNA/TKNB are testnet tokens; they have no real price feed. We need a real-asset price series to make the Monte Carlo tuning more than a synthetic-data exercise.
+
+**Decision**
+Use XLM as the proxy asset, sourced from Stellar Horizon mainnet (XLM/USDC) plus three CEX feeds (CoinGecko/Binance/Kraken XLM/USD). 3,589 points total. Disclose the proxy explicitly in the dashboard badge, the `getDatasetMeta()` API, the dataset JSON itself, and this ADR.
+
+**Why not synthetic data**
+Synthetic random walks don't capture real microstructure (gaps, fat tails, weekend liquidity drops). Tuning on synthetic data tells you how the tuner behaves, not how the tuned params will perform.
+
+**Why not skip real data entirely**
+Without a real-asset signal, "Monte Carlo over real history" is just "Monte Carlo over localStorage transaction history" — which on a fresh browser is empty.
+
+**Why this is a *limitation*, not a fix**
+- XLM's volatility profile differs from a real AMM token pair (XLM is more stable than most token pairs)
+- Tuning results are *shape-correct* (search process valid, walk-forward valid) but *value-imprecise* (the optimal threshold for XLM is unlikely to be the optimal threshold for an actual TKNA/TKNB pair)
+- Production deployment would re-run the tuner on the actual pair's price history
+
+**Consequence**
+- Dashboard badge displays "(XLM as proxy for TKNA/TKNB)" — visible disclosure
+- `getDatasetMeta()` exposes `proxyAsset` and `proxyDisclaimer` fields
+- Tests verify both fields are surfaced
+- Anyone reading the closed-loop story knows the optimizer is doing real work, but on a stand-in asset
+
+**Verified by**
+- `data/price-dataset.json` top-level `proxyAsset` and `proxyDisclaimer` fields
+- `app/loop/page.tsx` badge with hover disclaimer
+- `lib/agent/price-source.ts:getDatasetMeta` exposes both fields
+- `__tests__/price-source.test.ts` "getDatasetMeta surfaces proxyAsset and proxyDisclaimer" test
+- `docs/CLOSED_LOOP.md` "Data source caveat" section
+
+---
+
 ## Future ADRs（待决策）
 
 以下决策尚未做出，列在此处说明系统设计是迭代的，不是一次性完成的。

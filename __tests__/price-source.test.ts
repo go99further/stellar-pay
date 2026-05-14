@@ -9,6 +9,8 @@ import {
 } from "../lib/agent/price-source";
 
 const SAMPLE_DATASET: PriceDataset = {
+  proxyAsset: "XLM as proxy for TKNA/TKNB",
+  proxyDisclaimer: "TKNA/TKNB are testnet tokens; XLM is used as a behavioral proxy.",
   fetchedAt: 1_700_000_000_000,
   totalPoints: 6,
   sources: [
@@ -162,6 +164,21 @@ describe("price-source", () => {
       expect(meta.sources).toHaveLength(2);
       expect(meta.splits).toEqual({ train: 3, validation: 2, test: 1 });
       expect(meta.fetchedAt).toBe(SAMPLE_DATASET.fetchedAt);
+    });
+
+    it("getDatasetMeta surfaces proxyAsset and proxyDisclaimer when present", async () => {
+      await loadRealPriceDataset(mockFetchOk(SAMPLE_DATASET));
+      const meta = getDatasetMeta();
+      expect(meta.proxyAsset).toBe("XLM as proxy for TKNA/TKNB");
+      expect(meta.proxyDisclaimer).toContain("XLM is used as a behavioral proxy");
+    });
+
+    it("getDatasetMeta returns null proxyAsset when missing", async () => {
+      const noProxyDataset = { ...SAMPLE_DATASET, proxyAsset: undefined, proxyDisclaimer: undefined };
+      await loadRealPriceDataset(mockFetchOk(noProxyDataset));
+      const meta = getDatasetMeta();
+      expect(meta.proxyAsset).toBeNull();
+      expect(meta.proxyDisclaimer).toBeNull();
     });
   });
 

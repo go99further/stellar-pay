@@ -95,6 +95,13 @@ export interface BacktestResultV2 {
 /**
  * 从交易历史提取价格序列（带波动率计算）
  *
+ * Note on data source: when the price-source cache is loaded, returned points
+ * come from a real-asset proxy (XLM/USDC + XLM/USD) — TKNA/TKNB are testnet-
+ * only and have no real price feed. The volatility profile of XLM differs from
+ * a typical AMM token pair, so tuning results are illustrative only. The
+ * localStorage fallback uses TKNA/TKNB swap data from the local browser session
+ * — that's a real-asset signal but with very few samples.
+ *
  * Priority order:
  * 1. If the real-price cache (price-source.ts) is loaded, use it. This is the
  *    production path on the Vercel demo where /api/price-dataset has been

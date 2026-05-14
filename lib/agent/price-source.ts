@@ -37,6 +37,8 @@ export interface PriceDatasetSplit {
 }
 
 export interface PriceDataset {
+  proxyAsset?: string;
+  proxyDisclaimer?: string;
   fetchedAt: number;
   totalPoints: number;
   sources: DatasetSource[];
@@ -135,6 +137,8 @@ export function getDatasetMeta(): {
   sources: DatasetSource[];
   splits: { train: number; validation: number; test: number };
   fetchedAt: number | null;
+  proxyAsset: string | null;
+  proxyDisclaimer: string | null;
 } {
   if (!cache) {
     return {
@@ -143,6 +147,8 @@ export function getDatasetMeta(): {
       sources: [],
       splits: { train: 0, validation: 0, test: 0 },
       fetchedAt: null,
+      proxyAsset: null,
+      proxyDisclaimer: null,
     };
   }
   return {
@@ -155,6 +161,8 @@ export function getDatasetMeta(): {
       test: cache.splits.test.length,
     },
     fetchedAt: cache.fetchedAt,
+    proxyAsset: cache.proxyAsset ?? null,
+    proxyDisclaimer: cache.proxyDisclaimer ?? null,
   };
 }
 

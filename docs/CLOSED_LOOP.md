@@ -192,6 +192,24 @@ Layer 2 继承 Layer 1 的三条不变量，并增加第四条：
 
 ## 5. Layer 3：parameter-optimizer.ts
 
+### 关于数据源的诚实说明 (Data source caveat)
+
+闭环引擎的真实数据来自 `data/price-dataset.json`，其中 3,589 个价格点是 XLM 资产的代理数据：
+- Stellar Horizon mainnet (XLM/USDC, 200 点)
+- CoinGecko XLM/USD 90d hourly (2,168 点)
+- Binance XLM/USDT 1h (500 点)
+- Kraken XLM/USD 1h (721 点)
+
+**为什么是 XLM 不是 TKNA/TKNB**：TKNA/TKNB 是 testnet 测试代币，没有真实价格行情。CoinGecko / Binance / Kraken 上不存在 TKNA。我们用 XLM 作为行为代理（behavioral proxy）来调优阈值参数。
+
+**这意味着什么**：
+- XLM 的波动率分布和一个典型 AMM token pair 不同（更稳定）
+- 调优出的参数 *形状* 是有意义的（搜索过程是真的，walk-forward 切分是真的）
+- 但 *绝对数值* 的可移植性受限——上线前需要在真实 token pair 上重跑
+- Dashboard 的徽章和 hover-text 都明确标注了代理资产
+
+This is intentionally surfaced; pretending otherwise would be the kind of thing audits exist to catch. See `docs/DESIGN_DECISIONS.md` ADR-7.
+
 ### 为什么 walk-forward 而不是 k-fold
 
 价格序列是时间序列数据。随机 k-fold 会把未来数据混入训练集——比如用第 80 笔交易
