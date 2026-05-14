@@ -251,5 +251,43 @@ describe("alert-feedback-tuning", () => {
       }
       // If not success (e.g. overfit flag), params are NOT persisted — that's correct.
     });
+
+    it("iqr is non-null when sample count > 0", () => {
+      seedSwapHistory(makeSyntheticPrices(60));
+      const report = tuneSuggestionParams();
+      // With 60 price points we always get a Monte Carlo run → iqr must be populated
+      expect(report.iqr).not.toBeNull();
+      if (report.iqr) {
+        expect(typeof report.iqr.p25.onlineWeight).toBe("number");
+        expect(typeof report.iqr.p75.onlineWeight).toBe("number");
+      }
+    });
+
+    it("TuningReport.baseline.testScore is computed even when tuning succeeds", () => {
+      seedSwapHistory(makeSyntheticPrices(60));
+      const report = tuneSuggestionParams();
+      // baseline must always be present regardless of success/failure
+      expect(report.baseline).toBeDefined();
+      expect(typeof report.baseline.trainScore).toBe("number");
+      expect(typeof report.baseline.validationScore).toBe("number");
+      expect(typeof report.baseline.testScore).toBe("number");
+      // On success the message should include the baseline delta line
+      if (report.success) {
+        expect(report.message).toMatch(/Baseline/i);
+        expect(report.message).toMatch(/Tuned delta/i);
+      }
+    });
+
+    it("TuningReport.baseline.testScore is computed even when tuning is rejected (overfitFlag/invalid)", () => {
+      // Use a very short history that forces the early-return path (< 10 points)
+      seedSwapHistory([1.0, 1.05, 0.98]);
+      const report = tuneSuggestionParams();
+      expect(report.success).toBe(false);
+      // Even on the early-return path, baseline must be present and zeroed
+      expect(report.baseline).toBeDefined();
+      expect(report.baseline.trainScore).toBe(0);
+      expect(report.baseline.validationScore).toBe(0);
+      expect(report.baseline.testScore).toBe(0);
+    });
   });
 });

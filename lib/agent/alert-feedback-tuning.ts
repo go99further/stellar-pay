@@ -12,6 +12,7 @@
 import {
   monteCarloSearch,
   walkForwardOptimize,
+  mulberry32,
   type ParamSpace,
   type SimulateFn,
 } from "./parameter-optimizer";
@@ -35,10 +36,26 @@ export interface SuggestionParams {
 export interface TuningReport {
   success: boolean;
   params: SuggestionParams;
-  confidenceInterval: { p25: SuggestionParams; p75: SuggestionParams } | null;
+  /**
+   * IQR (interquartile range) of the top-5% candidate parameters from Monte
+   * Carlo search. NOT a statistical confidence interval — those would require
+   * bootstrap-with-replacement. p25 and p75 here measure how stable the search
+   * was, not the uncertainty of a point estimate.
+   */
+  iqr: { p25: SuggestionParams; p75: SuggestionParams } | null;
   trainScore: number;
   validationScore: number;
   testScore: number;
+  /**
+   * Score of DEFAULT_PARAMS on the same data windows used for tuning. The
+   * difference (testScore - baselineTestScore) is the meaningful number — if
+   * it's negative or near zero, the tuned params aren't actually better.
+   */
+  baseline: {
+    trainScore: number;
+    validationScore: number;
+    testScore: number;
+  };
   message: string;
   sampleCount: number;
 }
@@ -299,10 +316,11 @@ export function tuneSuggestionParams(): TuningReport {
     return {
       success: false,
       params: { ...DEFAULT_PARAMS },
-      confidenceInterval: null,
+      iqr: null,
       trainScore: 0,
       validationScore: 0,
       testScore: 0,
+      baseline: { trainScore: 0, validationScore: 0, testScore: 0 },
       message:
         prices.length === 0
           ? "价格历史为空，无法调优参数。请先积累交易记录后重试。"
@@ -319,7 +337,7 @@ export function tuneSuggestionParams(): TuningReport {
     { iterations: 500, seed: 42, windowSize: Math.min(50, Math.floor(prices.length / 2)) }
   );
 
-  // Re-run Monte Carlo on full data to get confidence interval
+  // Re-run Monte Carlo on full data to get IQR of top-5% candidates
   const fullDist = monteCarloSearch(
     prices,
     SUGGESTION_PARAM_SPACE,
@@ -329,6 +347,20 @@ export function tuneSuggestionParams(): TuningReport {
 
   const rawParams = report.recommended as unknown as SuggestionParams;
   const clamped = clampToSpace(rawParams);
+
+  // ── Baseline: score DEFAULT_PARAMS on the same 60/20/20 windows ──────────
+  const trainEnd = Math.floor(prices.length * 0.6);
+  const valEnd = Math.floor(prices.length * 0.8);
+  const weights = { hit: 1, miss: -0.5, falseAlarm: -0.3 };
+  const evalRng = mulberry32(42);
+  const baselineFn = (slice: number[]) => {
+    if (slice.length === 0) return 0;
+    const detail = simulateSuggestion(slice, DEFAULT_PARAMS, evalRng);
+    return detail.hits * weights.hit + detail.misses * weights.miss + detail.falseAlarms * weights.falseAlarm;
+  };
+  const baselineTrain = baselineFn(prices.slice(0, trainEnd));
+  const baselineVal = baselineFn(prices.slice(trainEnd, valEnd));
+  const baselineTest = baselineFn(prices.slice(valEnd));
 
   // Validate the clamped result is usable
   let isValid = true;
@@ -342,13 +374,14 @@ export function tuneSuggestionParams(): TuningReport {
     return {
       success: false,
       params: clamped,
-      confidenceInterval: {
+      iqr: {
         p25: clampToSpace(fullDist.confidenceInterval.p25 as unknown as SuggestionParams),
         p75: clampToSpace(fullDist.confidenceInterval.p75 as unknown as SuggestionParams),
       },
       trainScore: report.trainScore,
       validationScore: report.validationScore,
       testScore: report.testScore,
+      baseline: { trainScore: baselineTrain, validationScore: baselineVal, testScore: baselineTest },
       message: report.overfitFlag
         ? `调优结果疑似过拟合（train=${report.trainScore.toFixed(2)}, test=${report.testScore.toFixed(2)}），未持久化。建议扩大数据窗口后重试。`
         : "调优结果参数范围无效，未持久化。使用默认参数。",
@@ -359,17 +392,21 @@ export function tuneSuggestionParams(): TuningReport {
   // Persist the valid result
   setSuggestionParams(clamped);
 
+  const delta = report.testScore - baselineTest;
+  const messageWithBaseline = `${report.message}\nBaseline (default params) test score: ${baselineTest.toFixed(2)}. Tuned delta: ${delta >= 0 ? "+" : ""}${delta.toFixed(2)}.`;
+
   return {
     success: true,
     params: clamped,
-    confidenceInterval: {
+    iqr: {
       p25: clampToSpace(fullDist.confidenceInterval.p25 as unknown as SuggestionParams),
       p75: clampToSpace(fullDist.confidenceInterval.p75 as unknown as SuggestionParams),
     },
     trainScore: report.trainScore,
     validationScore: report.validationScore,
     testScore: report.testScore,
-    message: report.message,
+    baseline: { trainScore: baselineTrain, validationScore: baselineVal, testScore: baselineTest },
+    message: messageWithBaseline,
     sampleCount: fullDist.sampleCount,
   };
 }
