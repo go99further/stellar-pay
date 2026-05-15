@@ -23,6 +23,9 @@ export interface ActiveThresholds {
   liquidityOutflowHigh: number;
   sandwichWindowLedgers: number;
   anomalyRemovalPct: number;
+  stalePriceTolerancePct: number;
+  imbalanceMedium: number;
+  imbalanceHigh: number;
 }
 
 const STORAGE_KEY = "stellar-pay-security-thresholds-overrides";
@@ -38,6 +41,9 @@ export const DEFAULT_ACTIVE_THRESHOLDS: ActiveThresholds = {
   liquidityOutflowHigh: 20,
   sandwichWindowLedgers: 3,
   anomalyRemovalPct: 5,
+  stalePriceTolerancePct: 0.1,
+  imbalanceMedium: 3,
+  imbalanceHigh: 10,
 };
 
 function isValidShape(v: unknown): v is ActiveThresholds {
@@ -49,7 +55,10 @@ function isValidShape(v: unknown): v is ActiveThresholds {
     typeof x.liquidityOutflowMedium === "number" &&
     typeof x.liquidityOutflowHigh === "number" &&
     typeof x.sandwichWindowLedgers === "number" &&
-    typeof x.anomalyRemovalPct === "number"
+    typeof x.anomalyRemovalPct === "number" &&
+    typeof x.stalePriceTolerancePct === "number" &&
+    typeof x.imbalanceMedium === "number" &&
+    typeof x.imbalanceHigh === "number"
   );
 }
 
@@ -71,6 +80,15 @@ function validateRanges(t: ActiveThresholds): void {
   }
   if (t.anomalyRemovalPct <= 0 || t.anomalyRemovalPct > 100) {
     throw new RangeError("anomalyRemovalPct must be in (0, 100]");
+  }
+  if (t.stalePriceTolerancePct <= 0) {
+    throw new RangeError("stalePriceTolerancePct must be > 0");
+  }
+  if (t.imbalanceMedium < 1) {
+    throw new RangeError("imbalanceMedium must be >= 1");
+  }
+  if (t.imbalanceMedium >= t.imbalanceHigh) {
+    throw new RangeError("imbalanceMedium must be < imbalanceHigh");
   }
 }
 

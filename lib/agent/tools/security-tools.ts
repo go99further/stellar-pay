@@ -6,6 +6,8 @@ import {
   detectPriceImpact,
   detectLiquidityFlow,
   detectAnomalies,
+  detectStalePrice,
+  detectImbalance,
   type DecodedAmmEvent,
 } from "../security-core";
 import { recordSecurityTrigger } from "../security-feedback";
@@ -146,15 +148,15 @@ export async function scanRecentAnomaliesHandler(): Promise<{
     getReserves(DUMMY_READER),
   ]);
   const r = detectAnomalies(events, reserveA);
-  // Record one sandwich trigger per flagged address so settleBySandwichBehavior
-  // can grade each suspect independently. Use the latest swap ledger we saw
-  // as the trigger ledger; settlement waits ledgerWindow blocks past that.
+  // Record anomaly triggers (not sandwich) so settleAnomalyByFollowup can grade them.
   if (r.riskLevel !== "low") {
     const lastLedger = events.reduce((max, e) => Math.max(max, e.ledger), 0);
     for (const flag of r.flaggedAddresses) {
-      recordSecurityTrigger("sandwich", r.riskLevel, {
+      const removalPct = parseFloat(flag.reason.match(/(\d+\.?\d*)%/)?.[1] ?? "0");
+      recordSecurityTrigger("anomaly", r.riskLevel, {
         suspectAddress: flag.address,
-        frontRunLedger: lastLedger,
+        removalPct,
+        reserveAAtTrigger: reserveA.toString(),
         observedAtLedger: lastLedger,
       });
     }
@@ -164,5 +166,90 @@ export async function scanRecentAnomaliesHandler(): Promise<{
     flaggedAddresses: r.flaggedAddresses,
     riskLevel: r.riskLevel,
     summary: r.summary,
+  };
+}
+
+// ── check_stale_price ─────────────────────────────────────────────────────────
+
+export const checkStalePriceSchema: Anthropic.Tool = {
+  name: "check_stale_price",
+  description:
+    "Check whether the pool price has been static across recent reserve snapshots, indicating possible liquidity exhaustion or oracle failure.",
+  input_schema: {
+    type: "object",
+    properties: {
+      snapshots: {
+        type: "array",
+        description: "Recent reserve snapshots [{reserveA, reserveB, ledger}]",
+        items: {
+          type: "object",
+          properties: {
+            reserveA: { type: "string" },
+            reserveB: { type: "string" },
+            ledger: { type: "number" },
+          },
+          required: ["reserveA", "reserveB", "ledger"],
+        },
+      },
+    },
+    required: ["snapshots"],
+  },
+};
+
+export async function checkStalePriceHandler(input: {
+  snapshots: { reserveA: string; reserveB: string; ledger: number }[];
+}): Promise<{
+  isStale: boolean;
+  staleSinceLedger: number | null;
+  riskLevel: "low" | "medium" | "high";
+  recommendation: string;
+}> {
+  const parsed = input.snapshots.map((s) => ({
+    reserveA: BigInt(s.reserveA),
+    reserveB: BigInt(s.reserveB),
+    ledger: s.ledger,
+  }));
+  const r = detectStalePrice(parsed);
+  if (r.riskLevel !== "low" && r.staleSinceLedger !== null) {
+    const priceRatio =
+      parsed.length > 0 && parsed[0].reserveB !== 0n
+        ? Number(parsed[0].reserveA) / Number(parsed[0].reserveB)
+        : 0;
+    recordSecurityTrigger("stale_price", r.riskLevel, {
+      staleSinceLedger: r.staleSinceLedger,
+      priceRatioAtTrigger: priceRatio,
+      snapshotCount: parsed.length,
+    });
+  }
+  return r;
+}
+
+// ── check_imbalance ───────────────────────────────────────────────────────────
+
+export const checkImbalanceSchema: Anthropic.Tool = {
+  name: "check_imbalance",
+  description:
+    "Check whether the pool's reserve ratio is severely skewed, indicating a large directional trade or price dislocation.",
+  input_schema: { type: "object", properties: {}, required: [] },
+};
+
+export async function checkImbalanceHandler(): Promise<{
+  imbalanceRatio: string;
+  riskLevel: "low" | "medium" | "high";
+  recommendation: string;
+}> {
+  const [reserveA, reserveB] = await getReserves(DUMMY_READER);
+  const r = detectImbalance(reserveA, reserveB);
+  if (r.riskLevel !== "low") {
+    recordSecurityTrigger("imbalance", r.riskLevel, {
+      imbalanceRatio: r.imbalanceRatio,
+      reserveAAtTrigger: reserveA.toString(),
+      reserveBAtTrigger: reserveB.toString(),
+    });
+  }
+  return {
+    imbalanceRatio: r.imbalanceRatio.toFixed(2),
+    riskLevel: r.riskLevel,
+    recommendation: r.recommendation,
   };
 }

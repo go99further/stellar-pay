@@ -189,3 +189,56 @@ export function detectAnomalies(
       : `${flagged.length} address(es) flagged for concentrated liquidity removal.`;
   return { flaggedAddresses: flagged, riskLevel, summary };
 }
+
+export function detectStalePrice(
+  snapshots: { reserveA: bigint; reserveB: bigint; ledger: number }[]
+): {
+  isStale: boolean;
+  staleSinceLedger: number | null;
+  riskLevel: RiskLevel;
+  recommendation: string;
+} {
+  if (snapshots.length < 3) {
+    return { isStale: false, staleSinceLedger: null, riskLevel: "low", recommendation: "Pool price is actively changing." };
+  }
+  const activeThresholds = getActiveThresholds();
+  const tolerance = activeThresholds.stalePriceTolerancePct / 100;
+  const ratios = snapshots.map((s) => Number(s.reserveA) / Number(s.reserveB));
+  const min = Math.min(...ratios);
+  const max = Math.max(...ratios);
+  const isStale = min !== 0 && (max - min) / min <= tolerance;
+  if (isStale) {
+    const ledgerCount = snapshots[snapshots.length - 1].ledger - snapshots[0].ledger;
+    return {
+      isStale: true,
+      staleSinceLedger: snapshots[0].ledger,
+      riskLevel: "medium",
+      recommendation: `Pool price has not moved in ${ledgerCount} ledgers — possible liquidity exhaustion or oracle failure.`,
+    };
+  }
+  return { isStale: false, staleSinceLedger: null, riskLevel: "low", recommendation: "Pool price is actively changing." };
+}
+
+export function detectImbalance(
+  reserveA: bigint,
+  reserveB: bigint
+): {
+  imbalanceRatio: number;
+  riskLevel: RiskLevel;
+  recommendation: string;
+} {
+  if (reserveA === 0n || reserveB === 0n) {
+    return { imbalanceRatio: 1, riskLevel: "low", recommendation: "Pool balance is within normal range." };
+  }
+  const a = Number(reserveA);
+  const b = Number(reserveB);
+  const imbalanceRatio = Math.max(a / b, b / a);
+  const t = getActiveThresholds();
+  const riskLevel: RiskLevel =
+    imbalanceRatio < t.imbalanceMedium ? "low" : imbalanceRatio < t.imbalanceHigh ? "medium" : "high";
+  const recommendation =
+    riskLevel === "low"
+      ? "Pool balance is within normal range."
+      : `Pool is severely imbalanced (ratio ${imbalanceRatio.toFixed(2)}:1) — large directional trade or price dislocation.`;
+  return { imbalanceRatio, riskLevel, recommendation };
+}

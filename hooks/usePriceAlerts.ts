@@ -95,6 +95,8 @@ export function usePriceAlerts(
       // Settle security feedback records (Issue 1 fix):
       // - liquidity_flow: use current reserves as TVL proxy
       // - sandwich: settled via decoded events (requires event-decoder, done async)
+      // - anomaly: settled via decoded events (1h follow-up check)
+      // - stale_price / imbalance: settled via reserves change (30min)
       // - expired: 24h safety net
       const reserveANum = Number(reserveA) / 1e7;
       const reserveBNum = Number(reserveB) / 1e7;

@@ -21,7 +21,7 @@ const MAX_RECORDS = 200;
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type SecurityDetectorType = "price_impact" | "liquidity_flow" | "sandwich";
+export type SecurityDetectorType = "price_impact" | "liquidity_flow" | "sandwich" | "anomaly" | "stale_price" | "imbalance";
 export type SecurityOutcome = "pending" | "confirmed" | "false_positive" | "expired";
 
 export interface PriceImpactContext {
@@ -45,12 +45,31 @@ export interface SandwichContext {
   observedAtLedger: number;
 }
 
+export interface AnomalyContext {
+  suspectAddress: string;
+  removalPct: number;
+  reserveAAtTrigger: string;
+  observedAtLedger: number;
+}
+
+export interface StalePriceContext {
+  staleSinceLedger: number;
+  priceRatioAtTrigger: number;
+  snapshotCount: number;
+}
+
+export interface ImbalanceContext {
+  imbalanceRatio: number;
+  reserveAAtTrigger: string;
+  reserveBAtTrigger: string;
+}
+
 export interface SecurityFeedbackRecord {
   id: string;
   detectorType: SecurityDetectorType;
   triggeredAt: number;
   riskLevel: "low" | "medium" | "high";
-  triggerContext: PriceImpactContext | LiquidityFlowContext | SandwichContext;
+  triggerContext: PriceImpactContext | LiquidityFlowContext | SandwichContext | AnomalyContext | StalePriceContext | ImbalanceContext;
   outcome: SecurityOutcome;
   settledAt?: number;
   settlementEvidence?: Record<string, unknown>;
@@ -110,7 +129,10 @@ function isValidRecord(r: unknown): r is SecurityFeedbackRecord {
     typeof x.id === "string" &&
     (x.detectorType === "price_impact" ||
       x.detectorType === "liquidity_flow" ||
-      x.detectorType === "sandwich") &&
+      x.detectorType === "sandwich" ||
+      x.detectorType === "anomaly" ||
+      x.detectorType === "stale_price" ||
+      x.detectorType === "imbalance") &&
     typeof x.triggeredAt === "number" &&
     (x.riskLevel === "low" || x.riskLevel === "medium" || x.riskLevel === "high") &&
     typeof x.triggerContext === "object" &&
@@ -135,7 +157,7 @@ function generateId(): string {
 export function recordSecurityTrigger(
   detectorType: SecurityDetectorType,
   riskLevel: "low" | "medium" | "high",
-  triggerContext: PriceImpactContext | LiquidityFlowContext | SandwichContext,
+  triggerContext: PriceImpactContext | LiquidityFlowContext | SandwichContext | AnomalyContext | StalePriceContext | ImbalanceContext,
   now: number = Date.now()
 ): SecurityFeedbackRecord {
   const record: SecurityFeedbackRecord = {
@@ -356,6 +378,106 @@ export function expirePending(
 }
 
 /**
+ * Step 2e — settle anomaly records.
+ * 1 hour after trigger, if suspectAddress has further rem_liq events → confirmed,
+ * else → false_positive.
+ */
+export function settleAnomalyByFollowup(
+  events: DecodedAmmEvent[],
+  observedAt: number,
+  hourMs: number = 3_600_000
+): SecurityFeedbackRecord[] {
+  const all = readAll();
+  let changed = false;
+  const settled: SecurityFeedbackRecord[] = [];
+
+  const updated = all.map((rec) => {
+    if (rec.outcome !== "pending") return rec;
+    if (rec.detectorType !== "anomaly") return rec;
+    if (observedAt <= rec.triggeredAt) return rec;
+    if (observedAt - rec.triggeredAt < hourMs) return rec;
+
+    const ctx = rec.triggerContext as AnomalyContext;
+    const hasFollowup = events.some(
+      (e) => e.kind === "rem_liq" && e.provider === ctx.suspectAddress && e.ledger > ctx.observedAtLedger
+    );
+    const outcome: SecurityOutcome = hasFollowup ? "confirmed" : "false_positive";
+    changed = true;
+    const next: SecurityFeedbackRecord = {
+      ...rec,
+      outcome,
+      settledAt: observedAt,
+      settlementEvidence: { hasFollowup, suspectAddress: ctx.suspectAddress },
+    };
+    settled.push(next);
+    return next;
+  });
+
+  if (changed) writeAll(updated);
+  return settled;
+}
+
+/**
+ * Step 2f — settle stale_price and imbalance records by comparing current reserves
+ * to the trigger-time snapshot. Minimum age: 30 minutes.
+ */
+export function settleByReservesChange(
+  currentReserveA: number,
+  currentReserveB: number,
+  observedAt: number,
+  minAgeMs: number = 1_800_000
+): SecurityFeedbackRecord[] {
+  const all = readAll();
+  let changed = false;
+  const settled: SecurityFeedbackRecord[] = [];
+  const t = getActiveThresholds();
+
+  const updated = all.map((rec) => {
+    if (rec.outcome !== "pending") return rec;
+    if (rec.detectorType !== "stale_price" && rec.detectorType !== "imbalance") return rec;
+    if (observedAt <= rec.triggeredAt) return rec;
+    if (observedAt - rec.triggeredAt < minAgeMs) return rec;
+
+    let outcome: SecurityOutcome;
+    let evidence: Record<string, unknown>;
+
+    if (rec.detectorType === "stale_price") {
+      const ctx = rec.triggerContext as StalePriceContext;
+      const currentRatio = currentReserveB !== 0 ? currentReserveA / currentReserveB : 0;
+      const priceChanged =
+        ctx.priceRatioAtTrigger !== 0 &&
+        Math.abs(currentRatio - ctx.priceRatioAtTrigger) / ctx.priceRatioAtTrigger >
+          t.stalePriceTolerancePct / 100;
+      outcome = priceChanged ? "false_positive" : "confirmed";
+      evidence = { currentRatio, priceRatioAtTrigger: ctx.priceRatioAtTrigger, priceChanged };
+    } else {
+      const ctx = rec.triggerContext as ImbalanceContext;
+      const currentImbalance =
+        currentReserveA !== 0 && currentReserveB !== 0
+          ? Math.max(currentReserveA / currentReserveB, currentReserveB / currentReserveA)
+          : 1;
+      const improved = (ctx.imbalanceRatio - currentImbalance) / ctx.imbalanceRatio > 0.2;
+      outcome = improved ? "false_positive" : "confirmed";
+      evidence = { currentImbalance, imbalanceRatioAtTrigger: ctx.imbalanceRatio, improved };
+    }
+
+    changed = true;
+    const next: SecurityFeedbackRecord = {
+      ...rec,
+      outcome,
+      settledAt: observedAt,
+      settlementEvidence: evidence,
+    };
+    settled.push(next);
+    return next;
+  });
+
+  if (changed) writeAll(updated);
+  return settled;
+}
+
+
+/**
  * Orchestrator — run all settlement passes in sequence.
  * Callers supply the current observations; each settler only touches its own detector type.
  */
@@ -368,6 +490,8 @@ export function settleAllPending(opts: {
   priceImpactSettled: SecurityFeedbackRecord[];
   tvlSettled: SecurityFeedbackRecord[];
   sandwichSettled: SecurityFeedbackRecord[];
+  anomalySettled: SecurityFeedbackRecord[];
+  reservesSettled: SecurityFeedbackRecord[];
   expired: SecurityFeedbackRecord[];
 } {
   const priceImpactSettled = opts.priceImpact
@@ -386,9 +510,21 @@ export function settleAllPending(opts: {
     ? settleBySandwichBehavior(opts.sandwich.events, opts.sandwich.currentLedger)
     : [];
 
+  const anomalySettled = opts.sandwich
+    ? settleAnomalyByFollowup(opts.sandwich.events, opts.expireNow ?? Date.now())
+    : [];
+
+  const reservesSettled = opts.tvlChange
+    ? settleByReservesChange(
+        opts.tvlChange.currentReserveA,
+        opts.tvlChange.currentReserveB,
+        opts.tvlChange.observedAt
+      )
+    : [];
+
   const expired = expirePending(opts.expireNow ?? Date.now());
 
-  return { priceImpactSettled, tvlSettled, sandwichSettled, expired };
+  return { priceImpactSettled, tvlSettled, sandwichSettled, anomalySettled, reservesSettled, expired };
 }
 
 // ── Stats ─────────────────────────────────────────────────────────────────────
@@ -513,6 +649,15 @@ function getCurrentThresholds(detectorType: SecurityDetectorType): {
   }
   if (detectorType === "liquidity_flow") {
     return { medium: t.liquidityOutflowMedium, high: t.liquidityOutflowHigh };
+  }
+  if (detectorType === "anomaly") {
+    return { medium: t.anomalyRemovalPct, high: t.anomalyRemovalPct * 2 };
+  }
+  if (detectorType === "stale_price") {
+    return { medium: t.stalePriceTolerancePct, high: t.stalePriceTolerancePct * 2 };
+  }
+  if (detectorType === "imbalance") {
+    return { medium: t.imbalanceMedium, high: t.imbalanceHigh };
   }
   // sandwich: use sandwichWindowLedgers as medium, anomalyRemovalPct as high
   return { medium: t.sandwichWindowLedgers, high: t.anomalyRemovalPct };
