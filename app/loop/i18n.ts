@@ -60,12 +60,14 @@ const ZH: Dict = {
   "layer1.total_records": "记录总数",
 
   // Layer 2
-  "layer2.title": "Layer 2：Security 检测器",
-  "layer2.precision": "Precision",
+  "layer2.title": "Layer 2：Security 检测器（6 种风险检测）",
+  "layer2.precision": "Precision（精确率）",
   "layer2.expiration_rate": "过期率（expirationRate）",
   "layer2.effective_sample_rate": "有效样本率（effectiveSampleRate）",
   "layer2.confirmed_fp_pending": "确认 / 误报 / 待结算",
   "layer2.unreliable_warning": " ⚠ 数据不可信（过期率过高）",
+  "layer2.empty": "暂无检测器触发记录。当用户执行交易或池子状态变化时，检测器会自动触发并记录。",
+  "layer2.hidden_note": "共 {total} 个检测器，{hidden} 个尚无触发记录（未显示）。触发条件：anomaly=单地址集中移除 LP；stale_price=价格长时间不变；imbalance=储备比率严重倾斜。",
 
   // Layer 3
   "layer3.title": "Layer 3：参数优化器（Monte Carlo + walk-forward CV）",

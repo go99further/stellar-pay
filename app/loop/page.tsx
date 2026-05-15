@@ -62,9 +62,15 @@ function hitRateBorder(hitRate: number | null): string {
 const DETECTOR_TYPES: SecurityDetectorType[] = ["price_impact", "liquidity_flow", "sandwich", "anomaly", "stale_price", "imbalance"];
 
 function detectorLabel(d: SecurityDetectorType): string {
-  if (d === "price_impact") return "price_impact";
-  if (d === "liquidity_flow") return "liquidity_flow";
-  return "sandwich";
+  switch (d) {
+    case "price_impact": return "price_impact（滑点风险）";
+    case "liquidity_flow": return "liquidity_flow（流动性流出）";
+    case "sandwich": return "sandwich（三明治攻击）";
+    case "anomaly": return "anomaly（集中撤资）";
+    case "stale_price": return "stale_price（价格静止）";
+    case "imbalance": return "imbalance（储备失衡）";
+    default: return d;
+  }
 }
 
 function confidenceBadge(c: "high" | "medium" | "low"): string {
@@ -345,10 +351,9 @@ function Layer1Card({ layer1, t }: Layer1CardProps) {
 // ── Layer 2 Card ──────────────────────────────────────────────────────────────
 
 function Layer2Card({ t }: { t: (key: string, vars?: Record<string, string | number>) => string }) {
-  const detectorStats = DETECTOR_TYPES.map(d => ({
-    type: d,
-    stats: getSecurityStats(d),
-  }));
+  const detectorStats = DETECTOR_TYPES
+    .map(d => ({ type: d, stats: getSecurityStats(d) }))
+    .filter(({ stats }) => stats.total > 0);
 
   return (
     <div className="rounded border border-indigo-200 bg-indigo-50 p-4 dark:border-indigo-800 dark:bg-indigo-950">
@@ -427,6 +432,16 @@ function Layer2Card({ t }: { t: (key: string, vars?: Record<string, string | num
             </div>
           );
         })}
+        {detectorStats.length === 0 && (
+          <p className="mt-3 text-xs text-neutral-500 dark:text-neutral-400">
+            {t("layer2.empty")}
+          </p>
+        )}
+        {detectorStats.length < DETECTOR_TYPES.length && detectorStats.length > 0 && (
+          <p className="mt-3 text-[10px] text-neutral-500 dark:text-neutral-400">
+            {t("layer2.hidden_note", { hidden: DETECTOR_TYPES.length - detectorStats.length, total: DETECTOR_TYPES.length })}
+          </p>
+        )}
       </div>
     </div>
   );
