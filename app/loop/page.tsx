@@ -59,7 +59,7 @@ function hitRateBorder(hitRate: number | null): string {
 
 // ── Layer 2 helpers ───────────────────────────────────────────────────────────
 
-const DETECTOR_TYPES: SecurityDetectorType[] = ["price_impact", "liquidity_flow", "sandwich"];
+const DETECTOR_TYPES: SecurityDetectorType[] = ["price_impact", "liquidity_flow", "sandwich", "anomaly", "stale_price", "imbalance"];
 
 function detectorLabel(d: SecurityDetectorType): string {
   if (d === "price_impact") return "price_impact";

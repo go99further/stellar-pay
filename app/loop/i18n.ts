@@ -62,9 +62,9 @@ const ZH: Dict = {
   // Layer 2
   "layer2.title": "Layer 2：Security 检测器",
   "layer2.precision": "Precision",
-  "layer2.expiration_rate": "expirationRate",
-  "layer2.effective_sample_rate": "effectiveSampleRate",
-  "layer2.confirmed_fp_pending": "confirmed / fp / pending",
+  "layer2.expiration_rate": "过期率（expirationRate）",
+  "layer2.effective_sample_rate": "有效样本率（effectiveSampleRate）",
+  "layer2.confirmed_fp_pending": "确认 / 误报 / 待结算",
   "layer2.unreliable_warning": " ⚠ 数据不可信（过期率过高）",
 
   // Layer 3
