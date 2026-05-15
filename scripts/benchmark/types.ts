@@ -33,6 +33,9 @@ export interface BenchmarkCase {
   expectedTools: string[];
   forbiddenTools?: string[];
 
+  // Param extraction (optional — only set when key params should match)
+  expectedParams?: Record<string, unknown>;
+
   // 输出
   mustContain?: string[];
   mustNotContain?: string[];
