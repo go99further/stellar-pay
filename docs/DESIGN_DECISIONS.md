@@ -331,6 +331,49 @@ Practical demonstration of statistical thinking, not publication-grade rigor. Th
 - `__tests__/method-comparison.test.ts` — Welch t-test values match `scipy.stats.ttest_ind(equal_var=False)` on reference inputs
 - `app/loop/methods/page.tsx` (in development) — interactive comparison surface
 
+**Empirical finding (2026-05-15, real XLM dataset, 3,589 points)**
+
+Running `compareMethods` with runs=30, budget=500 on the production XLM price dataset produced an **unexpected result**:
+
+| Method | Mean ± Std |
+|--------|-----------|
+| Default | 1.506 (deterministic) |
+| Random Search | 1.807 ± 0.166 |
+| Grid Search | 1.968 (deterministic) |
+| Monte Carlo | 1.807 ± 0.166 |
+
+Pairwise comparisons:
+| Comparison | t | dof | p | Cohen's d | Effect |
+|-----------|----|-----|---|-----------|--------|
+| MC vs Random | 0.000 | 58 | 1.000 | 0.000 | negligible |
+| Grid vs Random | 5.32 | 29 | <0.001 | 1.37 | large ✓ |
+| Tuned vs Default | 9.94 | 29 | <0.001 | 2.57 | large ✓ |
+
+**Two findings**:
+
+1. **Grid Search outperforms Monte Carlo** at this budget on this dataset (consistent with HPO literature for low-dim spaces with bounded ranges — uniform coverage of a 5-dim 5-step grid (3,125 cells) beats random sampling at budget=500).
+
+2. **MC vs Random shows no difference** (p=1.000) — this is because `compareMethods` reports `topCandidates[0].score` (single best), not the top-5% median that `monteCarloSearch` exposes. Comparing single-best samples, MC and Random are functionally equivalent at the same budget. This is a known design tradeoff in `compareMethods`, not a finding about the algorithms.
+
+**Three prerequisites the "Grid > MC" claim depends on** (without verification, the claim is data-set-specific):
+
+1. **Parameter space topology**: Grid wins when optima fall near grid points. If optima sit between grid cells (5-step grid creates 0.25-wide intervals), MC's random sampling can find them while Grid misses. Not verified across diverse param spaces.
+
+2. **Dataset characteristics**: XLM is a mature liquid asset with relatively smooth price series. On a high-volatility asset (e.g., a meme token), optima may shift to corners of the parameter space where Grid's uniform coverage performs worse. Single-dataset validation cannot rule this out.
+
+3. **Budget regime**: MC's top-k aggregation advantages emerge at higher budgets (5000+). At budget=500, MC behaves like Random because there is not enough material to filter. Larger budgets may flip the ranking.
+
+**Robust conclusion** (independent of the three prerequisites): **Tuned vs Default** is significant in every plausible setting (d=2.57, large). This is the only claim that survives the three prerequisites — it is the headline number, not "Grid beats MC".
+
+**Why we did not add more datasets**
+
+We considered adding BTC/ETH/meme-token datasets to test prerequisite 2. We chose not to because:
+- Adding 1 dataset replaces "single-dataset cherry-pick" with "two-dataset cherry-pick" — the underlying problem (selection of which datasets) does not go away.
+- Robust empirical claims about HPO methods require ≥5 diverse datasets, which is out of scope for an interview-grade demo.
+- Honest disclosure of single-dataset evidence with three explicit prerequisites is more defensible than claiming generality from N=2.
+
+This conservative posture is itself documented as the audit-thinking posture (cf. LIMITATIONS.md preface).
+
 ---
 
 ## Future ADRs（待决策）
