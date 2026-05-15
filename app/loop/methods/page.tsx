@@ -388,39 +388,51 @@ function Methodology({ locale }: { t: (key: string) => string; locale: "zh" | "e
   return (
     <div className="rounded border border-emerald-200 bg-emerald-50 p-4 text-xs dark:border-emerald-800 dark:bg-emerald-950">
       <h3 className="text-sm font-semibold text-emerald-900 dark:text-emerald-200">
-        {locale === "zh" ? "方法说明" : "Methodology"}
+        {locale === "zh" ? "实验设计说明" : "Methodology"}
       </h3>
       <ul className="mt-2 space-y-1 text-emerald-800 dark:text-emerald-300">
         <li>
-          <strong>{locale === "zh" ? "标准化 budget" : "Standardized budget"}：</strong>
+          <strong>{locale === "zh" ? "等价计算预算（Budget 标准化）" : "Standardized budget"}：</strong>
           {locale === "zh"
-            ? " 每个方法每次 run 都跑 500 次评估。否则比较的是 budget 不是搜索策略。"
+            ? " 四种方法每次实验均使用相同的 500 次函数评估配额。若预算不等，比较的是计算量而非搜索策略本身的优劣，结论无效。"
             : " every method runs 500 evals per trial. Otherwise we'd compare budgets, not search strategies."}
         </li>
         <li>
-          <strong>30 runs：</strong>
+          <strong>{locale === "zh" ? "重复实验（30 次独立运行）" : "30 runs"}：</strong>
           {locale === "zh"
-            ? " 种子 [1..30]。30 是 t 分布近似正态分布 + 中心极限定理生效的渐近门槛。"
+            ? " 使用种子 1–30 各运行一次，共 30 个独立样本。30 是 t 分布渐近正态分布的经验门槛，满足中心极限定理对样本均值分布的近似要求，使 Welch t 检验的 p 值具有统计有效性。"
             : " seeds [1..30]. 30 is the asymptotic threshold where t ≈ Normal and CLT kicks in for means."}
         </li>
         <li>
-          <strong>Welch t-test：</strong>
+          <strong>{locale === "zh" ? "Welch 双样本 t 检验（异方差）" : "Welch t-test"}：</strong>
           {locale === "zh"
-            ? " 不假设方差相等（Grid 是 std≈0、Random 高方差，Student's 会给错的 p）。两尾。"
+            ? " 四种方法的方差结构差异显著：Grid Search 为确定性算法（σ≈0），Random Search 方差较高，两者不满足 Student's t 检验的等方差假设。Welch 检验通过 Welch–Satterthwaite 公式近似自由度，在异方差条件下给出有效的 p 值。采用双尾检验，不预设方向性假设。"
             : " unequal-variance variant (Grid std≈0, Random high — Student's would give wrong p). Two-tailed."}
         </li>
         <li>
-          <strong>Cohen&apos;s d：</strong>
+          <strong>{locale === "zh" ? "Cohen's d（效应量）" : "Cohen's d"}：</strong>
           {locale === "zh"
-            ? " 标准化效应量。p 说效应是否真实，d 说效应是否大到值得在意。0.2=small / 0.5=medium / 0.8+=large。"
+            ? " 标准化均值差，衡量效应的实际显著性而非统计显著性。p 值回答「差异是否真实存在」，Cohen's d 回答「差异是否大到具有实践意义」。惯用分级：d < 0.2 可忽略，0.2–0.5 小效应，0.5–0.8 中效应，≥ 0.8 大效应。仅报告 p 值而忽略效应量是常见的统计误用。"
             : " standardized effect size. p says \"real?\", d says \"big enough?\". 0.2=small / 0.5=medium / 0.8+=large."}
         </li>
         <li className="pt-1 text-emerald-700 dark:text-emerald-400">
           {locale === "zh" ? "已知局限（详见 docs/LIMITATIONS.md）：" : "Known limitations (see docs/LIMITATIONS.md):"}
           <ul className="ml-4 mt-1 list-disc">
-            <li>L9 — {locale === "zh" ? "未做 Bonferroni 校正（4 次成对比较）" : "no Bonferroni correction for 4 pairwise tests"}</li>
-            <li>L10 — {locale === "zh" ? "未做 Shapiro–Wilk 正态性检验（依赖 CLT）" : "no formal Shapiro–Wilk normality test (CLT relied upon)"}</li>
-            <li>L11 — {locale === "zh" ? "事后分析，未做 prospective power analysis" : "post-hoc analysis, no prospective power analysis"}</li>
+            <li>
+              {locale === "zh"
+                ? "L9 — 未对 4 次成对比较施加 Bonferroni 校正（族错误率约 18.5%）；因各 p 值均远低于校正阈值 0.0125，结论不受影响"
+                : "L9 — no Bonferroni correction for 4 pairwise tests"}
+            </li>
+            <li>
+              {locale === "zh"
+                ? "L10 — 未对得分分布执行 Shapiro–Wilk 正态性检验；依赖 n=30 与中心极限定理的渐近保证"
+                : "L10 — no formal Shapiro–Wilk normality test (CLT relied upon)"}
+            </li>
+            <li>
+              {locale === "zh"
+                ? "L11 — 样本量（n=30）基于运行时间约束确定，未进行前瞻性功效分析（prospective power analysis）；属事后分析"
+                : "L11 — post-hoc analysis, no prospective power analysis"}
+            </li>
           </ul>
         </li>
       </ul>
