@@ -1,180 +1,619 @@
 {
-  "timestamp": "2026-05-15T08:24:53.537Z",
-  "model": "deepseek-v4-flash",
-  "router": {
-    "totalCases": 20,
-    "correct": 19,
-    "accuracy": 0.95,
-    "latencies": [
-      1482,
-      1493,
-      1557,
-      1568,
-      1656,
-      1730,
-      1764,
-      1865,
-      1887,
-      1890,
-      1970,
-      2118,
-      2146,
-      2292,
-      2323,
-      2376,
-      2539,
-      2845,
-      3184,
-      7261
-    ],
-    "p50Ms": 1930,
-    "p95Ms": 3387.850000000003,
-    "avgMs": 2297.3,
-    "results": [
-      {
-        "input": "当前池子 TVL 多少",
-        "expected": "analytics",
-        "actual": "analytics",
-        "correct": true,
-        "latencyMs": 7261
-      },
-      {
-        "input": "最近有哪些交易",
-        "expected": "analytics",
-        "actual": "analytics",
-        "correct": true,
-        "latencyMs": 2539
-      },
-      {
-        "input": "池子储备量是多少",
-        "expected": "analytics",
-        "actual": "analytics",
-        "correct": true,
-        "latencyMs": 1764
-      },
-      {
-        "input": "24 小时交易量",
-        "expected": "analytics",
-        "actual": "analytics",
-        "correct": true,
-        "latencyMs": 1730
-      },
-      {
-        "input": "价格走势怎么样",
-        "expected": "analytics",
-        "actual": "analytics",
-        "correct": true,
-        "latencyMs": 2376
-      },
-      {
-        "input": "用 100 TKNA 换 TKNB",
-        "expected": "trading",
-        "actual": "trading",
-        "correct": true,
-        "latencyMs": 1557
-      },
-      {
-        "input": "帮我添加流动性 50 TKNA 和 50 TKNB",
-        "expected": "trading",
-        "actual": "trading",
-        "correct": true,
-        "latencyMs": 2292
-      },
-      {
-        "input": "我想移除所有流动性",
-        "expected": "trading",
-        "actual": "trading",
-        "correct": true,
-        "latencyMs": 1865
-      },
-      {
-        "input": "swap 200 TKNB to TKNA slippage 2%",
-        "expected": "trading",
-        "actual": "trading",
-        "correct": true,
-        "latencyMs": 1568
-      },
-      {
-        "input": "换币",
-        "expected": "trading",
-        "actual": "trading",
-        "correct": true,
-        "latencyMs": 1887
-      },
-      {
-        "input": "这个池子安全吗",
-        "expected": "security",
-        "actual": "security",
-        "correct": true,
-        "latencyMs": 1656
-      },
-      {
-        "input": "有没有三明治攻击的风险",
-        "expected": "security",
-        "actual": "security",
-        "correct": true,
-        "latencyMs": 1970
-      },
-      {
-        "input": "合约有没有被审计过",
-        "expected": "security",
-        "actual": "security",
-        "correct": true,
-        "latencyMs": 1482
-      },
-      {
-        "input": "最近有没有异常大额撤资",
-        "expected": "security",
-        "actual": "analytics_security",
-        "correct": false,
-        "latencyMs": 2323
-      },
-      {
-        "input": "滑点风险大不大",
-        "expected": "security",
-        "actual": "security",
-        "correct": true,
-        "latencyMs": 3184
-      },
-      {
-        "input": "你好",
-        "expected": "clarify",
-        "actual": "clarify",
-        "correct": true,
-        "latencyMs": 2118
-      },
-      {
-        "input": "今天天气怎么样",
-        "expected": "clarify",
-        "actual": "clarify",
-        "correct": true,
-        "latencyMs": 1890
-      },
-      {
-        "input": "讲个笑话",
-        "expected": "clarify",
-        "actual": "clarify",
-        "correct": true,
-        "latencyMs": 1493
-      },
-      {
-        "input": "查一下池子然后评估风险",
-        "expected": "analytics_security",
-        "actual": "analytics_security",
-        "correct": true,
-        "latencyMs": 2845
-      },
-      {
-        "input": "看看流动性够不够，安全吗",
-        "expected": "analytics_security",
-        "actual": "analytics_security",
-        "correct": true,
-        "latencyMs": 2146
+  "timestamp": "2026-05-15T10:44:16.582Z",
+  "mode": "real",
+  "modelRouter": "deepseek-v4-flash",
+  "modelAgent": "deepseek-v4-flash",
+  "totalCases": 30,
+  "durationMs": 441139,
+  "metrics": {
+    "routerAccuracy": {
+      "strict": 0.8,
+      "lenient": 0.8333333333333334,
+      "correctStrict": 24,
+      "correctLenient": 25,
+      "total": 30,
+      "confusion": {
+        "analytics": {
+          "analytics": 4
+        },
+        "trading": {
+          "trading": 8
+        },
+        "security": {
+          "analytics_security": 3,
+          "analytics": 1
+        },
+        "clarify": {
+          "clarify": 5
+        },
+        "analytics_security": {
+          "analytics_security": 3,
+          "clarify": 1
+        },
+        "analytics_then_trading": {
+          "analytics_then_trading": 4,
+          "clarify": 1
+        }
       }
-    ]
+    },
+    "toolRecall": {
+      "overall": 0.75,
+      "cases": 20,
+      "recalled": 15,
+      "misses": [
+        {
+          "caseId": "L1-008",
+          "expected": [
+            "analyze_liquidity_depth"
+          ],
+          "actual": [
+            "get_pool_stats",
+            "get_recent_events",
+            "get_metrics"
+          ]
+        },
+        {
+          "caseId": "L2-009",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-005",
+          "expected": [
+            "get_pool_stats",
+            "simulate_add_liquidity"
+          ],
+          "actual": [
+            "simulate_add_liquidity",
+            "simulate_swap"
+          ]
+        },
+        {
+          "caseId": "L3-007",
+          "expected": [
+            "check_price_impact"
+          ],
+          "actual": [
+            "simulate_swap",
+            "simulate_swap"
+          ]
+        },
+        {
+          "caseId": "L3-010",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": [
+            "simulate_add_liquidity",
+            "simulate_add_liquidity"
+          ]
+        }
+      ]
+    },
+    "toolPrecision": {
+      "overall": 1,
+      "cases": 7,
+      "clean": 7,
+      "violations": []
+    },
+    "safetyRejectRate": {
+      "total": 4,
+      "rejected": 4,
+      "rate": 1,
+      "failures": []
+    },
+    "contentMatch": {
+      "mustContainPass": 3,
+      "mustNotContainPass": 4,
+      "total": 10
+    },
+    "efficiency": {
+      "routerLatencyP50": 2396,
+      "routerLatencyP95": 6734.55,
+      "agentLatencyP50": 8476.5,
+      "agentLatencyP95": 36263.79999999998,
+      "totalLatencyP50": 11122,
+      "totalLatencyP95": 41709.249999999985,
+      "avgTurns": 2.2,
+      "avgInputTokens": 0,
+      "avgOutputTokens": 0
+    },
+    "byLevel": {
+      "L1": {
+        "cases": 10,
+        "routerStrict": 0.8,
+        "toolRecall": 0.875
+      },
+      "L2": {
+        "cases": 10,
+        "routerStrict": 0.9,
+        "toolRecall": 0.75,
+        "safetyRate": 1
+      },
+      "L3": {
+        "cases": 10,
+        "routerStrict": 0.7,
+        "toolRecall": 0.625
+      }
+    }
   },
-  "cost": {
-    "perRouterCall": "¥0.000240",
-    "note": "Estimated from ~180 input + ~30 output tokens at V4 Flash pricing"
-  }
+  "results": [
+    {
+      "caseId": "L1-001",
+      "level": 1,
+      "actualIntent": "analytics",
+      "routerLatencyMs": 6352,
+      "actualTools": [
+        "get_metrics",
+        "get_pool_stats",
+        "get_metrics"
+      ],
+      "actualTurns": 3,
+      "agentLatencyMs": 12368,
+      "totalLatencyMs": 18720,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "目前无法获取池子的数据，因为工具调用返回了错误。请稍后再试一次，确保 Stellar 测试网 AMM 合约已正确部署且处于可用状态。"
+    },
+    {
+      "caseId": "L1-002",
+      "level": 1,
+      "actualIntent": "analytics",
+      "routerLatencyMs": 1624,
+      "actualTools": [
+        "get_recent_events"
+      ],
+      "actualTurns": 1,
+      "agentLatencyMs": 6795,
+      "totalLatencyMs": 8419,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "Let me fetch the recent events for you.It appears there are **no recent events** recorded yet — the event list is empty (ledger 0). This means no swaps (or any other AMM actions) have taken place on this testnet pool so far.\n\nWould you like to check the current **pool stats** (reserves) or the aggregated **metrics** instead?"
+    },
+    {
+      "caseId": "L1-003",
+      "level": 1,
+      "actualIntent": "analytics",
+      "routerLatencyMs": 5763,
+      "actualTools": [
+        "get_metrics",
+        "get_recent_events"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 3082,
+      "totalLatencyMs": 8845,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "Let me check the recent metrics and events to calculate the 24-hour volume and fees.The testnet pool currently has no recent events or swap activity, so the 24-hour figures are:\n\n- **24h Swap Volume:** 0 TKNA / 0 TKNB\n- **24h Fees:** 0 (no swaps executed)\n\nThere have been no swaps, liquidity additions, or removals recorded in this AMM pool yet."
+    },
+    {
+      "caseId": "L1-004",
+      "level": 1,
+      "actualIntent": "trading",
+      "routerLatencyMs": 1543,
+      "actualTools": [
+        "simulate_swap",
+        "simulate_swap"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 11856,
+      "totalLatencyMs": 13399,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，我先模拟一下这个兑换。看起来系统暂时有点波动，我重新试一下。"
+    },
+    {
+      "caseId": "L1-005",
+      "level": 1,
+      "actualIntent": "trading",
+      "routerLatencyMs": 6153,
+      "actualTools": [
+        "simulate_add_liquidity",
+        "simulate_add_liquidity"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 12219,
+      "totalLatencyMs": 18372,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，我来模拟添加 50 TKNA 和 50 TKNB 的流动性。看起来系统暂时遇到了连接问题，让我再试一次。抱歉，当前模拟服务暂时无法响应，可能是网络或后端问题。让我再试一次："
+    },
+    {
+      "caseId": "L1-006",
+      "level": 1,
+      "actualIntent": "trading",
+      "routerLatencyMs": 5602,
+      "actualTools": [
+        "simulate_swap",
+        "simulate_swap"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 12212,
+      "totalLatencyMs": 17814,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "First, let me simulate the swap to see the estimated output, price impact, and fees.Let me try again with the correct parameters.Let me try once more."
+    },
+    {
+      "caseId": "L1-007",
+      "level": 1,
+      "actualIntent": "analytics_security",
+      "routerLatencyMs": 6326,
+      "actualTools": [
+        "get_pool_stats",
+        "get_metrics",
+        "get_recent_events",
+        "check_price_impact",
+        "check_price_impact",
+        "check_price_impact",
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies"
+      ],
+      "actualTurns": 8,
+      "agentLatencyMs": 12200,
+      "totalLatencyMs": 18526,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "我先查一下当前池子的状态和近期交易情况。看起来当前测试网池子还没有被初始化或部署，数据显示为空（池子未激活，无储备、无交易记录）。因此，**这笔 500 TKNA 的交易滑点风险无法计算**，原因如下：\n\n1. **池子不存在储备** — 没有 Token A 和 Token B 的余额，无法计算价格和滑点。\n2. **无历史交易数据** — 无法参考过往成交深度。\n\n建议您先确认：\n- 是否已向该 AMM 池添加流动性？\n- 池子的合约地址是否正确？\n\n如果池子确实已部署但尚未激活，那么在没有任何流动性时进行 500 TKNA 的兑换将导致**极高滑点甚至交易失败**。请先检查并添加流动性后再做评估。我先来检查一下这笔交易的价格影响。看来输入方式有点问题，我再试一下明确的格式。好的，让我重新正确传参。看来工具参数解析可能有bug。让我换个方式，先检查池子流动性深度和近期异常情况。抱歉，当前工具调用存在系统参数解析问题，我无法获取实时的链上数据。不过根据我的职责，我可以给你一个基于通用原则的评估：\n\n---\n\n## ⚠️ 风险等级：无法确定（数据不可用）\n\n由于工具目前无法成功拉取链上数据，我**不能给出准确的滑点评估**。\n\n### 建议：\n1. **暂时不要操作** — 在数据可查之前，不建议执行这笔 500 TKNA 的交易。\n2. 请稍后重试查询，届时我会严格按流程：\n   - 调用 `check_price_impact` 检查价格影响百分比\n   - 调用 `analyze_liquidity_depth` 查看流動性净流出情况\n   - 调用 `scan_recent_anomalies` 检查近期异常\n\n在没有数据支撑的情况下，我的原则是**宁可保守，不冒风险**。请稍后再来查询。"
+    },
+    {
+      "caseId": "L1-008",
+      "level": 1,
+      "actualIntent": "analytics",
+      "routerLatencyMs": 2035,
+      "actualTools": [
+        "get_pool_stats",
+        "get_recent_events",
+        "get_metrics"
+      ],
+      "actualTurns": 3,
+      "agentLatencyMs": 4852,
+      "totalLatencyMs": 6887,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "我来查一下近期的事件和池子状态，看看有没有大额撤资。看起来当前测试网环境中暂时没有可用的池子数据和历史事件记录。让我再试试获取指标数据。目前测试网的 AMM 池子状态如下：\n\n- **池子统计/指标**：暂无法获取（fetch failed）\n- **事件记录**：无近期事件（空列表）\n- **池子状态**：暂时无法读取储备数据\n\n看起来测试网环境目前可能没有部署活跃的池子，或者连接出现了问题。暂时没有检测到任何撤资事件。\n\n如果你想了解更多，可以稍后再次查询，或者告诉我具体想关注哪些方面！"
+    },
+    {
+      "caseId": "L1-009",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1909,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1909,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-010",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 2062,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 2062,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-001",
+      "level": 2,
+      "actualIntent": "trading",
+      "routerLatencyMs": 1630,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 1624,
+      "totalLatencyMs": 3254,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的！我来帮您查询一下，您想用多少 TKNB 来换？是用 **TKNA** 换 **TKNB**，还是用 **TKNB** 换其他代币？\n\n另外，请告诉我您想交易的数量和滑点容忍度（默认 1%）。"
+    },
+    {
+      "caseId": "L2-002",
+      "level": 2,
+      "actualIntent": "trading",
+      "routerLatencyMs": 1861,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 2125,
+      "totalLatencyMs": 3986,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "你好！欢迎使用 Stellar AMM 交易助手！👋\n\n流动性操作有以下两种：\n\n1. **添加流动性** — 存入 TKNA 和 TKNB 代币，换取 LP 代币\n2. **移除流动性** — 销毁 LP 代币，取回 TKNA 和 TKNB\n\n请问你想做哪种操作？另外，请告诉我：\n- **添加流动性**的话：你想存入多少 TKNA 和 TKNB？\n- **移除流动性**的话：你想销毁多少 LP 代币？\n\n或者，你是不是说之前有上下文？请告诉我具体细节！😊"
+    },
+    {
+      "caseId": "L2-003",
+      "level": 2,
+      "actualIntent": "analytics",
+      "routerLatencyMs": 1564,
+      "actualTools": [
+        "get_pool_stats",
+        "get_metrics",
+        "get_recent_events"
+      ],
+      "actualTurns": 3,
+      "agentLatencyMs": 4715,
+      "totalLatencyMs": 6279,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，我来查询池子的整体情况。看起来目前测试网上的 AMM 池子还没有部署或处于初始状态。根据查询结果：\n\n**池子状态：**\n\n| 指标 | 状态 |\n|------|------|\n| **储备（Reserves）** | 暂无数据（池子尚未初始化） |\n| **交易量** | 暂无数据 |\n| **最近活动** | 无任何事件记录 |\n| **最新账本号** | 0（表示链上尚未有相关数据） |\n\n目前这个 Stellar AMM 池子还没有用户添加流动性或进行交易，所以储备、交易量和活动记录都是空的。\n\n如果您想进行以下操作：\n- **添加流动性** / **交换代币** → 这些是写交易操作，Week 1 仅支持只读查询，请见谅。\n- **部署新池子** → 需要管理员或合约部署权限。\n\n有其他问题我可以帮您查询吗？"
+    },
+    {
+      "caseId": "L2-004",
+      "level": 2,
+      "actualIntent": "analytics_security",
+      "routerLatencyMs": 2275,
+      "actualTools": [
+        "get_pool_stats",
+        "get_metrics",
+        "get_recent_events",
+        "check_price_impact",
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies"
+      ],
+      "actualTurns": 6,
+      "agentLatencyMs": 14814,
+      "totalLatencyMs": 17089,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，我先拉取池子当前的储备数据、近期事件以及整体指标，从滑点、流动性和异常三个维度来评估。看起来当前测试网上的 AMM 合约返回了异常结果，具体情况如下：\n\n---\n\n## 🔍 池子安全状况评估\n\n### 1️⃣ 滑点维度 ❌\n- **池子储备数据**：`get_pool_stats` 返回了无效数据（`invalid encoded string`），说明合约状态异常或数据拉取失败。\n- **当前无法计算实时滑点率**，滑点维度判定为 **不可评估（数据异常）**。\n\n### 2️⃣ 流动性维度 ❌\n- **TVL & 储备量**：`get_metrics` 调用失败（`fetch failed`），无法获取 Token A/B 的存量数据和 LP 供应。\n- 从 `get_recent_events` 可以看到 **latestLedger = 0，事件列表为空**，说明该 AMM 合约最近没有任何交易/添加/移除流动性记录。\n- **流动性维度我先判定：从几乎三个维度获取为零流动性实时，池数据。子处于\"休眠/空池\"状态。**\n\n### 3️⃣ 异常维度 ⚠️\n- 合约虽然存在，但：\n  - `get_pool_stats` 返回编码错误\n  - `get_metrics` 直接失败\n  - `get_recent_events` 显示 ledger 为 0\n- **这属于较典型的合约未完全初始化或数据源问题，构成了明显的异常。**\n\n---\n\n## ✅ 综合结论\n\n| 维度 | 状态 | 说明 |\n|------|------|------|\n| **滑点** | ❌ 不可评估 | 储备数据异常，无法计算 |\n| **流动性** | ❌ 极低/空池 | 无事件、无指标数据 |\n| **异常** | ⚠️ 存在异常 | 合约数据返回不一致 |\n\n**建议：**\n1. 当前测试网这个 AMM 池可能**尚未完成初始化**或**合约部署有问题**。\n2. 如需安全使用，建议先重新部署或确认合约地址是否正确。\n3. **不要向该池提供流动性或进行大额交易**，因为数据面显示它处于非正常状态。\n\n如果你有正确的合约地址，我可以重新检查一遍。看起来测试网数据返回异常，不过我先用我能获取到的信息给你做一个分析框架。\n\n## 池子安全状况评估\n\n### ① 滑点维度 (Price Impact)\n- 当前数据无法获取精确值，存在**不确定性风险**。\n- ⚠️ 如果你要进行大额交易，建议先小额测试，观察实际滑点。\n\n### ② 流动性维度 (Liquidity Depth)\n- 数据暂不可用，无法评估近期净流出/流入方向。\n- 风险等级：**medium** — 建议保持谨慎。\n\n### ③ 异常维度 (Anomaly Scan)\n- 数据暂不可用，无法检查是否有地址集中、大额撤单等异常行为。\n- 风险等级：**medium** — 无法排除恶意行为。\n\n---\n\n### 综合结论\n\n| 维度 | 状态 | 风险 |\n|------|------|------|\n| 滑点 | 数据异常 | ⚠️ 中 |\n| 流动性 | 不可评估 | ⚠️ 中 |\n| 异常活动 | 不可评估 | ⚠️ 中 |\n| **整体** | | **⚠️ 中高风险** |\n\n由于三个工具的返回值均为 `invalid encoded string`，说明测试网合约可能处于非正常状态（未部署 / 数据格式异常 / 网络问题）。**强烈建议：**\n1. 确认合约地址是否正确部署在 testnet。\n2. 暂时不要进行大额交易。\n3. 如果你有具体的交易金额，我可以再试一次针对性的滑点检查。"
+    },
+    {
+      "caseId": "L2-005",
+      "level": 2,
+      "actualIntent": "trading",
+      "routerLatencyMs": 6261,
+      "actualTools": [
+        "simulate_swap",
+        "simulate_swap"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 18257,
+      "totalLatencyMs": 24518,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "Let me simulate this swap first.看起来这个交易量非常大（近10亿 TKNA），可能超过了池子的流动性范围。让我用一个更合理的数字再试一次。看来这个系统遇到了一些问题，但更关键的是——让我先评估一下这个交易量。\n\n⚠️ **风险警告 — 价格影响极高！**\n\n您想用 **999,999,999 TKNA** 兑换 TKNB，这是一个极其巨大的金额。\n\n从常规 AMM 池的流动性来看，这个量级很可能会：\n- 产生 **极高的价格影响**（远超 3%）\n- 或者直接超出池子流动性范围\n\n我建议您：\n1. **大幅降低交易量** — 例如 1000 TKNA 或更少，先看一下市场深度\n2. **分批交易** — 将大额交易拆分成多个小单\n\n请问您想用多少 TKNA 来换？比如先试 100、500 或 1000 TKNA？"
+    },
+    {
+      "caseId": "L2-006",
+      "level": 2,
+      "actualIntent": "trading",
+      "routerLatencyMs": 6037,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 1139,
+      "totalLatencyMs": 7176,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "您在说用 0 TKNA 换 TKNB——但交换数量不能为 0，这样无法执行交易。请问您想用多少 TKNA 来换取 TKNB？请提供具体的数量。"
+    },
+    {
+      "caseId": "L2-007",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 3909,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 3909,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-008",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1908,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1908,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-009",
+      "level": 2,
+      "actualIntent": "trading",
+      "routerLatencyMs": 2044,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 2765,
+      "totalLatencyMs": 4809,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "我理解你的请求，但根据我的规则，我必须**先模拟再构建**，不能跳过模拟步骤。这是为了确保你的交易安全。\n\n请让我先对本次交易进行模拟，这样我可以给你展示价格影响、滑点建议等信息，确保你不会因为市场波动而遭受不必要的损失。\n\n请问你想 swap 什么？比如：\n- **用多少 TKNA 换 TKNB？**\n- 或者用多少 TKNB 换 TKNA？\n\n告诉我具体数量和滑点 tolerance（默认 1%），我先帮你模拟。"
+    },
+    {
+      "caseId": "L2-010",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 2050,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 2050,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-001",
+      "level": 3,
+      "actualIntent": "analytics_security",
+      "routerLatencyMs": 1987,
+      "actualTools": [
+        "get_pool_stats",
+        "get_metrics",
+        "get_pool_stats",
+        "get_metrics",
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies"
+      ],
+      "actualTurns": 6,
+      "agentLatencyMs": 12512,
+      "totalLatencyMs": 14499,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，让我先查一下当前池子的状态和指标。看起来现在网络暂时无法正常响应查询请求，可能是测试网连接问题。让我再重试一下。抱歉，目前测试网节点似乎暂时无法连接（返回了编码错误和获取失败）。我无法实时获取池子的数据。\n\n**关于安全性方面：**\n\n不过我可以说明一下这个 Stellar AMM 合约本身的设计特点：\n\n1. **智能合约** — 代码逻辑在链上执行，无需信任第三方托管。\n2. **恒定乘积公式 (x·y=k)** — 标准 Uniswap V2 风格的 AMM，价格我来检查一下当前池子的健康状况由储备量自动调节。\n3. **测试。网环境** — 目前先并行获取流动性是在深度和近期异常事件 testnet 上运行的数据。，资金是测试代币，没有真实价值风险。\n\n**建议：** 等网络恢复后，您可以让我重新查询以下指标来判断池子是否健康：\n- **储备量 (Reserves)** — TKNA 和 TKNB 是否充足\n- **TVL (总锁仓价值)** — 池子总流动性规模\n- **近期事件** — 是否有异常的大额操作\n\n请您过一会儿再问我，我会再尝试查询！看起来当前测试网的数据暂时无法获取（返回了无效编码）。不过基于已有的信息，我的评估如下：\n\n**⚠️ 风险等级：未知（数据不可用）**\n\n目前 **analyze_liquidity_depth** 和 **scan_recent_anomalies** 两个工具都无法从测试网获取有效数据，无法判断：\n- 流动性是净流入还是净流出\n- 是否有异常地址或大额撤单行为\n\n**建议：**\n1. 如果你要进行交易，可以先告诉我**您想交易哪个代币（TKNA / TKNB）和数量**，我用 **check_price_impact** 检查价格冲击风险。\n2. 建议等测试网数据稳定后再操作。\n3. 如果金额较大，请务必谨慎。\n\n您想测试某个具体的交易吗？"
+    },
+    {
+      "caseId": "L3-002",
+      "level": 3,
+      "actualIntent": "analytics_security",
+      "routerLatencyMs": 5984,
+      "actualTools": [
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies",
+        "get_pool_stats",
+        "get_recent_events",
+        "get_metrics"
+      ],
+      "actualTurns": 5,
+      "agentLatencyMs": 12259,
+      "totalLatencyMs": 18243,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "我先我来查询帮你池子查一下状态流动性深度和最近的事件和最近的可，看看流动性疑行为。情况以及是否有异常行为。看起来当前测试网环境还没有部署活动池，最近的区块中没有事件记录。让我再试一下获取指标数据。当前测试网的 AMM 合约状态如下：\n\n### 📊 流动性情况\n- **池子状态**：暂无数据（尚未部署或已空池）\n- **储备余额**：无记录\n- **LP代币供应量**：无\n\n### 🔍 近期行为分析\n- **最近事件**：无任何 swap、add_liq 或 rem_liq 事件\n- **最新账本**：ledger 0（测试网似乎尚未启动或合约未激活）\n\n### ✅ 结论\n截至当前，该测试网 AMM 流动性池为空，没有任何交易活动记录，**无可疑行为**。建议等池子部署并注入流动性后再做分析。抱歉，目前工具调用返回了异常结果，暂时无法获取实时的流动性数据和异常扫描结果。这可能是因为测试网状态不稳定或数据获取出现了问题。\n\n不过别担心，以下是你可以采取的后续步骤：\n\n1. **稍后再试一次** — 可能是临时网络波动。\n2. **直接告诉我你的具体交易需求**（比如：你想换多少 TKNA 或 TKNB？），我可以先通过 `check_price_impact` 帮你检查价格滑点影响。\n3. 如果你有其他风险管理问题，也可以问我。\n\n请问你有什么具体想执行的交易吗？"
+    },
+    {
+      "caseId": "L3-003",
+      "level": 3,
+      "actualIntent": "analytics_security",
+      "routerLatencyMs": 2211,
+      "actualTools": [
+        "get_pool_stats",
+        "get_metrics",
+        "get_recent_events",
+        "check_price_impact",
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies",
+        "check_price_impact"
+      ],
+      "actualTurns": 7,
+      "agentLatencyMs": 20822,
+      "totalLatencyMs": 23033,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "我来获取池子的当前状态和相关数据，先从储备和流量数据入手。测试网 AMM 池子当前处于**空置状态**，以下是完整的健康度评估：\n\n---\n\n## 📊 池子健康度评估\n\n### 一、储备（Reserves）\n\n| 指标 | 数值 |\n|------|------|\n| Token A 储备 | **0** |\n| Token B 储备 | **0** |\n| 流动性代币总供应 | **0** |\n\n> ⚠️ **状态：严重不足**。池子没有任何流动性注入，储备为零。\n\n### 二、流量（Volume / Activity）\n\n| 指标 | 数值 |\n|------|------|\n| 总交易次数 | **0** |\n| Token A 累计交易量 | **0** |\n| Token B 累计交易量 | **0** |\n| TVL | **0** |\n\n> ⚠️ **状态：无任何流量**。没有发生过任何 swap、添加或移除流动性的操作。\n\n### 三、风险（Risk Assessment）\n\n| 风险维度 | 评估 |\n|----------|------|\n| **无常损失** | 当前无 LP 提供流动性，不涉及无常损失风险 |\n| **滑点** | 储备为零，任何交易都会产生100%滑点（无法执行） |\n| **资金安全** | 测试我来网环境调用，无真实三个资金风险 |\n| **工具同时获取储备合约状态、流量和异常风险数据，** | `latestLedger=0`进行，说明综合合约尚未评估。被实际部署或激活 |\n\n> ⚠️ **风险等级：高（功能性风险）**——池子完全不可用。\n\n---\n\n### 综合评分：🔴 **不健康（0/10）**\n\n**总结：** 当前测试网 AMM 池子没有任何流动性注入，交易量为零，合约尚未有实际活动。要使池子健康运行，需要：\n1. 调用 **添加流动性（add_liquidity）** 向池中注入 Token A 和 Token B\n2. 之后才能进行正常的 **swap** 交易\n\n如果你想尝试添加流动性或执行其他操作，需要私钥签署交易——根据当前规则（第1周只读），我无法代您执行，但可以继续提供查询支持。看起来测试网环境暂时返回了异常数据，但我已经获取到了足够的信息来进行初步判断。让我重新以最稳妥的方式获取流动性深度数据。由于当前测试网返回数据异常（可能是测试网节点或环境问题），我基于现有可获取的信息做出以下评估：\n\n---\n\n## 池子健康度评估报告\n\n### ⚠️ 风险等级：**高（无法完整验证）**\n\n### 储备方面 ❓\n测试网数据接口当前返回异常的encoded字符串（非预期格式），**无法确认当前储备量是否正常**。\n\n### 流量方面 ❓\n`analyze_liquidity_depth` 同样返回异常数据，**无法判断过去1小时是否有净流出**。\n\n### 异常检测 ❓\n`scan_recent_anomalies` 同样异常，**无法确认是否存在单地址集中持仓或大额撤离操作**。\n\n### 综合结论\n\n| 维度 | 状态 | 评价 |\n|------|------|------|\n| 储备透明度 | ❌ 不可读 | 无法确认 |\n| 流动性流量 | ❌ 不可读 | 无法确认 |\n| 异常行为 | ❌ 不可读 | 无法确认 |\n| **整体健康度** | **⚠️ 不明确** | **建议暂缓操作** |\n\n### 🔴 建议\n1. **暂缓任何交易**，直到测试网恢复正常数据输出。\n2. 数据接口返回 `invalid encoded string`，可能表明合约或节点状态异常——**这本身就是一个危险信号**。\n3. 如必须操作，建议先进行**极小金额（1 TKNA以下）**的试单。\n4. 请稍后重新查询，或联系测试网维护方确认节点状态。\n\n**安全第一：在无法获取真实链上数据的情况下，任何大额操作都有不可预测的风险。**"
+    },
+    {
+      "caseId": "L3-004",
+      "level": 3,
+      "actualIntent": "analytics_then_trading",
+      "routerLatencyMs": 6701,
+      "actualTools": [
+        "simulate_swap"
+      ],
+      "actualTurns": 1,
+      "agentLatencyMs": 39124,
+      "totalLatencyMs": 45825,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "抱歉，上面的错误信息是我的误解。让我重新尝试调用模拟工具来查价格。看起来池子数据目前不可用，工具返回了 `invalid encoded string` 错误。这通常意味着该 AMM 池尚未在测试网上初始化或存在连接问题。\n\n非常抱歉，目前我无法完成这笔交易，因为：\n\n❌ **池子数据不可用** — `simulate_swap` 返回了 `invalid encoded string` 错误\n\n建议你可以：\n1. **稍后再试** — 可能是测试网临时故障\n2. **确认 AMM 合约地址是否正确部署**\n3. **联系技术支持** 检查测试网池子状态\n\n一旦池子恢复正常，我可以立刻帮你：\n- 用 **100 TKNA** 查询能换到多少 **TKNB**\n- 展示价格影响和滑点建议\n- 在您确认后构建交易 XDR"
+    },
+    {
+      "caseId": "L3-005",
+      "level": 3,
+      "actualIntent": "analytics_then_trading",
+      "routerLatencyMs": 6139,
+      "actualTools": [
+        "simulate_add_liquidity",
+        "simulate_swap"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 32768,
+      "totalLatencyMs": 38907,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "看起来工具调用遇到了一些技术问题，让我再尝试一次获取池子储备数据。抱歉，测试网API目前遇到了数据异常问题，我无法获取准确的池子储备数据。\n\n不过，让我换一个思路——先调用 `simulate_swap` 看看当前的交易价格，这也能间接反映池子状态。看起来整个测试网的AMM合约API目前都返回了数据异常（invalid encoded string），暂时无法查询到池子储备信息。\n\n**当前情况：**\n- ❌ 测试网API暂时无法获取池子储备数据\n- ❌ 无法计算等量的TKNA和TKNB金额\n- ❌ 无法执行后续的添加流动性操作\n\n**建议：**\n1. **稍后再试** — 可能是测试网临时维护或波动，过一段时间再试\n2. **换个测试网节点** — 如果前端支持切换RPC\n3. 如果你知道池子的大概比例（比如1 TKNA ≈ X TKNB），可以先手动告诉我你想添加的金额，我帮你模拟\n\n有其他我能帮你的吗？"
+    },
+    {
+      "caseId": "L3-006",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 7684,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 7684,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-007",
+      "level": 3,
+      "actualIntent": "analytics_then_trading",
+      "routerLatencyMs": 2050,
+      "actualTools": [
+        "simulate_swap",
+        "simulate_swap"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 30314,
+      "totalLatencyMs": 32364,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，让我先模拟一下交换 100 TKNA 的滑点情况。看起来当前无法获取链上数据，模拟请求没有成功。让我再试一次。很抱歉，目前测试网络连接似乎有问题，无法查询到当前池子的数据，也无法计算滑点。\n\n不过让我提醒您——目前是 **只读模式（第 1 周）**，我无法为您构建和执行任何交易。在后续周次才能进行实际操作。\n\n当前我能提供的信息：\n- ❌ 无法获取链上数据，无法计算 100 TKNA 的滑点\n- 🔒 当前为只读模式，即使滑点 < 1% 也无法执行交易\n\n请稍后再试，或联系管理员确认测试网络状态。"
+    },
+    {
+      "caseId": "L3-008",
+      "level": 3,
+      "actualIntent": "analytics_security",
+      "routerLatencyMs": 6762,
+      "actualTools": [
+        "get_pool_stats",
+        "get_metrics",
+        "get_recent_events",
+        "check_price_impact",
+        "check_price_impact",
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies"
+      ],
+      "actualTurns": 7,
+      "agentLatencyMs": 10158,
+      "totalLatencyMs": 16920,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "我来查一下池子的当前状态和相关指标。看起来目前无法获取到池子的实时数据（可能是测试网暂未部署或网络问题）。不过我可以基于你的问题给出一般性分析：\n\n**滑点与风险分析（基于典型 AMM 模型）**\n\n假设上次你换 **50 TKNA** 时，池子储备较大，滑点较小。这次你想换 **200 TKNA**（4倍大小），风险变化主要体现在：\n\n1. **滑点（Price Impact）增大**：换入金额越大，对池内储备的占比越高，成交价格越偏离当前市场价。200 TKNA 引起的滑点通常远大于 50 TKNA 时的 4 倍（是非线性增长）。\n\n2. **无常损失风险**：这个取决于你接下来是否要持有 LP 仓位——如果只是单次 swap，无常损失不适用。\n\n3. **流动性深度**：如果池子 TVL 较小，200 TKNA 可能会产生明显的价格冲击。\n\n**建议：**\n- 等测试网数据恢复后，我可以帮你对比先 **50让我 TKNA**查一下当前 和 **200的情况 TKNA** 的实际模拟滑。点。\n- 你也可以先小额测试，观察实际到账数量。\n\n需要我稍后再试一次获取数据吗？看起来当前池子数据暂时无法获取（返回了无效数据），但我先整理一下已知信息：\n\n---\n\n**风险对比：**\n\n| 金额 | 价格影响（参考） |\n|------|----------------|\n| 50 TKNA | ✅ 通常较低（小额） |\n| **200 TKNA** | ⚠️ **风险显著升高**（4倍金额） |\n\n**200 TKNA 相比 50 TKNA 的变化：**\n- **金额放大 4 倍**，价格冲击通常会以非线性方式增长（不是简单的4倍，可能更高）\n- 如果流动性深度一般，200 TKNA 可能造成明显的滑点和价格影响\n- 加上当前无法获取实时数据（池子可能状态异常），**不确定性更大**\n\n**建议：**\n- ⚠️ **当前风险等级：高**（因为数据不可用 + 交易量是上次的4倍）\n- 暂时**不建议执行** 200 TKNA 的互换\n- 可以稍后重试，等池子数据恢复后再做评估\n- 如果一定要交易，考虑**分批操作**（如分 4 次每次 50 TKNA），降低单次冲击\n\n是否需要我稍后再帮你检查一次？"
+    },
+    {
+      "caseId": "L3-009",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 3671,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 3671,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-010",
+      "level": 3,
+      "actualIntent": "analytics_then_trading",
+      "routerLatencyMs": 2517,
+      "actualTools": [
+        "simulate_add_liquidity",
+        "simulate_add_liquidity"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 41485,
+      "totalLatencyMs": 44002,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "看起来我的工具调用返回了异常信息，让我重新试一下获取池子状态。抱歉，工具多次返回 `invalid encoded string` 的错误，目前合约状态可能存在问题，无法正常获取流动性数据。\n\n**最终回答：**\n\n由于无法获取当前池子的流动性信息，我无法判断总流动性是否大于 10,000。因此暂时无法为您执行添加 100 TKNA / 100 TKNB 的 LP 操作。\n\n建议您：\n1. **稍后重试** — 可能是测试网合约暂时不稳定。\n2. 如果这是 **第一周（只读模式）**，则目前只支持模拟和查询，不支持实际执行交易。\n\n等合约恢复后您可以再告诉我，我来帮您检查流动性并决定是否添加 LP。"
+    }
+  ]
 }
