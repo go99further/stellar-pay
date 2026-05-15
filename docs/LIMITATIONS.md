@@ -140,6 +140,30 @@ For each item: **what's wrong**, **how it manifests**, and **what would fix it i
 
 ---
 
+## L12 — Anomaly settler path is short-circuited (same fate as sandwich)
+
+**What:** `settleAnomalyByFollowup` requires decoded AMM events to check if the suspect address made follow-up `rem_liq` operations. But `usePriceAlerts.ts` doesn't pass decoded events to `settleAllPending` (it only passes reserves for TVL settlement). So anomaly records are triggered and recorded, but never settled — they expire after 24h.
+
+**How it manifests:** `getSecurityStats("anomaly")` will show `pending` growing and eventually `expired` growing, but `confirmed` and `falsePositives` stay at 0. Precision is null forever.
+
+**Fix path:** Decode events in the 30s poll (call `fetchAmmEvents` + decode) and pass them to `settleAllPending({ sandwich: { events, currentLedger } })`. This is the same fix needed for sandwich (LIMITATIONS L2). Estimated cost: 1 hour (event decoding pipeline in the hook).
+
+**Status:** Known. Same structural issue as sandwich (L2). Both need the event pipeline wired into the hook.
+
+---
+
+## L13 — stale_price detection and settlement share the same tolerance oracle
+
+**What:** `detectStalePrice` triggers when price ratio variation is within `stalePriceTolerancePct`. `settleByReservesChange` (stale_price branch) settles by checking if the current ratio has diverged from the trigger-time ratio by more than the same `stalePriceTolerancePct`. This creates a structural self-correlation: the settlement is testing whether the condition that triggered the alert has changed — using the same threshold that defined the trigger.
+
+**How it manifests:** The settlement is essentially asking "is the price still stale by the same definition that triggered the alert?" This is tautologically biased toward `confirmed` — if the price was stale enough to trigger, it's likely still stale 30 minutes later (stale prices tend to stay stale). The `false_positive` path requires a price movement larger than the trigger tolerance, which is a higher bar than random.
+
+**Fix path:** Use an independent settlement oracle — e.g., check whether any swap events occurred in the pool during the 30-minute window (event-based signal, not price-ratio-based). Or use a different, larger tolerance for settlement (e.g., 2× the detection tolerance).
+
+**Status:** Known. The current implementation is functional but structurally self-correlated. A reviewer would correctly identify this as "circular validation."
+
+---
+
 ## What we don't claim
 
 To be explicit about scope:

@@ -209,28 +209,28 @@ describe("settleByReservesChange — imbalance", () => {
   beforeEach(() => localStorage.clear());
   afterEach(() => { localStorage.clear(); clearSecurityFeedback(); });
 
-  it("marks false_positive when imbalance corrected by > 20%", () => {
+  it("confirms when imbalance corrected by arbitrage (> 20% improvement)", () => {
     const ctx: ImbalanceContext = {
       imbalanceRatio: 10.0,
       reserveAAtTrigger: "10000000",
       reserveBAtTrigger: "1000000",
     };
     recordSecurityTrigger("imbalance", "high", ctx, 1_000);
-    // Now ratio is 2:1 — much better (corrected by > 20%)
+    // Now ratio is 2:1 — much better (corrected by > 20%) → confirmed (detector was right)
     const settled = settleByReservesChange(2_000_000, 1_000_000, 1_000 + 1_800_001);
-    expect(settled.some(r => r.detectorType === "imbalance" && r.outcome === "false_positive")).toBe(true);
+    expect(settled.some(r => r.detectorType === "imbalance" && r.outcome === "confirmed")).toBe(true);
   });
 
-  it("confirms imbalance when ratio persists", () => {
+  it("marks false_positive when imbalance persists (structural, not exploitable)", () => {
     const ctx: ImbalanceContext = {
       imbalanceRatio: 10.0,
       reserveAAtTrigger: "10000000",
       reserveBAtTrigger: "1000000",
     };
     recordSecurityTrigger("imbalance", "high", ctx, 1_000);
-    // Still 10:1 — no improvement
+    // Still 10:1 — no improvement → false_positive (structural, not a real alert)
     const settled = settleByReservesChange(10_000_000, 1_000_000, 1_000 + 1_800_001);
-    expect(settled.some(r => r.detectorType === "imbalance" && r.outcome === "confirmed")).toBe(true);
+    expect(settled.some(r => r.detectorType === "imbalance" && r.outcome === "false_positive")).toBe(true);
   });
 
   it("does not settle before 30 minutes", () => {

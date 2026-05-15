@@ -451,13 +451,16 @@ export function settleByReservesChange(
       outcome = priceChanged ? "false_positive" : "confirmed";
       evidence = { currentRatio, priceRatioAtTrigger: ctx.priceRatioAtTrigger, priceChanged };
     } else {
+      // imbalance: if the market corrected the imbalance (arbitrage came in),
+      // that CONFIRMS the detector caught a real exploitable opportunity.
+      // If imbalance persists, it may be structural (pool design) → false_positive.
       const ctx = rec.triggerContext as ImbalanceContext;
       const currentImbalance =
         currentReserveA !== 0 && currentReserveB !== 0
           ? Math.max(currentReserveA / currentReserveB, currentReserveB / currentReserveA)
           : 1;
       const improved = (ctx.imbalanceRatio - currentImbalance) / ctx.imbalanceRatio > 0.2;
-      outcome = improved ? "false_positive" : "confirmed";
+      outcome = improved ? "confirmed" : "false_positive";
       evidence = { currentImbalance, imbalanceRatioAtTrigger: ctx.imbalanceRatio, improved };
     }
 
