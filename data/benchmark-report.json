@@ -1,0 +1,180 @@
+{
+  "timestamp": "2026-05-15T08:24:53.537Z",
+  "model": "deepseek-v4-flash",
+  "router": {
+    "totalCases": 20,
+    "correct": 19,
+    "accuracy": 0.95,
+    "latencies": [
+      1482,
+      1493,
+      1557,
+      1568,
+      1656,
+      1730,
+      1764,
+      1865,
+      1887,
+      1890,
+      1970,
+      2118,
+      2146,
+      2292,
+      2323,
+      2376,
+      2539,
+      2845,
+      3184,
+      7261
+    ],
+    "p50Ms": 1930,
+    "p95Ms": 3387.850000000003,
+    "avgMs": 2297.3,
+    "results": [
+      {
+        "input": "当前池子 TVL 多少",
+        "expected": "analytics",
+        "actual": "analytics",
+        "correct": true,
+        "latencyMs": 7261
+      },
+      {
+        "input": "最近有哪些交易",
+        "expected": "analytics",
+        "actual": "analytics",
+        "correct": true,
+        "latencyMs": 2539
+      },
+      {
+        "input": "池子储备量是多少",
+        "expected": "analytics",
+        "actual": "analytics",
+        "correct": true,
+        "latencyMs": 1764
+      },
+      {
+        "input": "24 小时交易量",
+        "expected": "analytics",
+        "actual": "analytics",
+        "correct": true,
+        "latencyMs": 1730
+      },
+      {
+        "input": "价格走势怎么样",
+        "expected": "analytics",
+        "actual": "analytics",
+        "correct": true,
+        "latencyMs": 2376
+      },
+      {
+        "input": "用 100 TKNA 换 TKNB",
+        "expected": "trading",
+        "actual": "trading",
+        "correct": true,
+        "latencyMs": 1557
+      },
+      {
+        "input": "帮我添加流动性 50 TKNA 和 50 TKNB",
+        "expected": "trading",
+        "actual": "trading",
+        "correct": true,
+        "latencyMs": 2292
+      },
+      {
+        "input": "我想移除所有流动性",
+        "expected": "trading",
+        "actual": "trading",
+        "correct": true,
+        "latencyMs": 1865
+      },
+      {
+        "input": "swap 200 TKNB to TKNA slippage 2%",
+        "expected": "trading",
+        "actual": "trading",
+        "correct": true,
+        "latencyMs": 1568
+      },
+      {
+        "input": "换币",
+        "expected": "trading",
+        "actual": "trading",
+        "correct": true,
+        "latencyMs": 1887
+      },
+      {
+        "input": "这个池子安全吗",
+        "expected": "security",
+        "actual": "security",
+        "correct": true,
+        "latencyMs": 1656
+      },
+      {
+        "input": "有没有三明治攻击的风险",
+        "expected": "security",
+        "actual": "security",
+        "correct": true,
+        "latencyMs": 1970
+      },
+      {
+        "input": "合约有没有被审计过",
+        "expected": "security",
+        "actual": "security",
+        "correct": true,
+        "latencyMs": 1482
+      },
+      {
+        "input": "最近有没有异常大额撤资",
+        "expected": "security",
+        "actual": "analytics_security",
+        "correct": false,
+        "latencyMs": 2323
+      },
+      {
+        "input": "滑点风险大不大",
+        "expected": "security",
+        "actual": "security",
+        "correct": true,
+        "latencyMs": 3184
+      },
+      {
+        "input": "你好",
+        "expected": "clarify",
+        "actual": "clarify",
+        "correct": true,
+        "latencyMs": 2118
+      },
+      {
+        "input": "今天天气怎么样",
+        "expected": "clarify",
+        "actual": "clarify",
+        "correct": true,
+        "latencyMs": 1890
+      },
+      {
+        "input": "讲个笑话",
+        "expected": "clarify",
+        "actual": "clarify",
+        "correct": true,
+        "latencyMs": 1493
+      },
+      {
+        "input": "查一下池子然后评估风险",
+        "expected": "analytics_security",
+        "actual": "analytics_security",
+        "correct": true,
+        "latencyMs": 2845
+      },
+      {
+        "input": "看看流动性够不够，安全吗",
+        "expected": "analytics_security",
+        "actual": "analytics_security",
+        "correct": true,
+        "latencyMs": 2146
+      }
+    ]
+  },
+  "cost": {
+    "perRouterCall": "¥0.000240",
+    "note": "Estimated from ~180 input + ~30 output tokens at V4 Flash pricing"
+  }
+}

@@ -107,7 +107,10 @@ async function classifyIntentOpenAI(history: AgentMessage[]): Promise<RouterOutp
     max_tokens: 256,
     messages: [{ role: "system", content: SYSTEM_PROMPT }, ...messages],
     tools,
-    tool_choice: { type: "function", function: { name: "route_intent" } },
+    // Note: DeepSeek V4 Flash does not support tool_choice (returns 400).
+    // Omitting it defaults to "auto" which works — the model reliably calls
+    // route_intent when prompted correctly. Anthropic path still uses forced
+    // tool_choice for guaranteed single-call behavior.
   });
 
   const toolCall = response.choices[0]?.message?.tool_calls?.[0];
