@@ -301,6 +301,7 @@ Pairwise tests reported:
 - *Not paired*: methods produce independent samples per seed, no natural pairing across methods.
 - *Not Student's*: cannot assume equal variance — Grid is deterministic (σ≈0), Random has high variance, MC sits between. Student's would give wrong p-values.
 - *Welch–Satterthwaite* approximates degrees of freedom for unequal variances, gives valid p-value under heteroscedasticity.
+- *Grid degenerate case*: because Grid is deterministic, its std=0 and SE_Grid=0. Welch degenerates when one sample has zero variance (dof collapses, p→1). This means "MC vs Grid" and "Grid vs Random" comparisons are not statistically meaningful in the strict Welch sense. **The primary claim is "MC vs Random"** — both are stochastic, Welch is valid there. Grid is reported as a deterministic reference baseline, not as a Welch-comparable sample.
 
 **Why 30 runs**
 - 30 is the asymptotic threshold where the t-distribution approximates the normal distribution well enough for the Central Limit Theorem to apply on means.
