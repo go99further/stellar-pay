@@ -14,30 +14,41 @@
 
 ## 二、关键数字（必须能脱口而出）
 
-### Benchmark（30 条标注，真实跑分，data/benchmark-report.json）
-- Router 准确率：83%（lenient，25/30）/ 80%（strict，24/30）
-- 工具 Recall：75%（15/20 有工具的用例）
-- 工具 Precision：100%（没有一次调了不该调的工具）
-- 安全拒绝率：100%（4/4 对抗输入全拦截）
-- 端到端 P50：11.1s（含 testnet RPC 5s/次）
-- Router P50：2.4s / P95：6.7s
-- 平均工具调用轮次：2.2
+### Benchmark 150 条标注，真实跑分（n=150，~36 分钟，data/benchmark-report.json）
 
-### 延迟高的原因（必须能解释）
-- Stellar testnet RPC 每次 ~5 秒（mainnet < 500ms）
-- Agent 平均 2.2 轮工具调用（每轮 = LLM 2s + RPC 5s ≈ 7s）
-- 不是 Agent 的问题，是 testnet 基础设施的问题
+```
+Router 准确率:   80.0% strict / 88.7% lenient   (95% CI: ±5-6pp)
+Tool Recall:     67.5%                          (95% CI: ±8.5pp)
+Tool Precision:  100%                           (确定性，0 violations)
+Safety Reject:   83.3%                          (n=6, CI 太宽不可信)
+端到端 P50:      13.2s     P95: 32.0s
+Router P50:      4.6s
+Avg turns:       1.89
+```
 
-### 数据闭环
-- 数据集：3,589 个真实价格点（XLM 作为 TKNA/TKNB 代理）
-- 参数优化：Monte Carlo 500 iter + walk-forward 60/20/20
-- 核心结论：Tuned vs Default 显著（p<0.001, Cohen's d=1.14, large effect）
-- Grid vs MC：Grid 在 5 维空间下反而更好（p<0.001, d=1.37）——反直觉但有理论支撑
+### 分层结果（最值钱的发现）
 
-### 系统整体
-- 测试：902/902（61 文件）
-- 检测器：6 个（3 个 Agent 可调用 + 3 个通过工具间接触发）
-- LIMITATIONS：13 条已知局限
+```
+L1 单 Agent 直通 (50):  Router 100%   Tool Recall 97.7%   ← 几乎完美
+L2 复杂推理 (50):       Router 82%    Tool Recall 64%
+L3 多 Agent 协同 (50):  Router 58%    Tool Recall 41.7%   ← 真实弱点
+```
+
+### 30 → 150 条对比（暴露了什么）
+
+```
+              n=30    n=150    Δ
+Tool Recall   84.2%   67.5%    -16.7pp
+Safety        100%    83.3%    -16.7pp
+```
+
+**Tool Recall 大幅下降是真实问题暴露**：30 条里 L3 类只有 3-4 个，掩盖了 Trading Agent 跳过 pre-query 的缺陷；150 条里 L3 各类有 15-20 个，问题立即显形。**这就是扩展到 150 条的真正价值**。
+
+### 三个根本性发现
+
+1. **Router 在 L3 条件句上系统性失败**（58%）—— "如果 X 就 Y" 模式被误判为 clarify
+2. **Trading Agent 跳过 pre-query**（Tool Recall 主源）—— sequential case 直接 simulate，不先 get_pool_stats
+3. **Rejection Oracle 回归**（L2-009）—— 拒绝构建 XDR 时仍 echo "XDR" 关键词
 
 ---
 
