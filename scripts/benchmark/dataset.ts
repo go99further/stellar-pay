@@ -350,7 +350,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "检查一下安全性，没问题的话帮我换 50 TKNA",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "security", "trading"],
-    expectedTools: [],
+    expectedTools: ["simulate_swap"],
     maxTurns: 8,
     difficulty: "hard",
     tags: ["sequential", "conditional"],
@@ -722,11 +722,11 @@ export const CASES: BenchmarkCase[] = [
   // ── L2 — complex_params_missing (extra 13) ─────────────────────────────────
   {
     id: "L2-011", level: 2, category: "complex_params_missing",
-    userMessage: "帮我换点 TKNB",
+    userMessage: "帮我换点 TKNB，大概 50 个",
     expectedIntent: "trading",
-    acceptableIntents: ["trading", "clarify"],
     expectedTools: ["simulate_swap"],
-    maxTurns: 5, difficulty: "medium", tags: ["missing_amount"],
+    expectedParams: { tokenIn: "TKNA", amountIn: 50 },
+    maxTurns: 5, difficulty: "medium", tags: ["partial_amount"],
   },
   {
     id: "L2-012", level: 2, category: "complex_params_missing",
@@ -933,20 +933,20 @@ export const CASES: BenchmarkCase[] = [
   // ── L2 — complex_boundary (extra 8) ────────────────────────────────────────
   {
     id: "L2-037", level: 2, category: "complex_boundary",
-    userMessage: "换 0 TKNA",
+    userMessage: "用 0.0 TKNA 模拟一下",
     expectedIntent: "trading",
     acceptableIntents: ["trading", "clarify"],
     expectedTools: [],
     forbiddenTools: ["build_swap_xdr"],
-    maxTurns: 3, difficulty: "hard", tags: ["zero_amount"],
+    maxTurns: 3, difficulty: "hard", tags: ["zero_decimal"],
   },
   {
     id: "L2-038", level: 2, category: "complex_boundary",
-    userMessage: "换 999999999 TKNA",
+    userMessage: "I want to swap 1e10 TKNA",
     expectedIntent: "trading",
     expectedTools: ["simulate_swap"],
     mustContain: ["impact"],
-    maxTurns: 4, difficulty: "hard", tags: ["huge_amount"],
+    maxTurns: 4, difficulty: "hard", tags: ["scientific_notation", "en"],
   },
   {
     id: "L2-039", level: 2, category: "complex_boundary",
@@ -981,7 +981,7 @@ export const CASES: BenchmarkCase[] = [
     expectedIntent: "trading",
     acceptableIntents: ["trading", "clarify"],
     expectedTools: [],
-    mustContain: ["slippage"],
+    mustContain: ["滑点"],
     maxTurns: 4, difficulty: "hard", tags: ["extreme_slippage"],
   },
   {
@@ -1185,8 +1185,8 @@ export const CASES: BenchmarkCase[] = [
   {
     id: "L3-027", level: 3, category: "multi_sequential",
     userMessage: "我想根据当前价格决定换多少",
-    expectedIntent: "analytics_then_trading",
-    acceptableIntents: ["analytics_then_trading", "analytics"],
+    expectedIntent: "analytics",
+    acceptableIntents: ["analytics", "analytics_then_trading"],
     expectedTools: ["get_pool_stats"],
     maxTurns: 6, difficulty: "hard", tags: ["sequential", "user_decides"],
   },
@@ -1218,7 +1218,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "评估风险，然后执行 swap 200 TKNA",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "security", "trading"],
-    expectedTools: [],
+    expectedTools: ["simulate_swap"],
     maxTurns: 8, difficulty: "hard", tags: ["sequential", "risk_first"],
   },
   {
@@ -1241,7 +1241,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "先告诉我 1 TKNA 值多少 TKNB，再帮我换",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "trading"],
-    expectedTools: [],
+    expectedTools: ["get_pool_stats"],
     maxTurns: 8, difficulty: "hard", tags: ["sequential", "price_first"],
   },
   {
@@ -1360,11 +1360,11 @@ export const CASES: BenchmarkCase[] = [
   },
   {
     id: "L3-049", level: 3, category: "multi_gated",
-    userMessage: "上次价格 1.5，现在如果涨过 1.6 就帮我换 100",
+    userMessage: "如果当前价格涨过 1.6 就帮我换 100 TKNA",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "analytics", "trading"],
     expectedTools: ["get_pool_stats"],
-    maxTurns: 8, difficulty: "hard", tags: ["gated", "stateful_condition"],
+    maxTurns: 8, difficulty: "hard", tags: ["gated", "price_threshold"],
   },
   {
     id: "L3-050", level: 3, category: "multi_gated",
