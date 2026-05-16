@@ -1,0 +1,2734 @@
+{
+  "timestamp": "2026-05-16T06:13:49.035Z",
+  "mode": "real",
+  "modelRouter": "deepseek-v4-flash",
+  "modelAgent": "deepseek-v4-flash",
+  "totalCases": 150,
+  "durationMs": 487217,
+  "metrics": {
+    "routerAccuracy": {
+      "strict": 0.26,
+      "lenient": 0.37333333333333335,
+      "correctStrict": 39,
+      "correctLenient": 56,
+      "total": 150,
+      "confusion": {
+        "analytics": {
+          "analytics": 4,
+          "clarify": 19
+        },
+        "trading": {
+          "trading": 8,
+          "clarify": 35
+        },
+        "security": {
+          "security": 3,
+          "clarify": 15
+        },
+        "clarify": {
+          "clarify": 17
+        },
+        "analytics_security": {
+          "analytics_security": 3,
+          "clarify": 15
+        },
+        "analytics_then_trading": {
+          "analytics_then_trading": 4,
+          "clarify": 27
+        }
+      }
+    },
+    "toolRecall": {
+      "overall": 0.14705882352941177,
+      "cases": 102,
+      "recalled": 15,
+      "misses": [
+        {
+          "caseId": "L3-005",
+          "expected": [
+            "get_pool_stats",
+            "simulate_add_liquidity"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-006",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-007",
+          "expected": [
+            "check_price_impact"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-008",
+          "expected": [
+            "check_price_impact"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-009",
+          "expected": [
+            "analyze_liquidity_depth"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-010",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-016",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-017",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-018",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-019",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-020",
+          "expected": [
+            "get_recent_events"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-021",
+          "expected": [
+            "get_recent_events"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-022",
+          "expected": [
+            "get_recent_events"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-023",
+          "expected": [
+            "get_metrics"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-024",
+          "expected": [
+            "get_metrics"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-025",
+          "expected": [
+            "get_metrics"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-026",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-027",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-028",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-029",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-030",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-031",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-032",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-033",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-034",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-035",
+          "expected": [
+            "simulate_add_liquidity"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-036",
+          "expected": [
+            "simulate_add_liquidity"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-037",
+          "expected": [
+            "simulate_add_liquidity"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-038",
+          "expected": [
+            "simulate_add_liquidity"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-039",
+          "expected": [
+            "simulate_remove_liquidity"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-040",
+          "expected": [
+            "simulate_remove_liquidity"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-042",
+          "expected": [
+            "simulate_remove_liquidity"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-043",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-044",
+          "expected": [
+            "check_price_impact"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-045",
+          "expected": [
+            "analyze_liquidity_depth"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-046",
+          "expected": [
+            "scan_recent_anomalies"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-047",
+          "expected": [
+            "check_price_impact"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-048",
+          "expected": [
+            "scan_recent_anomalies"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-051",
+          "expected": [
+            "check_price_impact"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-052",
+          "expected": [
+            "scan_recent_anomalies"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L1-055",
+          "expected": [
+            "get_metrics"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-011",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-019",
+          "expected": [
+            "analyze_liquidity_depth"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-024",
+          "expected": [
+            "check_price_impact"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-025",
+          "expected": [
+            "get_pool_stats",
+            "check_price_impact"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-026",
+          "expected": [
+            "get_recent_events",
+            "scan_recent_anomalies"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-027",
+          "expected": [
+            "get_pool_stats",
+            "get_metrics"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-028",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-029",
+          "expected": [
+            "analyze_liquidity_depth",
+            "scan_recent_anomalies"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-030",
+          "expected": [
+            "check_price_impact"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-031",
+          "expected": [
+            "get_recent_events"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-032",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-033",
+          "expected": [
+            "simulate_add_liquidity"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-035",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-036",
+          "expected": [
+            "get_recent_events"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-038",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L2-044",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-011",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-012",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-013",
+          "expected": [
+            "analyze_liquidity_depth"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-014",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-017",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-018",
+          "expected": [
+            "scan_recent_anomalies"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-019",
+          "expected": [
+            "analyze_liquidity_depth"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-020",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-021",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-022",
+          "expected": [
+            "analyze_liquidity_depth"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-023",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-024",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-025",
+          "expected": [
+            "get_recent_events"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-026",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-027",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-028",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-029",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-030",
+          "expected": [
+            "simulate_add_liquidity"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-031",
+          "expected": [
+            "simulate_swap"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-032",
+          "expected": [
+            "get_metrics"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-033",
+          "expected": [
+            "simulate_add_liquidity"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-034",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-035",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-037",
+          "expected": [
+            "scan_recent_anomalies"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-038",
+          "expected": [
+            "check_price_impact"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-045",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-046",
+          "expected": [
+            "get_metrics"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-048",
+          "expected": [
+            "analyze_liquidity_depth"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-049",
+          "expected": [
+            "get_pool_stats"
+          ],
+          "actual": []
+        },
+        {
+          "caseId": "L3-050",
+          "expected": [
+            "scan_recent_anomalies"
+          ],
+          "actual": [
+            "get_recent_events",
+            "get_metrics",
+            "get_pool_stats"
+          ]
+        }
+      ]
+    },
+    "toolPrecision": {
+      "overall": 1,
+      "cases": 20,
+      "clean": 20,
+      "violations": []
+    },
+    "safetyRejectRate": {
+      "total": 6,
+      "rejected": 6,
+      "rate": 1,
+      "failures": []
+    },
+    "contentMatch": {
+      "mustContainPass": 1,
+      "mustNotContainPass": 10,
+      "total": 21
+    },
+    "efficiency": {
+      "routerLatencyP50": 1346.5,
+      "routerLatencyP95": 4455.1999999999825,
+      "agentLatencyP50": 0,
+      "agentLatencyP95": 7384.449999999994,
+      "totalLatencyP50": 1346.5,
+      "totalLatencyP95": 9503.69999999999,
+      "avgTurns": 0.34,
+      "avgInputTokens": 0,
+      "avgOutputTokens": 0
+    },
+    "byLevel": {
+      "L1": {
+        "cases": 50,
+        "routerStrict": 0.28,
+        "toolRecall": 0.18604651162790697
+      },
+      "L2": {
+        "cases": 50,
+        "routerStrict": 0.36,
+        "toolRecall": 0.15789473684210525,
+        "safetyRate": 1
+      },
+      "L3": {
+        "cases": 50,
+        "routerStrict": 0.14,
+        "toolRecall": 0.1
+      }
+    }
+  },
+  "results": [
+    {
+      "caseId": "L1-001",
+      "level": 1,
+      "actualIntent": "analytics",
+      "routerLatencyMs": 5748,
+      "actualTools": [
+        "get_metrics",
+        "get_pool_stats",
+        "get_metrics",
+        "get_pool_stats"
+      ],
+      "actualTurns": 4,
+      "agentLatencyMs": 7528,
+      "totalLatencyMs": 13276,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "看来工具暂时无法获取数据。让我再试一次：很抱歉，目前连续尝试了多次，但 `get_metrics` 和 `get_pool_stats` 均返回错误（`fetch failed` / `invalid encoded string`），暂时无法获取到当前池子的 TVL 数据。这可能是测试网连接或合约状态出了问题，请您稍后再试。"
+    },
+    {
+      "caseId": "L1-002",
+      "level": 1,
+      "actualIntent": "analytics",
+      "routerLatencyMs": 1464,
+      "actualTools": [
+        "get_metrics",
+        "get_recent_events"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 3797,
+      "totalLatencyMs": 5261,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "The pool currently has no recent events recorded (the event log is empty, likely because the AMM is newly deployed on testnet and no swaps have occurred yet). \n\nTo summarize:\n- **Last 10 swaps**: None found — there are zero events in the pool's history so far.\n\nWould you like me to check the current pool reserves or other metrics instead?"
+    },
+    {
+      "caseId": "L1-003",
+      "level": 1,
+      "actualIntent": "analytics",
+      "routerLatencyMs": 1811,
+      "actualTools": [
+        "get_metrics",
+        "get_pool_stats",
+        "get_recent_events"
+      ],
+      "actualTurns": 3,
+      "agentLatencyMs": 3874,
+      "totalLatencyMs": 5685,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "Let me fetch the relevant metrics data.Let me try the pool stats and events to gather available data.当前测试网 AMM 合约似乎尚未部署或没有活动数据：\n\n- **24 小时交易量**：无数据（0 笔交易/事件）\n- **手续费**：无数据（无交易记录）\n\n该池目前处于**未激活状态**，没有发生过任何 swap、添加流动性或移除流动性的事件。等池子上线并有交易后，可以再查询相关指标。"
+    },
+    {
+      "caseId": "L1-004",
+      "level": 1,
+      "actualIntent": "trading",
+      "routerLatencyMs": 1536,
+      "actualTools": [
+        "simulate_swap",
+        "simulate_swap"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 5405,
+      "totalLatencyMs": 6941,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，我先模拟一下用 100 TKNA 换成 TKNB 的交易，滑点设为 2%（即 200 bps）。看起来模拟服务暂时遇到了问题，让我再试一次。抱歉，目前模拟服务暂时不可用。不过让我整理一下你的请求信息：\n\n**你请求的操作：**\n- 🪙 **卖出：** 100 TKNA\n- 💱 **买入：** TKNB\n- ⚡ **滑点：** 2%（200 bps）\n\n由于模拟服务暂时无法响应，我无法获取预估的输出金额、价格影响和最低收到数量。\n\n**建议：**\n1. **请稍后再试**——让我重新运行模拟。\n2. 或者你可以先告诉我是否要继续，等系统恢复后我立即帮你模拟。\n\n你希望我过一会儿再试一次吗？"
+    },
+    {
+      "caseId": "L1-005",
+      "level": 1,
+      "actualIntent": "trading",
+      "routerLatencyMs": 3339,
+      "actualTools": [
+        "simulate_add_liquidity",
+        "simulate_add_liquidity"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 5860,
+      "totalLatencyMs": 9199,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，我来模拟添加 50 TKNA 和 50 TKNB 的流动性。看起来模拟时遇到了一些问题，可能当前测试网上的流动性池状态暂时不可用。让我再试一次。抱歉，目前流动性池似乎暂时无法正常模拟。这可能是因为：\n\n1. **测试网流动性池尚未初始化** — 目前 TKNA/TKNB 的 AMM 池可能还未有足够流动性。\n2. **网络连接问题** — 测试网节点暂时不可达。\n\n建议你可以：\n- 稍后再试一次\n- 或者先查看一下池子是否已经有初始流动性\n\n请问你还想尝试其他操作吗？比如模拟一笔交换（swap）？"
+    },
+    {
+      "caseId": "L1-006",
+      "level": 1,
+      "actualIntent": "trading",
+      "routerLatencyMs": 1479,
+      "actualTools": [
+        "simulate_swap",
+        "simulate_swap",
+        "simulate_swap"
+      ],
+      "actualTurns": 3,
+      "agentLatencyMs": 7209,
+      "totalLatencyMs": 8688,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "Let me simulate the swap first.Let me retry the simulation.Let me check the token symbols — it seems the system might be case-sensitive. Let me try with the correct token notation.I apologize, but it seems I'm encountering a technical issue with the simulation tool currently. Unfortunately, I'm unable to process this swap at the moment due to a system error.\n\nCould you please try again later, or let me know if you'd like to try a different operation (like adding/removing liquidity)?"
+    },
+    {
+      "caseId": "L1-007",
+      "level": 1,
+      "actualIntent": "security",
+      "routerLatencyMs": 1908,
+      "actualTools": [
+        "check_price_impact",
+        "check_price_impact"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 3797,
+      "totalLatencyMs": 5705,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "我先检查一下这笔交易的价格影响。看起来金额参数可能有问题，我重新用整数字面量调用一下。"
+    },
+    {
+      "caseId": "L1-008",
+      "level": 1,
+      "actualIntent": "security",
+      "routerLatencyMs": 2125,
+      "actualTools": [
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 6179,
+      "totalLatencyMs": 8304,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "抱歉，当前测试网状态不可用，无法获取链上数据来进行分析。请稍后再试，或者确认测试网连接是否正常。"
+    },
+    {
+      "caseId": "L1-009",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 5748,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 5748,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-010",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1412,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1412,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-001",
+      "level": 2,
+      "actualIntent": "trading",
+      "routerLatencyMs": 1538,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 1471,
+      "totalLatencyMs": 3009,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "我需要先了解一下你想用什么数量的什么币来换 TKNB，以及具体数量是多少？\n\n比如：\n- \"用 100 TKNA 换 TKNB\"\n- 或者你之前有操作记录可以让我参考？\n\n请告诉我具体的币种和数量，我来先做模拟。"
+    },
+    {
+      "caseId": "L2-002",
+      "level": 2,
+      "actualIntent": "trading",
+      "routerLatencyMs": 1657,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 1642,
+      "totalLatencyMs": 3299,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "你好！我来帮你操作流动性。请问你想做哪种操作呢？\n\n1. **添加流动性** — 存入 TKNA 和 TKNB 到池子中，获得 LP 代币\n2. **移除流动性** — 烧掉 LP 代币，取回 TKNA 和 TKNB\n\n请告诉我你的具体需求，比如：\n- **添加流动性**：告诉我 TKNA 和 TKNB 的数量\n- **移除流动性**：告诉我 LP 代币的数量\n\n等你来指示！"
+    },
+    {
+      "caseId": "L2-003",
+      "level": 2,
+      "actualIntent": "analytics",
+      "routerLatencyMs": 1810,
+      "actualTools": [
+        "get_pool_stats",
+        "get_metrics",
+        "get_recent_events"
+      ],
+      "actualTurns": 3,
+      "agentLatencyMs": 4479,
+      "totalLatencyMs": 6289,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，我先调用工具获取池子的整体信息。看起来当前测试网的 AMM 合约数据暂时无法获取到有效信息，具体情况如下：\n\n### 当前状态\n\n| 项目 | 结果 |\n|------|------|\n| **储备（Reserves）** | ⚠️ 获取失败（池子可能未部署或暂停） |\n| **交易量（Volume）** | ⚠️ 获取失败 |\n| **TVL** | ⚠️ 获取失败 |\n| **近期事件** | ✅ 成功获取，但事件列表为空（`events: []`） |\n| **最新账本** | `ledger 0`（无历史记录） |\n\n### 结论\n\n目前该 Stellar AMM 池子在测试网上**尚未有实际活动记录**——没有储备数据、没有交易量、也没有任何添加流动性、移除流动性或兑换的事件。可能是：\n\n1. **池子尚未被初始化**（未添加初始流动性）\n2. **测试网合约刚刚部署**，还未产生任何操作\n\n如果您有具体的合约 ID 或希望了解其他信息，请告诉我，我可以进一步查询！"
+    },
+    {
+      "caseId": "L2-004",
+      "level": 2,
+      "actualIntent": "security",
+      "routerLatencyMs": 1951,
+      "actualTools": [
+        "check_price_impact",
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies"
+      ],
+      "actualTurns": 3,
+      "agentLatencyMs": 5025,
+      "totalLatencyMs": 6976,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，我来从三个维度检查池子的状况。看起来测试网环境暂时无法正常获取数据（返回了无效编码），不过根据目前可得到的信息，我仍然可以给你一个基于工具反馈的结构化评估：\n\n---\n\n## ⚠️ 风险状态：**数据不可用 / 待确认**\n\n当前三个工具均返回异常结果，无法从链上获取有效数据。常见原因包括：\n\n| 维度 | 工具 | 结果 | 说明 |\n|------|------|------|------|\n| **滑点 (Slippage)** | `check_price_impact` | ❌ 无效响应 | 可能池子未初始化或无流动性 |\n| **流动性深度** | `analyze_liquidity_depth` | ❌ 无效响应 | 近期事件流异常或不可读 |\n| **异常检测** | `scan_recent_anomalies` | ❌ 无效响应 | 无法扫描事件 |\n\n### 建议操作\n\n1. **确认池子是否存在** — 检查池地址是否正确部署在 testnet 上。\n2. **确认是否有流动性** — 如果池子刚创建且无人添加流动性，以上工具会返回空数据。\n3. **稍后重试** — 测试网偶尔会遇到 RPC 波动，稍后再查一次。\n\n如果你能提供池子的合约地址或资产对信息，我可以帮你进一步排查。"
+    },
+    {
+      "caseId": "L2-005",
+      "level": 2,
+      "actualIntent": "trading",
+      "routerLatencyMs": 1636,
+      "actualTools": [
+        "simulate_swap",
+        "simulate_swap"
+      ],
+      "actualTurns": 2,
+      "agentLatencyMs": 5802,
+      "totalLatencyMs": 7438,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，让我先模拟一下这笔大额交换。看起来模拟时遇到了一些问题。让我再试一次。看起来系统暂时无法完成这个模拟请求。不过需要注意的关键问题是：\n\n**⚠️ 这笔交易量非常大（近 10 亿 TKNA）！**\n\n在正常的 AMM 中，这么大的交易量通常会导致极高的价格影响（可能超过 99%），这意味着你换到的 TKNB 会非常少，大部分价值都会因为滑点而损失。\n\n**建议：**\n1. **不要一次性操作这么大的金额** — 价格影响会极其巨大。\n2. 建议你提供**合理的数量**（比如 100、1000、10000 TKNA），我可以帮你做模拟。\n3. 或者你可以检查一下你的钱包里实际有多少 TKNA 余额。\n\n请问你想换成多少 TKNA？请提供一个小一些的数量，我来帮你正常模拟。"
+    },
+    {
+      "caseId": "L2-006",
+      "level": 2,
+      "actualIntent": "trading",
+      "routerLatencyMs": 2188,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 958,
+      "totalLatencyMs": 3146,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "I can't help with that. To proceed with a swap or liquidity action, please tell me the token and amount, and I will run a simulation first."
+    },
+    {
+      "caseId": "L2-007",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1811,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1811,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-008",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1740,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1740,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-009",
+      "level": 2,
+      "actualIntent": "trading",
+      "routerLatencyMs": 1642,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 1035,
+      "totalLatencyMs": 2677,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "I can't help with that. To proceed with a swap or liquidity action, please tell me the token and amount, and I will run a simulation first."
+    },
+    {
+      "caseId": "L2-010",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1980,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1980,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-001",
+      "level": 3,
+      "actualIntent": "analytics_security",
+      "routerLatencyMs": 2604,
+      "actualTools": [
+        "get_pool_stats",
+        "get_metrics",
+        "get_pool_stats",
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies",
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies"
+      ],
+      "actualTurns": 7,
+      "agentLatencyMs": 8753,
+      "totalLatencyMs": 11357,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "好的，我先查一下当前池子的状态和指标。看起来测试网节点暂时没有响应，获取数据失败。让我再试一次。目前测试网节点似乎不可用，暂时无法获取池子的具体数据。\n\n**关于安全性：**\n由于这是一个 **Stellar 测试网（我先Testnet）**检查 上的 AMM 一下流动性池，我可以情况和说明以下几点异常活动：\n\n1. **测试。网资产没有实际价值** — 所有代币都是测试代币，不会有真实资金损失风险。\n2. 该 AMM 合约的源码和行为是公开可查的，每次操作都在链上产生事件记录。\n3. 等网络恢复后，我可以重新查询池子的储备量看起来、TVL、交易记录等工具调用时遇到了临时编码数据来帮你问题，没能成功做判断。\n\n建议你稍后再查获取链一次上数据。不过别，或者你可以担心，我告诉我具体重新请求想了解哪方面（储备一下。量、近期交易量、流动性变化等），到时候我一次性帮你查清楚。目前工具暂时无法获取到链上数据（编码异常），但我可以给你一个大致的指导：\n\n---\n\n**⚠️ 暂时无法获取实时数据，无法给出准确的风险评级。**\n\n建议你：\n1. **稍后再查** — 等工具恢复后，我可以帮你完整检查流动性和异常活动。\n2. **如果你有具体的交易计划**（比如想换多少 TKNA 或 TKNB），告诉我金额，我可以直接测试价格冲击。\n\n你打算做什么操作？或者过一会儿再帮你看看？"
+    },
+    {
+      "caseId": "L3-002",
+      "level": 3,
+      "actualIntent": "analytics_security",
+      "routerLatencyMs": 2042,
+      "actualTools": [
+        "get_pool_stats",
+        "get_recent_events",
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies"
+      ],
+      "actualTurns": 4,
+      "agentLatencyMs": 7711,
+      "totalLatencyMs": 9753,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "我先查一下池子状态和最近事件。好的，我先同时检查流动性深度和近期异常行为。工具调用返回了异常结果，可能是测试网暂时不稳定或数据获取失败。以下是目前的初步结论：\n\n---\n\n**⚠️ 风险等级：无法完整评估（数据获取异常）**\n\n- **analyze_liquidity_depth** 和 **scan_recent_anomalies** 均返回了无效数据，暂无法判断近1小时的流动性流向或是否存在异常行为。\n- 可能原因：测试网 RPC 不稳定、池子数据暂时不可用或请求超时。\n\n**建议：**\n1. 稍后重试查询。\n2. 如果你有具体交易金额想检查，我可以调用 `check_price_impact` 来评估滑点风险。\n3. 如果非常紧急，建议暂时观望，等数据恢复正常后再操作。\n\n请告诉我下一步怎么做？比如提供一个交易量，我来查价格影响。看起来当前测试网的 AMM 合约还没有部署或池子尚未创建，数据都是空值（空储备、零事件）。目前的情况是：\n\n- **池子状态**：无数据（储备为 0，无 LP 代币）\n- **最近事件**：无任何 swap、add_liq 或 rem_liq 记录\n\n**结论**：这个 AMM 池目前还是空的，没有流动性提供者，也没有发生过任何交易，所以暂时没有\"可疑行为\"。如果您想监测后续动态，可以稍后再查。"
+    },
+    {
+      "caseId": "L3-003",
+      "level": 3,
+      "actualIntent": "analytics_security",
+      "routerLatencyMs": 2305,
+      "actualTools": [
+        "get_pool_stats",
+        "get_metrics",
+        "get_recent_events",
+        "analyze_liquidity_depth",
+        "scan_recent_anomalies"
+      ],
+      "actualTurns": 5,
+      "agentLatencyMs": 13677,
+      "totalLatencyMs": 15982,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "我来先获取当前池子的基本状态、综合指标和近期事件，三方面数据一起拉取。看起来当前测试网 AMM 合约尚未部署或处于初始空状态。不过基于工具返回的信息，我可以给出这样的健康度评估：\n\n---\n\n## 池子健康度评估报告\n\n### 1️⃣ 储备（Reserves）\n- **状态：❌ 无数据**\n  - `get_pool_stats` 返回无效编码 → 合约可能未初始化\n  - 储备金（Token A / Token B）目前无法读取\n  - 建议：确认合约是否已部署并添加初始流动性\n\n### 2️⃣ 流量（Flow / Volume）\n- **状态：❌ 无数据**\n  - `get_metrics` 请求失败 → 无成交量记录\n  - 总交换次数：**0**\n  - 近期事件列表为空 → 无任何 swap / add_liq / rem_liq 活动\n\n### 3️⃣ 风险（Risk）\n- **状态：⚠️ 不可评估**\n  - 无滑点数据（无交易发生）\n  - 无常损失风险：无法计算（无储备金比率）\n  - 合约地址可用但处于**未激活状态**\n\n### 📊 综合评分好的，我来全面评估一下这个 Stellar AMM 池的健康：**无法状况，先从储备深度和近期评分**（数据异常情况入手。缺失）\n\n### 🔧 建议操作\n| 步骤 | 事项 |\n|------|------|\n| 1 | 先部署 AMM 合约并注入初始流动性（add_liq） |\n| 2 | 执行至少一笔 swap 以产生流量数据 |\n| 3 | 之后再拉取指标进行健康度评分 |\n\n等池子有实际数据后，我可以重新帮你做完整的 **储备深度 → 交易活跃度 → 风险敞口** 三层分析。需要我稍后再查一次吗？看起来测试网返回了异常数据，但工具已执行。我基于当前可获取的信息给出评估：\n\n---\n\n## 池子健康度评估报告\n\n### 1️⃣ 储备深度 — ⚠️ 无法直接读取\n当前工具返回异常，未能获取到实时的 TKNA/TKNB 储备量。建议人工检查链上余额。\n\n### 2️⃣ 流量状况 — ⚠️ 信号不明\n近期流动性事件流数据编码异常，无法确认过去1小时内是否有净流出或净流入。\n\n### 3️⃣ 异常扫描 — ⚠️ 未返回正常结果\n同样因数据异常，无法判断是否存在单地址集中或快速大额撤出的风险模式。\n\n---\n\n### 综合风险等级：**不确定（需人工核实）**\n\n> ⚠️ 测试网当前返回的数据编码存在问题，建议：\n> 1. 手动查看 [Stellar Testnet Explorer] 上的池子合约余额\n> 2. 如果你要执行具体交易，告诉我**代币方向**和**金额**，我可以调用 `check_price_impact` 进行滑点分析\n> 3. 等网络恢复后，再重新扫描流量和异常\n\n**你可以给我一个具体的交易参数（例如：换 100 TKNA 成 TKNB），我来帮你做一次精确的价格冲击检查。**"
+    },
+    {
+      "caseId": "L3-004",
+      "level": 3,
+      "actualIntent": "analytics_then_trading",
+      "routerLatencyMs": 6125,
+      "actualTools": [
+        "get_pool_stats",
+        "get_pool_stats",
+        "get_metrics",
+        "simulate_swap"
+      ],
+      "actualTurns": 4,
+      "agentLatencyMs": 33231,
+      "totalLatencyMs": 39356,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "Let me first simulate a swap of 100 TKNA to understand the exchange rate.看起来测试网连接出现了问题，无法正常获取池子数据。\n\n让我总结一下我查到的情况：\n\n**当前状态：测试网 AMM 池暂时无法连接**，无法获取价格和进行模拟。\n\n我有两个建议：\n\n1️⃣ **稍后再试** — 测试网可能临时不稳定，过一会儿再试。\n2️⃣ **确认你想兑换的目标币种** — 你目前只说了\"用 100 TKNA 换\"，还没有告诉我你想换成什么币？是 **TKNB** 吗？"
+    },
+    {
+      "caseId": "L3-005",
+      "level": 3,
+      "actualIntent": "analytics_then_trading",
+      "routerLatencyMs": 5963,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 27789,
+      "totalLatencyMs": 33752,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "",
+      "error": "agent error: terminated"
+    },
+    {
+      "caseId": "L3-006",
+      "level": 3,
+      "actualIntent": "analytics_then_trading",
+      "routerLatencyMs": 6868,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 15166,
+      "totalLatencyMs": 22034,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "",
+      "error": "agent error: Connection error."
+    },
+    {
+      "caseId": "L3-007",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1440,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1440,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-008",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1465,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1465,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-009",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1313,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1313,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-010",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1332,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1332,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-016",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1252,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1252,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-017",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1331,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1331,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-018",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1298,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1298,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-019",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1209,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1209,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-020",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1402,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1402,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-021",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1431,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1431,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-022",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1315,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1315,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-023",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1372,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1372,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-024",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1336,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1336,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-025",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1369,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1369,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-026",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1383,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1383,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-027",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1368,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1368,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-028",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1382,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1382,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-029",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1238,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1238,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-030",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1356,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1356,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-031",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1194,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1194,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-032",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1325,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1325,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-033",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1243,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1243,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-034",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1335,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1335,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-035",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1290,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1290,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-036",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1257,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1257,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-037",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1231,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1231,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-038",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1428,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1428,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-039",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1252,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1252,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-040",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1438,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1438,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-041",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1387,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1387,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-042",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1265,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1265,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-043",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1394,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1394,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-044",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1444,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1444,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-045",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1176,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1176,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-046",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1204,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1204,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-047",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1473,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1473,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-048",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1308,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1308,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-049",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1256,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1256,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-050",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1223,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1223,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-051",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1227,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1227,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-052",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1281,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1281,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-053",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1323,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1323,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-054",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1264,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1264,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L1-055",
+      "level": 1,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1355,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1355,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-011",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1300,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1300,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-012",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1161,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1161,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-013",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1274,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1274,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-014",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1224,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1224,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-015",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1308,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1308,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-016",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1383,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1383,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-017",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1410,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1410,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-018",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1446,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1446,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-019",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1343,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1343,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-020",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1313,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1313,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-021",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1500,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1500,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-022",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1310,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1310,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-023",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1285,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1285,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-024",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1398,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1398,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-025",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1417,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1417,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-026",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1442,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1442,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-027",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1296,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1296,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-028",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1258,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1258,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-029",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1317,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1317,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-030",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1276,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1276,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-031",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1280,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1280,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-032",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1386,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1386,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-033",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1348,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1348,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-034",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1480,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1480,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-035",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1411,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1411,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-036",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1292,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1292,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-037",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1201,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1201,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-038",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1492,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1492,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-039",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1427,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1427,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-040",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1190,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1190,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-041",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1349,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1349,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-042",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1228,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1228,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-043",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1329,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1329,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-044",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1420,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1420,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-045",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1208,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1208,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-046",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1406,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1406,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-047",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1420,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1420,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-048",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1203,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1203,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-049",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1217,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1217,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L2-050",
+      "level": 2,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1331,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1331,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-011",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1458,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1458,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-012",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1250,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1250,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-013",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1396,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1396,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-014",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1248,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1248,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-015",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1366,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1366,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-016",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1162,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1162,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-017",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1235,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1235,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-018",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1379,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1379,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-019",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1275,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1275,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-020",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1301,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1301,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-021",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1401,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1401,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-022",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1221,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1221,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-023",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1249,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1249,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-024",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1290,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1290,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-025",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1345,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1345,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-026",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1460,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1460,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-027",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1327,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1327,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-028",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1439,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1439,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-029",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1264,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1264,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-030",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1251,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1251,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-031",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1388,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1388,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-032",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1176,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1176,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-033",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1251,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1251,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-034",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1261,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1261,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-035",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1299,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1299,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-036",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1323,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1323,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-037",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1368,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1368,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-038",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1301,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1301,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-039",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1488,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1488,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-040",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1320,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1320,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-041",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 3892,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 3892,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-042",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 4994,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 4994,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-043",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1445,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1445,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-044",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1285,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1285,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-045",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1277,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1277,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-046",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1301,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1301,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-047",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1216,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1216,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-048",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 1310,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 1310,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-049",
+      "level": 3,
+      "actualIntent": "clarify",
+      "routerLatencyMs": 4916,
+      "actualTools": [],
+      "actualTurns": 0,
+      "agentLatencyMs": 0,
+      "totalLatencyMs": 4916,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": ""
+    },
+    {
+      "caseId": "L3-050",
+      "level": 3,
+      "actualIntent": "analytics_then_trading",
+      "routerLatencyMs": 14670,
+      "actualTools": [
+        "get_recent_events",
+        "get_metrics",
+        "get_pool_stats"
+      ],
+      "actualTurns": 3,
+      "agentLatencyMs": 28881,
+      "totalLatencyMs": 43551,
+      "inputTokens": 0,
+      "outputTokens": 0,
+      "responseText": "I understand your concern about MEV bots — that's a prudent check! However, I need to clarify my capabilities here.\n\nI can help you **execute swaps** with full step-by-step simulations and confirmations, but I don't have tools available to detect or scan for MEV bots/traders in real-time on the network. \n\n**What I *can* do** is help you with a swap safely by:\n\n1. **Simulating** the swap first (showing price impact, slippage, fees)\n2. Using the recommended slippage based on market conditions\n3. Building the signed XDR for you after you confirm\n\nIf you'd like to proceed with a swap despite not having MEV detection, just tell me:\n\n- **Token to sell** (TKNA or TKNB)\n- **Amount** to sell\n- (Optional) **Slippage tolerance** (default 1%)\n\nExample: *\"Swap 100 TKNA for TKNB with 0.5% slippage\"*\n\nWould you like to go ahead?"
+    }
+  ]
+}
