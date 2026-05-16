@@ -296,7 +296,7 @@ describe("collectAnalyticsSummary", () => {
     );
     vi.mocked(getAnthropicClient).mockReturnValue({ messages: { stream: () => stream } } as never);
 
-    const summary = await collectAnalyticsSummary(makeHistory("What is TVL?"));
+    const { summary } = await collectAnalyticsSummary(makeHistory("What is TVL?"));
     expect(summary).toBe("TVL is 1000 TKNA");
   });
 
@@ -307,7 +307,7 @@ describe("collectAnalyticsSummary", () => {
     );
     vi.mocked(getAnthropicClient).mockReturnValue({ messages: { stream: () => stream } } as never);
 
-    const summary = await collectAnalyticsSummary(makeHistory("test"));
+    const { summary } = await collectAnalyticsSummary(makeHistory("test"));
     expect(summary).toBe("");
   });
 
@@ -320,11 +320,11 @@ describe("collectAnalyticsSummary", () => {
     );
     vi.mocked(getAnthropicClient).mockReturnValue({ messages: { stream: () => stream } } as never);
 
-    const summary = await collectAnalyticsSummary(makeHistory("test"));
+    const { summary } = await collectAnalyticsSummary(makeHistory("test"));
     expect(summary).toBe("pool stats");
   });
 
-  it("ignores non-text events (tool_use, tool_result, done, usage)", async () => {
+  it("captures tool_use events alongside text", async () => {
     const stream = makeStreamWithFinal(
       [
         { type: "content_block_delta", delta: { type: "text_delta", text: "Price: 2.0" } },
@@ -347,7 +347,8 @@ describe("collectAnalyticsSummary", () => {
       messages: { stream: vi.fn().mockReturnValueOnce(stream).mockReturnValueOnce(stream2) },
     } as never);
 
-    const summary = await collectAnalyticsSummary(makeHistory("What is the price?"));
+    const { summary, events } = await collectAnalyticsSummary(makeHistory("What is the price?"));
     expect(summary).toBe("Price: 2.0");
+    expect(events.some(e => e.type === "tool_use" && e.name === "get_pool_stats")).toBe(true);
   });
 });

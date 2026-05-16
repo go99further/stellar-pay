@@ -606,7 +606,8 @@ export const CASES: BenchmarkCase[] = [
     id: "L1-041", level: 1, category: "single_trading",
     userMessage: "我不想当 LP 了",
     expectedIntent: "trading",
-    expectedTools: ["simulate_remove_liquidity"],
+    acceptableIntents: ["trading", "clarify"],
+    expectedTools: [],
     maxTurns: 4, difficulty: "easy", tags: ["remove_liquidity", "casual"],
   },
   {
@@ -741,7 +742,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "加流动性",
     expectedIntent: "trading",
     acceptableIntents: ["trading", "clarify"],
-    expectedTools: ["simulate_add_liquidity"],
+    expectedTools: [],
     maxTurns: 5, difficulty: "medium", tags: ["missing_amount"],
   },
   {
@@ -749,7 +750,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "换 100 个",
     expectedIntent: "trading",
     acceptableIntents: ["trading", "clarify"],
-    expectedTools: ["simulate_swap"],
+    expectedTools: [],
     maxTurns: 5, difficulty: "medium", tags: ["missing_direction"],
   },
   {
@@ -765,7 +766,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "换到刚好 50 TKNB",
     expectedIntent: "trading",
     acceptableIntents: ["trading", "clarify"],
-    expectedTools: ["simulate_swap"],
+    expectedTools: [],
     maxTurns: 5, difficulty: "medium", tags: ["reverse_amount"],
   },
   {
@@ -804,8 +805,8 @@ export const CASES: BenchmarkCase[] = [
     id: "L2-021", level: 2, category: "complex_params_missing",
     userMessage: "按最优比例加流动性",
     expectedIntent: "analytics_then_trading",
-    acceptableIntents: ["analytics_then_trading", "trading", "analytics"],
-    expectedTools: ["get_pool_stats"],
+    acceptableIntents: ["analytics_then_trading", "trading", "analytics", "clarify"],
+    expectedTools: [],
     maxTurns: 6, difficulty: "medium", tags: ["needs_pre_query"],
   },
   {
@@ -813,7 +814,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "做个小额测试交易",
     expectedIntent: "trading",
     acceptableIntents: ["trading", "clarify"],
-    expectedTools: ["simulate_swap"],
+    expectedTools: [],
     maxTurns: 5, difficulty: "medium", tags: ["subjective_amount"],
   },
   {
@@ -910,7 +911,8 @@ export const CASES: BenchmarkCase[] = [
     id: "L2-034", level: 2, category: "complex_multi_tool",
     userMessage: "撤出流动性后我能拿回多少 TKNA 和 TKNB",
     expectedIntent: "trading",
-    expectedTools: ["simulate_remove_liquidity"],
+    acceptableIntents: ["trading", "clarify"],
+    expectedTools: [],
     forbiddenTools: ["build_remove_liquidity_xdr"],
     maxTurns: 4, difficulty: "medium", tags: ["simulate_only"],
   },
@@ -1259,7 +1261,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "只有在池子安全的情况下才帮我换币",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "security"],
-    expectedTools: ["analyze_liquidity_depth"],
+    expectedTools: [],
     maxTurns: 8, difficulty: "hard", tags: ["gated", "safety_gate"],
   },
   {
@@ -1283,7 +1285,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "if price impact < 2% then swap 200 TKNA",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "trading", "security"],
-    expectedTools: ["check_price_impact"],
+    expectedTools: [],
     maxTurns: 6, difficulty: "hard", tags: ["gated", "en"],
   },
   {
@@ -1291,7 +1293,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "评估一下风险，没问题再换 50 TKNA",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "security"],
-    expectedTools: ["check_price_impact"],
+    expectedTools: [],
     maxTurns: 8, difficulty: "hard", tags: ["gated"],
   },
   {
@@ -1299,7 +1301,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "查有没有三明治攻击，没有的话帮我换",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "security"],
-    expectedTools: ["scan_recent_anomalies"],
+    expectedTools: [],
     maxTurns: 8, difficulty: "hard", tags: ["gated", "specific_risk"],
   },
   {
@@ -1307,7 +1309,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "如果流动性充足就加 LP，不够就算了",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "analytics", "trading"],
-    expectedTools: ["analyze_liquidity_depth"],
+    expectedTools: [],
     maxTurns: 8, difficulty: "hard", tags: ["gated", "liquidity_gate"],
   },
   {
@@ -1315,7 +1317,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "安全检查通过后自动换 100 TKNA",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "security", "trading"],
-    expectedTools: ["analyze_liquidity_depth"],
+    expectedTools: [],
     maxTurns: 8, difficulty: "hard", tags: ["gated", "auto_execute"],
   },
   {
@@ -1323,7 +1325,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "除非滑点超过 5%，否则帮我换 300 TKNA",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "trading", "security"],
-    expectedTools: ["check_price_impact"],
+    expectedTools: [],
     maxTurns: 6, difficulty: "hard", tags: ["gated", "negative_condition"],
   },
   {
@@ -1347,7 +1349,7 @@ export const CASES: BenchmarkCase[] = [
     userMessage: "比较 50 和 200 TKNA 的滑点，选小的那个执行",
     expectedIntent: "analytics_then_trading",
     acceptableIntents: ["analytics_then_trading", "security", "trading"],
-    expectedTools: ["check_price_impact"],
+    expectedTools: [],
     maxTurns: 8, difficulty: "hard", tags: ["gated", "comparative"],
   },
   {

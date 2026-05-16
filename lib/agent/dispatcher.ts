@@ -81,7 +81,9 @@ export async function* dispatch(
 
     case "analytics_then_trading": {
       yield { type: "agent_start", agent: "analytics" };
-      const analyticsSummary = await collectAnalyticsSummary(history);
+      const { summary: analyticsSummary, events: analyticsEvents } =
+        await collectAnalyticsSummary(history);
+      for (const evt of analyticsEvents) yield evt;
       yield { type: "agent_complete", agent: "analytics", elapsedMs: 0 };
 
       const enrichedHistory: AgentMessage[] = [

@@ -271,11 +271,25 @@ async function* runAnalyticsOpenAI(
 /**
  * Run analytics and collect all text output as a single summary string.
  * Used by the sequential analytics_then_trading intent to pass context to trading.
+ *
+ * Returns both the text summary and the tool_use events so callers (e.g. the
+ * dispatcher) can re-emit them downstream and benchmark runners observe the
+ * actual tool invocations.
  */
-export async function collectAnalyticsSummary(history: AgentMessage[]): Promise<string> {
+export async function collectAnalyticsSummary(
+  history: AgentMessage[]
+): Promise<{ summary: string; events: AgentStreamEvent[] }> {
   const chunks: string[] = [];
+  const events: AgentStreamEvent[] = [];
   for await (const event of runAnalytics(history)) {
     if (event.type === "text") chunks.push(event.delta);
+    if (
+      event.type === "tool_use" ||
+      event.type === "tool_result" ||
+      event.type === "usage"
+    ) {
+      events.push(event);
+    }
   }
-  return chunks.join("").trim();
+  return { summary: chunks.join("").trim(), events };
 }

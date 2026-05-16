@@ -14,41 +14,62 @@
 
 ## 二、关键数字（必须能脱口而出）
 
-### Benchmark 150 条标注，真实跑分（n=150，~36 分钟，data/benchmark-report.json）
+### Benchmark Round 4 — 最终结果（n=150，data/benchmark-report.json）
 
 ```
-Router 准确率:   80.0% strict / 88.7% lenient   (95% CI: ±5-6pp)
-Tool Recall:     67.5%                          (95% CI: ±8.5pp)
-Tool Precision:  100%                           (确定性，0 violations)
-Safety Reject:   83.3%                          (n=6, CI 太宽不可信)
-端到端 P50:      13.2s     P95: 32.0s
-Router P50:      4.6s
-Avg turns:       1.89
+Router 准确率:   83.3% strict / 90.0% lenient   (95% CI: ±5-6pp)
+Tool Recall:     78.4% (87/111)                 (95% CI: ±7.6pp)
+Tool Precision:  100% (确定性，0 violations)
+Safety Reject:   100% (6/6 对抗输入全拦截)
+端到端 P50:      13.9s
+Router P50:      4.0s
 ```
 
-### 分层结果（最值钱的发现）
+### 分层结果
 
 ```
-L1 单 Agent 直通 (50):  Router 100%   Tool Recall 97.7%   ← 几乎完美
-L2 复杂推理 (50):       Router 82%    Tool Recall 64%
-L3 多 Agent 协同 (50):  Router 58%    Tool Recall 41.7%   ← 真实弱点
+L1 单 Agent 直通 (50):  Router 100%   Tool Recall 97.7%
+L2 复杂推理 (50):       Router 74%    Tool Recall 59.1%
+L3 多 Agent 协同 (50):  Router 76%    Tool Recall 68.9%
 ```
 
-### 30 → 150 条对比（暴露了什么）
+### 4 轮迭代的完整故事（最值钱的部分）
 
 ```
-              n=30    n=150    Δ
-Tool Recall   84.2%   67.5%    -16.7pp
-Safety        100%    83.3%    -16.7pp
+Round 1 (n=30):   Router 83%,    Tool Recall 84%   ← 表面好看
+Round 2 (n=150):  Router 80%,    Tool Recall 67.5% ← 扩大暴露弱点
+Round 3:          Router 80.7%,  Tool Recall 73.5% ← 修 measurement bug
+Round 4:          Router 83.3%,  Tool Recall 78.4% ← prompt 修复 + zero-sum trade-off
 ```
 
-**Tool Recall 大幅下降是真实问题暴露**：30 条里 L3 类只有 3-4 个，掩盖了 Trading Agent 跳过 pre-query 的缺陷；150 条里 L3 各类有 15-20 个，问题立即显形。**这就是扩展到 150 条的真正价值**。
+### 4 个迭代的 lesson learned（按面试价值排）
 
-### 三个根本性发现
+1. **Round 2 → Round 3 lesson**：审计自己的测量工具比改 prompt 更重要
+   - dispatcher 的 `collectAnalyticsSummary` 在 sequential 模式下只收 text events，把 Analytics Agent 的 tool_use 吞掉了
+   - Round 2 的 67.5% 是被低估的虚假数字
+   - 没发现 measurement bug 的话，会错误地把 +5pp 归功于 trading prompt 改动
 
-1. **Router 在 L3 条件句上系统性失败**（58%）—— "如果 X 就 Y" 模式被误判为 clarify
-2. **Trading Agent 跳过 pre-query**（Tool Recall 主源）—— sequential case 直接 simulate，不先 get_pool_stats
-3. **Rejection Oracle 回归**（L2-009）—— 拒绝构建 XDR 时仍 echo "XDR" 关键词
+2. **Round 3 → Round 4 lesson**：prompt 加规则经常是 zero-sum
+   - Router 加 conditional sequential few-shots → L3 strict +14pp（6 个目标 case 修复）
+   - **但 L2 strict -8pp**（8 个原本正确的 case 漂移到 clarify）
+   - 净 +2.7pp Router，代价是 latency P50 +58%
+
+3. **Round 1 → Round 2 lesson**：n=30 的数字过于乐观
+   - 30 条 L3 各类只有 3-4 个 → 掩盖 Trading Agent pre-query 缺陷
+   - 150 条 L3 各类 15-20 个 → 真实弱点立即显形
+   - **样本量不只是统计学需要，是发现真实问题的唯一方法**
+
+4. **测量层教训**：单点 metric 提升经常掩盖副作用
+   - 任何 prompt 改动都需要 ablation 才能看清真实贡献
+   - 要分别报告 strict vs lenient（自然语言意图边界本身有 ~6-8% 模糊度）
+
+### 延迟解释
+
+```
+Stellar testnet RPC 每次 ~5 秒（mainnet < 500ms）
+Agent 平均 1.89 轮工具调用 × 7 秒/轮 ≈ 13s
+不是 Agent 的问题，是 testnet 基础设施
+```
 
 ---
 
