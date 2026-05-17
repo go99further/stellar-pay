@@ -268,19 +268,26 @@ async function* runAnalyticsOpenAI(
   yield { type: "done" };
 }
 
+export interface AnalyticsGateData {
+  reserveA: number;
+  reserveB: number;
+  tvl: number;
+  poolEmpty: boolean;
+}
+
 /**
  * Run analytics and collect all text output as a single summary string.
+ * Also extracts structured reserve data from tool results for Layer 1 gating.
  * Used by the sequential analytics_then_trading intent to pass context to trading.
- *
- * Returns both the text summary and the tool_use events so callers (e.g. the
- * dispatcher) can re-emit them downstream and benchmark runners observe the
- * actual tool invocations.
  */
 export async function collectAnalyticsSummary(
   history: AgentMessage[]
-): Promise<{ summary: string; events: AgentStreamEvent[] }> {
+): Promise<{ summary: string; events: AgentStreamEvent[]; gate: AnalyticsGateData }> {
   const chunks: string[] = [];
   const events: AgentStreamEvent[] = [];
+  let reserveA = 0;
+  let reserveB = 0;
+
   for await (const event of runAnalytics(history)) {
     if (event.type === "text") chunks.push(event.delta);
     if (
@@ -290,6 +297,19 @@ export async function collectAnalyticsSummary(
     ) {
       events.push(event);
     }
+    if (event.type === "tool_result" && event.name === "get_pool_stats") {
+      try {
+        const output = event.output as { tokenA?: { reserve?: string }; tokenB?: { reserve?: string } };
+        if (output?.tokenA?.reserve) reserveA = parseFloat(output.tokenA.reserve);
+        if (output?.tokenB?.reserve) reserveB = parseFloat(output.tokenB.reserve);
+      } catch { /* parse failure → use defaults */ }
+    }
   }
-  return { summary: chunks.join("").trim(), events };
+
+  const tvl = reserveA + reserveB;
+  return {
+    summary: chunks.join("").trim(),
+    events,
+    gate: { reserveA, reserveB, tvl, poolEmpty: reserveA === 0 && reserveB === 0 },
+  };
 }

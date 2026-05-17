@@ -81,11 +81,25 @@ export async function* dispatch(
 
     case "analytics_then_trading": {
       yield { type: "agent_start", agent: "analytics" };
-      const { summary: analyticsSummary, events: analyticsEvents } =
+      const { summary: analyticsSummary, events: analyticsEvents, gate } =
         await collectAnalyticsSummary(history);
       for (const evt of analyticsEvents) yield evt;
       yield { type: "agent_complete", agent: "analytics", elapsedMs: 0 };
 
+      // ── Layer 1 gate — hard refusals (deterministic, no LLM needed) ──
+      if (gate.poolEmpty) {
+        yield {
+          type: "text",
+          delta:
+            "Analytics 报告池子当前为空。无法执行交易——请等待流动性注入后再试。",
+        };
+        yield { type: "done" };
+        break;
+      }
+
+      // ── Layer 2 — LLM gate: Trading Agent receives analytics context
+      // and decides whether to proceed based on nuanced conditions
+      // (slippage, liquidity depth, recent anomalies, etc.)
       const enrichedHistory: AgentMessage[] = [
         ...history,
         {
